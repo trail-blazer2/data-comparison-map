@@ -1,14 +1,10 @@
 // ============================================================
 // DATA COMPARISON MAP — Wix Custom Element
-// Loads pre-fetched data.json + world-atlas TopoJSON from CDN
 // ============================================================
 
 const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 
-// ============================================================
-// COUNTRY CODE MAPPINGS
-// ============================================================
 const NUMERIC_TO_ALPHA2 = {
   '040':'AT','056':'BE','100':'BG','191':'HR','196':'CY','203':'CZ',
   '208':'DK','233':'EE','246':'FI','250':'FR','276':'DE','300':'GR',
@@ -31,9 +27,13 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
-// ============================================================
-// UTILITIES
-// ============================================================
+const CATEGORY_META = {
+  economy:         { icon: '💰', label: 'Economy' },
+  demographics:    { icon: '👥', label: 'Demographics' },
+  society:         { icon: '🏛️', label: 'Society' },
+  public_services: { icon: '📋', label: 'Public Services' }
+};
+
 function loadScript(url) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${url}"]`)) return resolve();
@@ -76,6 +76,8 @@ class DataComparisonMap extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this.DATA = {};
+    this.categories = {};
+    this.currentCategory = null;
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
@@ -89,11 +91,7 @@ class DataComparisonMap extends HTMLElement {
   $(s) { return this.shadowRoot.querySelector(s); }
   $$(s) { return this.shadowRoot.querySelectorAll(s); }
 
-  // ============================================================
-  // INIT
-  // ============================================================
   async init() {
-    // Resolve data.json relative to this script's location
     const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
     let baseUrl = '';
     if (scripts.length) {
@@ -101,16 +99,30 @@ class DataComparisonMap extends HTMLElement {
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
 
-    // Load topojson library + data.json + world-atlas in parallel
     const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
       fetch(baseUrl + 'data.json').then(r => r.json()),
       fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
 
-    // Store data (skip _meta key)
+    // Parse data
+    if (dataRaw._meta?.categories) {
+      Object.entries(dataRaw._meta.categories).forEach(([k, v]) => {
+        // v might be string like "💰 Economy" or we use CATEGORY_META
+      });
+    }
+
     Object.entries(dataRaw).forEach(([k, v]) => {
-      if (k !== '_meta') this.DATA[k] = v;
+      if (k === '_meta') return;
+      this.DATA[k] = v;
+    });
+
+    // Build category → dataType mapping
+    this.categories = {};
+    Object.entries(this.DATA).forEach(([key, dt]) => {
+      const cat = dt.category || 'other';
+      if (!this.categories[cat]) this.categories[cat] = [];
+      this.categories[cat].push(key);
     });
 
     // Show last-updated
@@ -126,17 +138,16 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
-    this.buildDataTypeButtons();
-    this.selectDataType(Object.keys(this.DATA)[0]);
+    this.buildCategoryButtons();
 
-    // Hide loader
+    // Select first category
+    const firstCat = Object.keys(this.categories)[0];
+    this.selectCategory(firstCat);
+
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
-  // ============================================================
-  // MAP DRAWING
-  // ============================================================
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
@@ -172,38 +183,84 @@ class DataComparisonMap extends HTMLElement {
       const [x, y] = proj(c);
       return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ') + 'Z';
-
     if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
     if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
     return [];
   }
 
   // ============================================================
-  // BUTTONS
+  // CATEGORY BUTTONS
   // ============================================================
-  buildDataTypeButtons() {
-    const c = this.$('#dtBtns');
+  buildCategoryButtons() {
+    const c = this.$('#catBtns');
     c.innerHTML = '';
-    Object.entries(this.DATA).forEach(([k, dt]) => {
+    Object.entries(this.categories).forEach(([catKey, dtKeys]) => {
+      const meta = CATEGORY_META[catKey] || { icon: '📊', label: catKey };
       const b = document.createElement('button');
-      b.className = 'btn';
-      b.dataset.key = k;
-      b.innerHTML = `<span>${dt.label}</span><span class="badge">${Object.keys(dt.sources).length}</span>`;
-      b.onclick = () => this.selectDataType(k);
+      b.className = 'cat-btn';
+      b.dataset.key = catKey;
+      b.innerHTML = `${meta.icon} ${meta.label}`;
+      b.onclick = () => this.selectCategory(catKey);
       c.appendChild(b);
     });
   }
 
+  selectCategory(catKey) {
+    this.currentCategory = catKey;
+    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
+    this.buildDataTypeButtons(catKey);
+
+    // Auto-select first data type in category
+    const first = this.categories[catKey]?.[0];
+    if (first) this.selectDataType(first);
+  }
+
+  // ============================================================
+  // DATA TYPE BUTTONS (within selected category)
+  // ============================================================
+  buildDataTypeButtons(catKey) {
+    const c = this.$('#dtBtns');
+    c.innerHTML = '';
+    const dtKeys = this.categories[catKey] || [];
+    dtKeys.forEach(key => {
+      const dt = this.DATA[key];
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.dataset.key = key;
+
+      // Count non-empty sources
+      const srcCount = Object.keys(dt.sources).length;
+      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+
+      b.innerHTML = `<span>${dt.label}</span><span class="badge">${okCount}/${srcCount}</span>`;
+      b.onclick = () => this.selectDataType(key);
+      c.appendChild(b);
+    });
+  }
+
+  // ============================================================
+  // SOURCE BUTTONS — greyed-out when empty
+  // ============================================================
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
     c.innerHTML = '';
-    Object.entries(this.DATA[dtKey].sources).forEach(([k, src]) => {
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.dataset.key = k;
+    const dt = this.DATA[dtKey];
+    Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
-      b.innerHTML = `<span>${src.label}</span><span class="badge">${count} 🌍</span>`;
-      b.onclick = () => this.selectSource(k);
+      const isEmpty = count === 0;
+
+      const b = document.createElement('button');
+      b.className = 'btn' + (isEmpty ? ' disabled' : '');
+      b.dataset.key = key;
+
+      if (isEmpty) {
+        b.innerHTML = `<span>${src.label}</span><span class="badge badge-empty">No data</span>`;
+        // Don't add click handler — it's greyed out
+      } else {
+        b.innerHTML = `<span>${src.label}</span><span class="badge">${count} 🌍 · ${src.year}</span>`;
+        b.onclick = () => this.selectSource(key);
+      }
+
       c.appendChild(b);
     });
   }
@@ -212,22 +269,40 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     this.buildSourceButtons(k);
-    this.selectSource(Object.keys(this.DATA[k].sources)[0]);
+
+    // Auto-select first non-empty source
+    const dt = this.DATA[k];
+    const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
+    if (firstOk) {
+      this.selectSource(firstOk[0]);
+    } else {
+      // All sources empty — show empty map
+      this.currentSource = null;
+      this.$('#mapTitle').textContent = dt.label;
+      this.$('#mapSub').textContent = 'No data available for any source';
+      this.$('#legMin').textContent = '—';
+      this.$('#legMax').textContent = '—';
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#e8e8e8'); });
+    }
   }
 
   selectSource(k) {
     this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
+    this.$$('#srcBtns .btn').forEach(b => {
+      // Only toggle active on non-disabled buttons
+      if (!b.classList.contains('disabled')) {
+        b.classList.toggle('active', b.dataset.key === k);
+      }
+    });
     this.paint();
   }
 
-  // ============================================================
-  // PAINT MAP
-  // ============================================================
   paint() {
     const dt = this.DATA[this.currentDataType];
     const src = dt.sources[this.currentSource];
-    this.$('#mapTitle').textContent = `${dt.label}`;
+    if (!src) return;
+
+    this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = `${src.label} · ${src.year} · ${dt.unit}`;
 
     const vals = Object.values(src.countries).filter(v => v != null);
@@ -254,22 +329,17 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ============================================================
-  // TOOLTIP
-  // ============================================================
   ttShow(e) {
     const dt = this.DATA[this.currentDataType];
+    if (!dt || !this.currentSource) return;
     const src = dt.sources[this.currentSource];
     const code = e.target.dataset.code;
-    const val = src.countries[code];
+    const val = src?.countries?.[code];
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttVal').textContent = fmt(val, dt.unit);
     this.$('#ttUnit').textContent = val != null ? dt.unit : '';
-    this.$('#ttSrc').textContent = `${src.label} · ${src.year}`;
-
-    // Discrepancy check (future-ready, enabled)
+    this.$('#ttSrc').textContent = `${src?.label || '—'} · ${src?.year || '—'}`;
     this.checkDiscrepancy(code);
-
     this.$('#tt').classList.add('visible');
   }
   ttMove(e) {
@@ -299,9 +369,6 @@ class DataComparisonMap extends HTMLElement {
     el.style.display = 'none';
   }
 
-  // ============================================================
-  // TEMPLATE
-  // ============================================================
   html() {
     return `
 <style>
@@ -311,216 +378,169 @@ class DataComparisonMap extends HTMLElement {
     max-width:1440px; margin:0 auto; padding:20px 24px;
     display:flex; flex-direction:column; gap:16px;
     background:linear-gradient(135deg,#dbeafe 0%,#f3e8ff 40%,#d1fae5 100%);
-    min-height:100vh;
-    position:relative;
-    overflow:hidden;
+    min-height:100vh; position:relative; overflow:hidden;
   }
-  /* Decorative blurred blobs behind everything for glass to refract */
   .app::before, .app::after {
     content:''; position:absolute; border-radius:50%; pointer-events:none; z-index:0;
     filter:blur(80px); opacity:0.5;
   }
-  .app::before {
-    width:500px; height:500px;
-    background:radial-gradient(circle,#a78bfa,transparent 70%);
-    top:-80px; left:-100px;
-  }
-  .app::after {
-    width:600px; height:600px;
-    background:radial-gradient(circle,#34d399,transparent 70%);
-    bottom:-120px; right:-150px;
-  }
+  .app::before { width:500px;height:500px;background:radial-gradient(circle,#a78bfa,transparent 70%);top:-80px;left:-100px; }
+  .app::after { width:600px;height:600px;background:radial-gradient(circle,#34d399,transparent 70%);bottom:-120px;right:-150px; }
 
   .header { text-align:center; padding:8px 0 0; position:relative; z-index:1; }
   .header h1 {
-    font-size:1.45rem; font-weight:700; margin:0;
+    font-size:1.45rem;font-weight:700;margin:0;
     background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
-  .header p { font-size:0.8rem; color:#666; margin:3px 0 0; }
+  .header p { font-size:0.8rem;color:#666;margin:3px 0 0; }
 
-  .main { display:grid; grid-template-columns:1fr 290px; gap:20px; align-items:start; position:relative; z-index:1; }
+  .main { display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;position:relative;z-index:1; }
 
-  /* ===== LIQUID GLASS ===== */
   .glass {
     position:relative;
-    background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.18) 0%,
-      rgba(255,255,255,0.06) 100%
-    );
-    backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
-    -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
-    border-radius: 24px;
-    border: 1.5px solid rgba(255,255,255,0.35);
-    box-shadow:
-      0 8px 40px rgba(0,0,0,0.06),
-      0 1.5px 0 rgba(255,255,255,0.5) inset;
-    overflow: hidden;
-  }
-  /* Specular highlight — bright arc at the top */
-  .glass::before {
-    content:'';
-    position:absolute; top:0; left:0; right:0; height:50%;
-    background: linear-gradient(
-      180deg,
-      rgba(255,255,255,0.45) 0%,
-      rgba(255,255,255,0.08) 40%,
-      transparent 100%
-    );
-    border-radius: 24px 24px 0 0;
-    pointer-events:none;
-    z-index:1;
-  }
-  /* Inner refraction glow */
-  .glass::after {
-    content:'';
-    position:absolute; inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.06) 100%);
+    backdrop-filter:blur(24px) saturate(180%) brightness(1.08);
+    -webkit-backdrop-filter:blur(24px) saturate(180%) brightness(1.08);
     border-radius:24px;
-    box-shadow:
-      inset 0 0 30px 4px rgba(120,200,255,0.06),
-      inset 0 -2px 12px 0 rgba(255,255,255,0.15);
-    pointer-events:none;
-    z-index:1;
+    border:1.5px solid rgba(255,255,255,0.35);
+    box-shadow:0 8px 40px rgba(0,0,0,0.06),0 1.5px 0 rgba(255,255,255,0.5) inset;
+    overflow:hidden;
   }
+  .glass::before {
+    content:'';position:absolute;top:0;left:0;right:0;height:50%;
+    background:linear-gradient(180deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.08) 40%,transparent 100%);
+    border-radius:24px 24px 0 0;pointer-events:none;z-index:1;
+  }
+  .glass::after {
+    content:'';position:absolute;inset:0;border-radius:24px;
+    box-shadow:inset 0 0 30px 4px rgba(120,200,255,0.06),inset 0 -2px 12px 0 rgba(255,255,255,0.15);
+    pointer-events:none;z-index:1;
+  }
+  .glass > * { position:relative;z-index:2; }
 
-  .glass > * { position:relative; z-index:2; }
-
-  /* ===== MAP PANEL ===== */
   .map-panel { padding:24px 24px 16px; }
+  .title-row { display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px; }
+  .map-title { font-size:1.05rem;font-weight:600;margin:0; }
+  .map-sub { font-size:0.75rem;color:#777;margin:2px 0 0; }
 
-  .title-row { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; }
-  .map-title { font-size:1.05rem; font-weight:600; margin:0; }
-  .map-sub { font-size:0.75rem; color:#777; margin:2px 0 0; }
+  .legend { display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:0.7rem;color:#666; }
+  .legend-bar { flex:1;max-width:220px;height:10px;border-radius:5px;background:linear-gradient(90deg,#e0f2f1,#80cbc4,#26a69a,#00796b,#004d40);border:1px solid rgba(0,0,0,0.04); }
 
-  .legend { display:flex; align-items:center; gap:8px; margin:10px 0 6px; font-size:0.7rem; color:#666; }
-  .legend-bar {
-    flex:1; max-width:220px; height:10px; border-radius:5px;
-    background:linear-gradient(90deg,#e0f2f1,#80cbc4,#26a69a,#00796b,#004d40);
-    border:1px solid rgba(0,0,0,0.04);
-  }
+  .map-wrap { width:100%;display:flex;justify-content:center; }
+  .map-wrap svg { width:100%;max-width:820px;height:auto; }
 
-  .map-wrap { width:100%; display:flex; justify-content:center; }
-  .map-wrap svg { width:100%; max-width:820px; height:auto; }
+  .cp { stroke:rgba(255,255,255,0.65);stroke-width:0.4;cursor:pointer;transition:fill 0.3s,opacity 0.15s;opacity:0.82;paint-order:stroke; }
+  .cp:hover { opacity:1;stroke:#555;stroke-width:0.8;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
+  .cp.no-data { fill:#e8e8e8!important;opacity:0.35;cursor:default; }
 
-  .cp {
-    stroke:rgba(255,255,255,0.65); stroke-width:0.4;
-    cursor:pointer; transition:fill 0.3s,opacity 0.15s;
-    opacity:0.82; paint-order:stroke;
-  }
-  .cp:hover { opacity:1; stroke:#555; stroke-width:0.8; filter:drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
-  .cp.no-data { fill:#e8e8e8!important; opacity:0.35; cursor:default; }
-
-  /* ===== TOOLTIP (Liquid Glass) ===== */
   .tooltip {
-    position:fixed; pointer-events:none; z-index:9999;
-    padding:14px 18px;
-    background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.50) 0%,
-      rgba(255,255,255,0.20) 100%
-    );
-    backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
-    -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
-    border: 1.5px solid rgba(255,255,255,0.5);
-    border-radius:18px;
-    box-shadow:
-      0 12px 48px rgba(0,0,0,0.10),
-      inset 0 1px 0 rgba(255,255,255,0.6),
-      inset 0 -1px 4px rgba(0,0,0,0.02);
-    opacity:0; transition:opacity 0.12s;
-    max-width:280px;
+    position:fixed;pointer-events:none;z-index:9999;padding:14px 18px;
+    background:linear-gradient(135deg,rgba(255,255,255,0.50) 0%,rgba(255,255,255,0.20) 100%);
+    backdrop-filter:blur(32px) saturate(200%) brightness(1.1);
+    -webkit-backdrop-filter:blur(32px) saturate(200%) brightness(1.1);
+    border:1.5px solid rgba(255,255,255,0.5);border-radius:18px;
+    box-shadow:0 12px 48px rgba(0,0,0,0.10),inset 0 1px 0 rgba(255,255,255,0.6),inset 0 -1px 4px rgba(0,0,0,0.02);
+    opacity:0;transition:opacity 0.12s;max-width:280px;
   }
   .tooltip.visible { opacity:1; }
-  .tt-name { font-weight:700; font-size:0.9rem; margin-bottom:3px; }
-  .tt-val { font-size:1.15rem; font-weight:600; color:#00796b; }
-  .tt-unit { font-size:0.7rem; color:#888; margin-left:3px; }
-  .tt-src { font-size:0.65rem; color:#aaa; margin-top:5px; }
-  .tt-disc {
-    display:none; margin-top:6px; padding:3px 10px;
-    background:rgba(255,152,0,0.1); border-radius:10px;
-    font-size:0.68rem; color:#e65100;
-  }
+  .tt-name { font-weight:700;font-size:0.9rem;margin-bottom:3px; }
+  .tt-val { font-size:1.15rem;font-weight:600;color:#00796b; }
+  .tt-unit { font-size:0.7rem;color:#888;margin-left:3px; }
+  .tt-src { font-size:0.65rem;color:#aaa;margin-top:5px; }
+  .tt-disc { display:none;margin-top:6px;padding:3px 10px;background:rgba(255,152,0,0.1);border-radius:10px;font-size:0.68rem;color:#e65100; }
 
   /* ===== CONTROLS ===== */
   .controls {
-    padding:20px;
-    display:flex; flex-direction:column; gap:18px;
-    position:sticky; top:20px;
-    max-height:calc(100vh - 40px); overflow-y:auto;
+    padding:20px;display:flex;flex-direction:column;gap:14px;
+    position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;
   }
   .controls::-webkit-scrollbar { width:3px; }
-  .controls::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1); border-radius:3px; }
+  .controls::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1);border-radius:3px; }
 
-  .sec-title {
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
-    color:#999; margin:0 0 8px; font-weight:600;
+  .sec-title { font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin:0 0 6px;font-weight:600; }
+  .btn-group { display:flex;flex-direction:column;gap:4px; }
+
+  /* Category tabs */
+  .cat-tabs { display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px; }
+  .cat-btn {
+    padding:7px 12px;border:1px solid rgba(255,255,255,0.3);border-radius:12px;
+    background:linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04));
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    cursor:pointer;font-size:0.72rem;font-weight:500;color:#555;
+    transition:all 0.2s;font-family:inherit;white-space:nowrap;
   }
-  .btn-group { display:flex; flex-direction:column; gap:4px; }
+  .cat-btn:hover { background:rgba(255,255,255,0.35);box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+  .cat-btn.active {
+    background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.12));
+    border-color:rgba(99,102,241,0.35);color:#4338ca;font-weight:600;
+    box-shadow:0 3px 12px rgba(99,102,241,0.12);
+  }
 
+  /* Data type & source buttons */
   .btn {
-    padding:9px 12px; border:1px solid rgba(255,255,255,0.3);
-    border-radius:12px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
-    backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);
-    cursor:pointer; font-size:0.76rem; font-weight:500; color:#444;
-    transition:all 0.2s; text-align:left;
-    display:flex; justify-content:space-between; align-items:center;
-    font-family:inherit; line-height:1.3;
+    padding:9px 12px;border:1px solid rgba(255,255,255,0.3);border-radius:12px;
+    background:linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04));
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    cursor:pointer;font-size:0.76rem;font-weight:500;color:#444;
+    transition:all 0.2s;text-align:left;
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:inherit;line-height:1.3;
   }
-  .btn:hover {
-    background:rgba(255,255,255,0.35);
-    transform:translateX(3px);
+  .btn:hover:not(.disabled) {
+    background:rgba(255,255,255,0.35);transform:translateX(3px);
     box-shadow:0 3px 12px rgba(0,0,0,0.05);
   }
   .btn.active {
     background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(168,85,247,0.10));
-    border-color:rgba(99,102,241,0.3);
-    color:#4338ca; font-weight:600;
+    border-color:rgba(99,102,241,0.3);color:#4338ca;font-weight:600;
     box-shadow:0 4px 16px rgba(99,102,241,0.10);
   }
-  .badge {
-    font-size:0.6rem; color:#bbb; flex-shrink:0;
-    background:rgba(0,0,0,0.03); padding:2px 6px; border-radius:6px;
+
+  /* Greyed-out / disabled source buttons */
+  .btn.disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+    background:rgba(200,200,200,0.08);
+    border-color:rgba(200,200,200,0.2);
+    color:#999;
   }
-  .btn.active .badge { color:#7c3aed; background:rgba(99,102,241,0.08); }
+  .btn.disabled:hover {
+    transform:none;
+    box-shadow:none;
+    background:rgba(200,200,200,0.08);
+  }
 
-  .footer { font-size:0.65rem; color:#bbb; text-align:center; padding:4px 0 12px; position:relative; z-index:1; }
+  .badge {
+    font-size:0.6rem;color:#bbb;flex-shrink:0;
+    background:rgba(0,0,0,0.03);padding:2px 6px;border-radius:6px;
+  }
+  .btn.active .badge { color:#7c3aed;background:rgba(99,102,241,0.08); }
+  .badge-empty { color:#cc8888;background:rgba(200,100,100,0.06); }
 
-  /* Init loader */
+  .footer { font-size:0.65rem;color:#bbb;text-align:center;padding:4px 0 12px;position:relative;z-index:1; }
+
   .init-loader {
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:120px 0; gap:16px; position:relative; z-index:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:120px 0;gap:16px;position:relative;z-index:1;
   }
   .init-loader .orbit { width:40px;height:40px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.9s linear infinite; }
-  .init-loader span { font-size:0.82rem; color:#888; }
+  .init-loader span { font-size:0.82rem;color:#888; }
   @keyframes spin { to { transform:rotate(360deg); } }
-
   .main { transition:opacity 0.4s; }
 
   @media(max-width:960px) {
     .main { grid-template-columns:1fr; }
-    .controls { position:static; max-height:none; flex-direction:row; flex-wrap:wrap; }
-    .controls > div { flex:1; min-width:200px; }
+    .controls { position:static;max-height:none; }
   }
-
-  /* Future alert dots */
-  .alert-dot {
-    display:none; position:absolute; width:8px;height:8px;
-    background:#ff5722; border-radius:50%; border:1.5px solid #fff;
-    box-shadow:0 0 8px rgba(255,87,34,0.5); animation:pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.6} }
 </style>
 
 <div class="app">
   <div class="header">
     <h1>Interactive Data Comparison Map</h1>
-    <p>Select a data type and source — hover over countries for details</p>
+    <p>Compare data across sources — hover over countries for details</p>
   </div>
 
-  <!-- Loading state -->
   <div id="initLoader" class="init-loader">
     <div class="orbit"></div>
     <span>Loading map & data…</span>
@@ -546,6 +566,10 @@ class DataComparisonMap extends HTMLElement {
 
     <div class="controls glass">
       <div>
+        <div class="sec-title">Category</div>
+        <div class="cat-tabs" id="catBtns"></div>
+      </div>
+      <div>
         <div class="sec-title">📊 Data Type</div>
         <div class="btn-group" id="dtBtns"></div>
       </div>
@@ -556,14 +580,14 @@ class DataComparisonMap extends HTMLElement {
     </div>
   </div>
 
-  <div class="footer" id="lastUpdated">Data auto-updated weekly via Eurostat & World Bank APIs</div>
+  <div class="footer" id="lastUpdated">Data auto-updated via Eurostat & World Bank APIs</div>
 </div>
 
 <div class="tooltip" id="tt">
   <div class="tt-name" id="ttName">—</div>
   <div><span class="tt-val" id="ttVal">—</span><span class="tt-unit" id="ttUnit"></span></div>
   <div class="tt-src" id="ttSrc"></div>
-  <div class="tt-disc" id="ttDisc">⚠️ Sources differ</div>
+  <div class="tt-disc" id="ttDisc"></div>
 </div>`;
   }
 }
