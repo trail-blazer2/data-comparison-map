@@ -57,11 +57,14 @@ function fmt(val, unit) {
   if (unit === 'persons') return val.toLocaleString();
   if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val/1e6).toFixed(1) + 'M';
   if (unit === 'net persons') return val.toLocaleString();
-  if (unit === 'USD/capita') return '$' + Math.round(val).toLocaleString();
+  if (unit === 'USD/capita' || unit === 'int. $') return '$' + Math.round(val).toLocaleString();
   if (unit === '% of GDP' || unit === '%') return val.toFixed(1) + '%';
   if (unit === 'births/woman') return val.toFixed(2);
   if (unit === 'years') return val.toFixed(1);
   if (unit === 'per 100k inh.') return val.toFixed(2);
+  if (unit === 'per 1,000 births') return val.toFixed(1);
+  if (unit === '% gross enrollment') return val.toFixed(1) + '%';
+  if (unit === 'index (0-100)') return val.toFixed(1);
   return String(val);
 }
 
