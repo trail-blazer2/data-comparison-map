@@ -1,5 +1,6 @@
 // ============================================================
 // DATA COMPARISON MAP — Wix Custom Element
+// Styles are loaded from styles.css — edit that file for theming!
 // ============================================================
 
 const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
@@ -34,17 +35,16 @@ const CATEGORY_META = {
   public_services: { icon: '📋', label: 'Public Services' }
 };
 
-function loadScript(url) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${url}"]`)) return resolve();
-    const s = document.createElement('script');
-    s.src = url; s.onload = resolve; s.onerror = reject;
-    document.head.appendChild(s);
-  });
-}
-
+// ===== Navy Blue color scale =====
 function getColor(t) {
-  const c = [[224,242,241],[128,203,196],[38,166,154],[0,121,107],[0,77,64]];
+  // Light grey-blue → medium slate → deep navy → near-black navy
+  const c = [
+    [200, 214, 229],  // #c8d6e5
+    [131, 149, 167],  // #8395a7
+    [87, 101, 116],   // #576574
+    [34, 47, 62],     // #222f3e
+    [10, 22, 40]      // #0a1628
+  ];
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
   const f = (t * n) - i;
@@ -66,6 +66,15 @@ function fmt(val, unit) {
   if (unit === '% gross enrollment') return val.toFixed(1) + '%';
   if (unit === 'index (0-100)') return val.toFixed(1);
   return String(val);
+}
+
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = url; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
 
 // ============================================================
@@ -92,6 +101,7 @@ class DataComparisonMap extends HTMLElement {
   $$(s) { return this.shadowRoot.querySelectorAll(s); }
 
   async init() {
+    // Resolve base URL for co-located files
     const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
     let baseUrl = '';
     if (scripts.length) {
@@ -99,6 +109,16 @@ class DataComparisonMap extends HTMLElement {
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
 
+    // Load external stylesheet into shadow DOM
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = baseUrl + 'styles.css';
+    this.shadowRoot.prepend(link);
+
+    // Wait for CSS to load before showing content
+    await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
+
+    // Load topojson + data + map geometry in parallel
     const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
       fetch(baseUrl + 'data.json').then(r => r.json()),
@@ -106,18 +126,11 @@ class DataComparisonMap extends HTMLElement {
     ]);
 
     // Parse data
-    if (dataRaw._meta?.categories) {
-      Object.entries(dataRaw._meta.categories).forEach(([k, v]) => {
-        // v might be string like "💰 Economy" or we use CATEGORY_META
-      });
-    }
-
     Object.entries(dataRaw).forEach(([k, v]) => {
-      if (k === '_meta') return;
-      this.DATA[k] = v;
+      if (k !== '_meta') this.DATA[k] = v;
     });
 
-    // Build category → dataType mapping
+    // Build categories
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
       const cat = dt.category || 'other';
@@ -125,13 +138,11 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
 
-    // Show last-updated
     if (dataRaw._meta?.lastUpdated) {
       const d = new Date(dataRaw._meta.lastUpdated);
       this.$('#lastUpdated').textContent = `Data updated: ${d.toLocaleDateString()}`;
     }
 
-    // Parse map
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
     this.geoFeatures = all.features.filter(f =>
       EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'))
@@ -139,15 +150,15 @@ class DataComparisonMap extends HTMLElement {
 
     this.drawMap();
     this.buildCategoryButtons();
-
-    // Select first category
-    const firstCat = Object.keys(this.categories)[0];
-    this.selectCategory(firstCat);
+    this.selectCategory(Object.keys(this.categories)[0]);
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
+  // ============================================================
+  // MAP
+  // ============================================================
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
@@ -194,12 +205,12 @@ class DataComparisonMap extends HTMLElement {
   buildCategoryButtons() {
     const c = this.$('#catBtns');
     c.innerHTML = '';
-    Object.entries(this.categories).forEach(([catKey, dtKeys]) => {
+    Object.entries(this.categories).forEach(([catKey]) => {
       const meta = CATEGORY_META[catKey] || { icon: '📊', label: catKey };
       const b = document.createElement('button');
       b.className = 'cat-btn';
       b.dataset.key = catKey;
-      b.innerHTML = `${meta.icon} ${meta.label}`;
+      b.innerHTML = `<span class="cat-icon">${meta.icon}</span><span class="cat-label">${meta.label}</span>`;
       b.onclick = () => this.selectCategory(catKey);
       c.appendChild(b);
     });
@@ -209,29 +220,23 @@ class DataComparisonMap extends HTMLElement {
     this.currentCategory = catKey;
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
     this.buildDataTypeButtons(catKey);
-
-    // Auto-select first data type in category
     const first = this.categories[catKey]?.[0];
     if (first) this.selectDataType(first);
   }
 
   // ============================================================
-  // DATA TYPE BUTTONS (within selected category)
+  // DATA TYPE BUTTONS
   // ============================================================
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
     c.innerHTML = '';
-    const dtKeys = this.categories[catKey] || [];
-    dtKeys.forEach(key => {
+    (this.categories[catKey] || []).forEach(key => {
       const dt = this.DATA[key];
       const b = document.createElement('button');
       b.className = 'btn';
       b.dataset.key = key;
-
-      // Count non-empty sources
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
-
       b.innerHTML = `<span>${dt.label}</span><span class="badge">${okCount}/${srcCount}</span>`;
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
@@ -239,7 +244,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // SOURCE BUTTONS — greyed-out when empty
+  // SOURCE BUTTONS (greyed out when empty)
   // ============================================================
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
@@ -248,19 +253,15 @@ class DataComparisonMap extends HTMLElement {
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
       const isEmpty = count === 0;
-
       const b = document.createElement('button');
       b.className = 'btn' + (isEmpty ? ' disabled' : '');
       b.dataset.key = key;
-
       if (isEmpty) {
         b.innerHTML = `<span>${src.label}</span><span class="badge badge-empty">No data</span>`;
-        // Don't add click handler — it's greyed out
       } else {
         b.innerHTML = `<span>${src.label}</span><span class="badge">${count} 🌍 · ${src.year}</span>`;
         b.onclick = () => this.selectSource(key);
       }
-
       c.appendChild(b);
     });
   }
@@ -269,34 +270,31 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     this.buildSourceButtons(k);
-
-    // Auto-select first non-empty source
     const dt = this.DATA[k];
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
     if (firstOk) {
       this.selectSource(firstOk[0]);
     } else {
-      // All sources empty — show empty map
       this.currentSource = null;
       this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '—';
       this.$('#legMax').textContent = '—';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#e8e8e8'); });
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
   }
 
   selectSource(k) {
     this.currentSource = k;
     this.$$('#srcBtns .btn').forEach(b => {
-      // Only toggle active on non-disabled buttons
-      if (!b.classList.contains('disabled')) {
-        b.classList.toggle('active', b.dataset.key === k);
-      }
+      if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
     this.paint();
   }
 
+  // ============================================================
+  // PAINT MAP
+  // ============================================================
   paint() {
     const dt = this.DATA[this.currentDataType];
     const src = dt.sources[this.currentSource];
@@ -309,7 +307,7 @@ class DataComparisonMap extends HTMLElement {
     if (!vals.length) {
       this.$('#legMin').textContent = '—';
       this.$('#legMax').textContent = '—';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#e8e8e8'); });
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
       return;
     }
 
@@ -324,11 +322,14 @@ class DataComparisonMap extends HTMLElement {
         p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5));
       } else {
         p.classList.add('no-data');
-        p.setAttribute('fill', '#e8e8e8');
+        p.setAttribute('fill', '#dfe6e9');
       }
     });
   }
 
+  // ============================================================
+  // TOOLTIP
+  // ============================================================
   ttShow(e) {
     const dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
@@ -369,171 +370,28 @@ class DataComparisonMap extends HTMLElement {
     el.style.display = 'none';
   }
 
+  // ============================================================
+  // HTML TEMPLATE (includes SVG filter for liquid glass)
+  // ============================================================
   html() {
     return `
-<style>
-  :host { display:block; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; color:#1a1a2e; }
-
-  .app {
-    max-width:1440px; margin:0 auto; padding:20px 24px;
-    display:flex; flex-direction:column; gap:16px;
-    background:linear-gradient(135deg,#dbeafe 0%,#f3e8ff 40%,#d1fae5 100%);
-    min-height:100vh; position:relative; overflow:hidden;
-  }
-  .app::before, .app::after {
-    content:''; position:absolute; border-radius:50%; pointer-events:none; z-index:0;
-    filter:blur(80px); opacity:0.5;
-  }
-  .app::before { width:500px;height:500px;background:radial-gradient(circle,#a78bfa,transparent 70%);top:-80px;left:-100px; }
-  .app::after { width:600px;height:600px;background:radial-gradient(circle,#34d399,transparent 70%);bottom:-120px;right:-150px; }
-
-  .header { text-align:center; padding:8px 0 0; position:relative; z-index:1; }
-  .header h1 {
-    font-size:1.45rem;font-weight:700;margin:0;
-    background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  }
-  .header p { font-size:0.8rem;color:#666;margin:3px 0 0; }
-
-  .main { display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;position:relative;z-index:1; }
-
-  .glass {
-    position:relative;
-    background:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.06) 100%);
-    backdrop-filter:blur(24px) saturate(180%) brightness(1.08);
-    -webkit-backdrop-filter:blur(24px) saturate(180%) brightness(1.08);
-    border-radius:24px;
-    border:1.5px solid rgba(255,255,255,0.35);
-    box-shadow:0 8px 40px rgba(0,0,0,0.06),0 1.5px 0 rgba(255,255,255,0.5) inset;
-    overflow:hidden;
-  }
-  .glass::before {
-    content:'';position:absolute;top:0;left:0;right:0;height:50%;
-    background:linear-gradient(180deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.08) 40%,transparent 100%);
-    border-radius:24px 24px 0 0;pointer-events:none;z-index:1;
-  }
-  .glass::after {
-    content:'';position:absolute;inset:0;border-radius:24px;
-    box-shadow:inset 0 0 30px 4px rgba(120,200,255,0.06),inset 0 -2px 12px 0 rgba(255,255,255,0.15);
-    pointer-events:none;z-index:1;
-  }
-  .glass > * { position:relative;z-index:2; }
-
-  .map-panel { padding:24px 24px 16px; }
-  .title-row { display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px; }
-  .map-title { font-size:1.05rem;font-weight:600;margin:0; }
-  .map-sub { font-size:0.75rem;color:#777;margin:2px 0 0; }
-
-  .legend { display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:0.7rem;color:#666; }
-  .legend-bar { flex:1;max-width:220px;height:10px;border-radius:5px;background:linear-gradient(90deg,#e0f2f1,#80cbc4,#26a69a,#00796b,#004d40);border:1px solid rgba(0,0,0,0.04); }
-
-  .map-wrap { width:100%;display:flex;justify-content:center; }
-  .map-wrap svg { width:100%;max-width:820px;height:auto; }
-
-  .cp { stroke:rgba(255,255,255,0.65);stroke-width:0.4;cursor:pointer;transition:fill 0.3s,opacity 0.15s;opacity:0.82;paint-order:stroke; }
-  .cp:hover { opacity:1;stroke:#555;stroke-width:0.8;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
-  .cp.no-data { fill:#e8e8e8!important;opacity:0.35;cursor:default; }
-
-  .tooltip {
-    position:fixed;pointer-events:none;z-index:9999;padding:14px 18px;
-    background:linear-gradient(135deg,rgba(255,255,255,0.50) 0%,rgba(255,255,255,0.20) 100%);
-    backdrop-filter:blur(32px) saturate(200%) brightness(1.1);
-    -webkit-backdrop-filter:blur(32px) saturate(200%) brightness(1.1);
-    border:1.5px solid rgba(255,255,255,0.5);border-radius:18px;
-    box-shadow:0 12px 48px rgba(0,0,0,0.10),inset 0 1px 0 rgba(255,255,255,0.6),inset 0 -1px 4px rgba(0,0,0,0.02);
-    opacity:0;transition:opacity 0.12s;max-width:280px;
-  }
-  .tooltip.visible { opacity:1; }
-  .tt-name { font-weight:700;font-size:0.9rem;margin-bottom:3px; }
-  .tt-val { font-size:1.15rem;font-weight:600;color:#00796b; }
-  .tt-unit { font-size:0.7rem;color:#888;margin-left:3px; }
-  .tt-src { font-size:0.65rem;color:#aaa;margin-top:5px; }
-  .tt-disc { display:none;margin-top:6px;padding:3px 10px;background:rgba(255,152,0,0.1);border-radius:10px;font-size:0.68rem;color:#e65100; }
-
-  /* ===== CONTROLS ===== */
-  .controls {
-    padding:20px;display:flex;flex-direction:column;gap:14px;
-    position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;
-  }
-  .controls::-webkit-scrollbar { width:3px; }
-  .controls::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1);border-radius:3px; }
-
-  .sec-title { font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin:0 0 6px;font-weight:600; }
-  .btn-group { display:flex;flex-direction:column;gap:4px; }
-
-  /* Category tabs */
-  .cat-tabs { display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px; }
-  .cat-btn {
-    padding:7px 12px;border:1px solid rgba(255,255,255,0.3);border-radius:12px;
-    background:linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04));
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    cursor:pointer;font-size:0.72rem;font-weight:500;color:#555;
-    transition:all 0.2s;font-family:inherit;white-space:nowrap;
-  }
-  .cat-btn:hover { background:rgba(255,255,255,0.35);box-shadow:0 2px 8px rgba(0,0,0,0.05); }
-  .cat-btn.active {
-    background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.12));
-    border-color:rgba(99,102,241,0.35);color:#4338ca;font-weight:600;
-    box-shadow:0 3px 12px rgba(99,102,241,0.12);
-  }
-
-  /* Data type & source buttons */
-  .btn {
-    padding:9px 12px;border:1px solid rgba(255,255,255,0.3);border-radius:12px;
-    background:linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04));
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    cursor:pointer;font-size:0.76rem;font-weight:500;color:#444;
-    transition:all 0.2s;text-align:left;
-    display:flex;justify-content:space-between;align-items:center;
-    font-family:inherit;line-height:1.3;
-  }
-  .btn:hover:not(.disabled) {
-    background:rgba(255,255,255,0.35);transform:translateX(3px);
-    box-shadow:0 3px 12px rgba(0,0,0,0.05);
-  }
-  .btn.active {
-    background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(168,85,247,0.10));
-    border-color:rgba(99,102,241,0.3);color:#4338ca;font-weight:600;
-    box-shadow:0 4px 16px rgba(99,102,241,0.10);
-  }
-
-  /* Greyed-out / disabled source buttons */
-  .btn.disabled {
-    opacity:0.4;
-    cursor:not-allowed;
-    background:rgba(200,200,200,0.08);
-    border-color:rgba(200,200,200,0.2);
-    color:#999;
-  }
-  .btn.disabled:hover {
-    transform:none;
-    box-shadow:none;
-    background:rgba(200,200,200,0.08);
-  }
-
-  .badge {
-    font-size:0.6rem;color:#bbb;flex-shrink:0;
-    background:rgba(0,0,0,0.03);padding:2px 6px;border-radius:6px;
-  }
-  .btn.active .badge { color:#7c3aed;background:rgba(99,102,241,0.08); }
-  .badge-empty { color:#cc8888;background:rgba(200,100,100,0.06); }
-
-  .footer { font-size:0.65rem;color:#bbb;text-align:center;padding:4px 0 12px;position:relative;z-index:1; }
-
-  .init-loader {
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:120px 0;gap:16px;position:relative;z-index:1;
-  }
-  .init-loader .orbit { width:40px;height:40px;border:3px solid rgba(99,102,241,0.15);border-top-color:#6366f1;border-radius:50%;animation:spin 0.9s linear infinite; }
-  .init-loader span { font-size:0.82rem;color:#888; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .main { transition:opacity 0.4s; }
-
-  @media(max-width:960px) {
-    .main { grid-template-columns:1fr; }
-    .controls { position:static;max-height:none; }
-  }
-</style>
+<!-- SVG Filter for Liquid Glass (Apple-style) -->
+<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
+  <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+    <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
+    <feComponentTransfer in="turbulence" result="mapped">
+      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+      <fePointLight x="-200" y="-200" z="300"/>
+    </feSpecularLighting>
+    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 
 <div class="app">
   <div class="header">
