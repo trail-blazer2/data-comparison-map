@@ -1,7 +1,8 @@
 {
   "_meta": {
-    "lastUpdated": "2026-03-22T22:03:51.883Z",
-    "generatedBy": "fetch-data.js via GitHub Actions"
+    "lastUpdated": "2026-03-22T22:20:07.145Z",
+    "generatedBy": "fetch-data.js via GitHub Actions",
+    "indicatorCount": 21
   },
   "unemployment_total": {
     "label": "Unemployment rate - Total",
@@ -9,55 +10,48 @@
     "sources": {
       "eurostat": {
         "label": "Eurostat",
-        "countries": {},
-        "year": 0,
-        "_countryCount": 0
-      },
-      "oecd": {
-        "label": "OECD",
         "countries": {
-          "AL": 10.93,
-          "AT": 5.58,
-          "BE": 5.91,
-          "BG": 3.54,
-          "BA": 11.04,
-          "BY": 3.38,
-          "CH": 4.87,
-          "CY": 4.92,
-          "CZ": 2.83,
-          "DE": 3.71,
-          "DK": 5.53,
-          "ES": 10.38,
-          "EE": 8.31,
-          "FI": 9.46,
-          "FR": 7.54,
-          "GB": 4.75,
-          "GR": 8.54,
-          "HR": 5,
-          "HU": 4.52,
-          "IE": 4.63,
-          "IS": 3.63,
-          "IT": 6.39,
-          "LT": 6.73,
-          "LU": 6.34,
-          "LV": 6.57,
-          "MD": 1.51,
-          "MK": 12.26,
-          "MT": 2.9,
-          "ME": 13.57,
-          "NL": 3.87,
-          "NO": 4.64,
-          "PL": 2.98,
-          "PT": 6.16,
-          "RO": 5.99,
-          "RS": 7.12,
-          "SK": 5.36,
-          "SI": 3.18,
-          "SE": 8.69,
-          "UA": 9.83
+          "BE": 6.2,
+          "BG": 3.5,
+          "CZ": 2.8,
+          "DK": 6.4,
+          "DE": 3.8,
+          "EE": 7.5,
+          "IE": 4.7,
+          "GR": 8.9,
+          "ES": 10.5,
+          "FR": 7.7,
+          "HR": 4.9,
+          "IT": 6.1,
+          "CY": 4.4,
+          "LV": 6.9,
+          "LT": 6.9,
+          "LU": 6.5,
+          "HU": 4.4,
+          "MT": 3.1,
+          "NL": 3.9,
+          "AT": 5.7,
+          "PL": 3.1,
+          "PT": 6,
+          "RO": 6.1,
+          "SI": 3.9,
+          "SK": 5.4,
+          "FI": 9.7,
+          "SE": 8.8,
+          "IS": 3.6,
+          "NO": 4.5,
+          "CH": 4.9,
+          "BA": 12.2,
+          "ME": 17.9,
+          "MK": 11.5,
+          "RS": 8.7
         },
-        "year": 2025,
-        "_countryCount": 39
+        "year": 2025
+      },
+      "imf": {
+        "label": "IMF",
+        "countries": {},
+        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -102,8 +96,7 @@
           "SE": 8.69,
           "UA": 9.83
         },
-        "year": 2025,
-        "_countryCount": 39
+        "year": 2025
       }
     }
   },
@@ -114,8 +107,7 @@
       "eurostat": {
         "label": "Eurostat",
         "countries": {},
-        "year": 0,
-        "_countryCount": 0
+        "year": 0
       },
       "youthstats": {
         "label": "YouthSTATS",
@@ -160,11 +152,10 @@
           "SE": 24.31,
           "UA": 19.15
         },
-        "year": 2025,
-        "_countryCount": 39
+        "year": 2025
       },
-      "oecd": {
-        "label": "OECD",
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
         "countries": {
           "AL": 25.57,
           "AT": 11,
@@ -206,8 +197,7 @@
           "SE": 24.31,
           "UA": 19.15
         },
-        "year": 2025,
-        "_countryCount": 39
+        "year": 2025
       }
     }
   },
@@ -218,11 +208,10 @@
       "eurostat": {
         "label": "Eurostat",
         "countries": {},
-        "year": 0,
-        "_countryCount": 0
+        "year": 0
       },
-      "oecd": {
-        "label": "OECD",
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
         "countries": {
           "AL": 26500,
           "AT": 74160,
@@ -264,8 +253,7 @@
           "SE": 75000,
           "UA": 18560
         },
-        "year": 2024,
-        "_countryCount": 39
+        "year": 2024
       }
     }
   },
@@ -311,11 +299,10 @@
           "AL": 1.23,
           "RS": 1.17
         },
-        "year": 2023,
-        "_countryCount": 34
+        "year": 2023
       },
-      "world_bank_gem": {
-        "label": "World Bank (GEM)",
+      "world_bank": {
+        "label": "World Bank",
         "countries": {
           "AL": 1.39,
           "AT": 0.88,
@@ -357,8 +344,7 @@
           "SE": 1.15,
           "UA": 3.78
         },
-        "year": 2023,
-        "_countryCount": 39
+        "year": 2023
       }
     }
   },
@@ -404,8 +390,7 @@
           "MD": 97517,
           "MK": 7458
         },
-        "year": 2024,
-        "_countryCount": 34
+        "year": 2024
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -450,8 +435,7 @@
           "SE": 47079,
           "UA": 1702358
         },
-        "year": 2025,
-        "_countryCount": 39
+        "year": 2025
       }
     }
   },
@@ -462,8 +446,12 @@
       "eurostat": {
         "label": "Eurostat",
         "countries": {},
-        "year": 0,
-        "_countryCount": 0
+        "year": 0
+      },
+      "imf": {
+        "label": "IMF",
+        "countries": {},
+        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -508,54 +496,7 @@
           "SE": 2.84,
           "UA": 6.5
         },
-        "year": 2024,
-        "_countryCount": 39
-      },
-      "world_bank_hnaps": {
-        "label": "World Bank (HNaPS)",
-        "countries": {
-          "AL": 2.22,
-          "AT": 2.94,
-          "BE": 3.14,
-          "BG": 2.45,
-          "BA": 1.69,
-          "BY": 5.79,
-          "CH": 1.06,
-          "CY": 1.8,
-          "CZ": 2.44,
-          "DE": 2.26,
-          "DK": 1.37,
-          "ES": 2.77,
-          "EE": 3.52,
-          "FI": 1.57,
-          "FR": 2,
-          "GB": 3.27,
-          "GR": 2.74,
-          "HR": 2.97,
-          "HU": 3.7,
-          "IE": 2.11,
-          "IS": 5.86,
-          "IT": 0.98,
-          "LT": 0.72,
-          "LU": 2.05,
-          "LV": 1.27,
-          "MD": 4.68,
-          "MK": 3.49,
-          "MT": 1.65,
-          "ME": 3.34,
-          "NL": 3.35,
-          "NO": 3.15,
-          "PL": 3.78,
-          "PT": 2.42,
-          "RO": 5.72,
-          "RS": 4.67,
-          "SK": 2.76,
-          "SI": 1.97,
-          "SE": 2.84,
-          "UA": 6.5
-        },
-        "year": 2024,
-        "_countryCount": 39
+        "year": 2024
       }
     }
   },
@@ -605,8 +546,7 @@
           "UA": 40997698,
           "BY": 9475174
         },
-        "year": 2025,
-        "_countryCount": 38
+        "year": 2025
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -651,8 +591,7 @@
           "SE": 10569709,
           "UA": 37860221
         },
-        "year": 2024,
-        "_countryCount": 39
+        "year": 2024
       }
     }
   },
@@ -702,8 +641,7 @@
           "UA": 73.4,
           "BY": 74.5
         },
-        "year": 2024,
-        "_countryCount": 38
+        "year": 2024
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -748,54 +686,7 @@
           "SE": 83.31,
           "UA": 73.42
         },
-        "year": 2023,
-        "_countryCount": 39
-      },
-      "world_bank_hnaps": {
-        "label": "World Bank (HNaPS)",
-        "countries": {
-          "AL": 79.6,
-          "AT": 81.54,
-          "BE": 82.4,
-          "BG": 75.71,
-          "BA": 77.85,
-          "BY": 74.18,
-          "CH": 84.06,
-          "CY": 81.65,
-          "CZ": 79.88,
-          "DE": 80.54,
-          "DK": 81.85,
-          "ES": 83.88,
-          "EE": 78.49,
-          "FI": 81.69,
-          "FR": 82.93,
-          "GB": 81.24,
-          "GR": 81.54,
-          "HR": 78.47,
-          "HU": 76.77,
-          "IE": 82.86,
-          "IS": 82.61,
-          "IT": 83.7,
-          "LT": 76.99,
-          "LU": 83.36,
-          "LV": 75.68,
-          "MD": 71.2,
-          "MK": 75.32,
-          "MT": 83.51,
-          "ME": 77.59,
-          "NL": 81.91,
-          "NO": 83.11,
-          "PL": 78.51,
-          "PT": 82.28,
-          "RO": 76.61,
-          "RS": 76.22,
-          "SK": 78.02,
-          "SI": 81.98,
-          "SE": 83.31,
-          "UA": 73.42
-        },
-        "year": 2023,
-        "_countryCount": 39
+        "year": 2023
       }
     }
   },
@@ -845,8 +736,7 @@
           "UA": 1.14,
           "BY": 1.45
         },
-        "year": 2024,
-        "_countryCount": 38
+        "year": 2024
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -891,8 +781,7 @@
           "SE": 1.45,
           "UA": 0.98
         },
-        "year": 2023,
-        "_countryCount": 39
+        "year": 2023
       }
     }
   },
@@ -931,11 +820,15 @@
           "FI": 82.5,
           "SE": 34
         },
-        "year": 2024,
-        "_countryCount": 27
+        "year": 2024
       },
-      "oecd": {
-        "label": "OECD",
+      "imf": {
+        "label": "IMF",
+        "countries": {},
+        "year": 0
+      },
+      "world_bank": {
+        "label": "World Bank",
         "countries": {
           "AL": 81.92,
           "BA": 39.91,
@@ -948,25 +841,792 @@
           "MD": 34.26,
           "UA": 58.72
         },
-        "year": 2024,
-        "_countryCount": 10
-      },
-      "world_bank_gem": {
-        "label": "World Bank (GEM)",
+        "year": 2024
+      }
+    }
+  },
+  "healthcare_spending": {
+    "label": "Healthcare spending",
+    "unit": "% of GDP",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
         "countries": {
-          "AL": 81.92,
-          "BA": 39.91,
-          "BY": 33.24,
-          "CH": 19.88,
-          "ES": 107.3,
-          "GB": 131.07,
-          "HU": 75.53,
-          "IS": 80.16,
-          "MD": 34.26,
-          "UA": 58.72
+          "BE": 10.69,
+          "BG": 7.93,
+          "CZ": 8.46,
+          "DK": 9.5,
+          "DE": 12.2,
+          "EE": 7.77,
+          "IE": 6.5,
+          "GR": 8.41,
+          "ES": 9.22,
+          "FR": 11.54,
+          "HR": 7.05,
+          "IT": 8.42,
+          "CY": 7.84,
+          "LV": 7.24,
+          "LT": 7.54,
+          "LU": 5.89,
+          "HU": 6.5,
+          "MT": 8.68,
+          "NL": 10.11,
+          "AT": 11.54,
+          "PL": 8.04,
+          "PT": 10.09,
+          "RO": 5.76,
+          "SI": 9.81,
+          "SK": 7.37,
+          "FI": 10.47,
+          "SE": 11.32,
+          "IS": 9.05,
+          "NO": 7.91,
+          "CH": 11.37,
+          "GB": 10.15,
+          "BA": 8.92,
+          "ME": 9.51,
+          "RS": 8.03
         },
-        "year": 2024,
-        "_countryCount": 10
+        "year": 2024
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 7.05,
+          "AT": 11.83,
+          "BE": 10.8,
+          "BG": 7.92,
+          "BA": 8.92,
+          "BY": 7.08,
+          "CH": 11.69,
+          "CY": 8.12,
+          "CZ": 8.51,
+          "DE": 12.27,
+          "DK": 9.39,
+          "ES": 9.22,
+          "EE": 7.84,
+          "FI": 10.47,
+          "FR": 11.54,
+          "GB": 11.13,
+          "GR": 8.39,
+          "HR": 7.15,
+          "HU": 6.37,
+          "IE": 6.85,
+          "IS": 8.98,
+          "IT": 8.44,
+          "LT": 7.6,
+          "LU": 5.89,
+          "LV": 7.28,
+          "MD": 6.74,
+          "MK": 7.43,
+          "MT": 8.84,
+          "ME": 9.65,
+          "NL": 10.01,
+          "NO": 9.43,
+          "PL": 8.06,
+          "PT": 10.24,
+          "RO": 5.71,
+          "RS": 8.03,
+          "SK": 7.35,
+          "SI": 9.88,
+          "SE": 11.22,
+          "UA": 8.2
+        },
+        "year": 2024
+      }
+    }
+  },
+  "education_spending": {
+    "label": "Education spending",
+    "unit": "% of GDP",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {},
+        "year": 0
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 3.09,
+          "AT": 5.28,
+          "BE": 6.28,
+          "BG": 4.5,
+          "BA": 3.25,
+          "BY": 4.95,
+          "CH": 4.92,
+          "CY": 4.74,
+          "CZ": 4.3,
+          "DE": 5.24,
+          "DK": 6.36,
+          "ES": 4.59,
+          "EE": 5.21,
+          "FI": 6.38,
+          "FR": 5.32,
+          "GB": 5.91,
+          "GR": 3.38,
+          "HR": 4.09,
+          "HU": 3.81,
+          "IE": 2.9,
+          "IS": 7.29,
+          "IT": 4.07,
+          "LT": 4.25,
+          "LU": 3.71,
+          "LV": 4.32,
+          "MD": 6.63,
+          "MT": 4.72,
+          "NL": 5.18,
+          "NO": 5.46,
+          "PL": 4.31,
+          "PT": 4.55,
+          "RO": 3.28,
+          "RS": 3.4,
+          "SK": 4.66,
+          "SI": 5.28,
+          "SE": 7.32,
+          "UA": 5.14
+        },
+        "year": 2023
+      }
+    }
+  },
+  "military_spending": {
+    "label": "Military spending",
+    "unit": "% of GDP",
+    "sources": {
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 2.04,
+          "AT": 1,
+          "BE": 1.28,
+          "BG": 2.15,
+          "BA": 0.75,
+          "BY": 2.07,
+          "CH": 0.72,
+          "CY": 1.65,
+          "CZ": 1.92,
+          "DE": 1.89,
+          "DK": 2.42,
+          "ES": 1.43,
+          "EE": 3.37,
+          "FI": 2.3,
+          "FR": 2.05,
+          "GB": 2.28,
+          "GR": 3.13,
+          "HR": 1.79,
+          "HU": 2.16,
+          "IE": 0.24,
+          "IT": 1.61,
+          "LT": 3.12,
+          "LU": 0.96,
+          "LV": 3.26,
+          "MD": 0.6,
+          "MK": 2.1,
+          "MT": 0.45,
+          "ME": 1.83,
+          "NL": 1.92,
+          "NO": 2.09,
+          "PL": 4.15,
+          "PT": 1.53,
+          "RO": 2.3,
+          "RS": 2.6,
+          "SK": 2.01,
+          "SI": 1.31,
+          "SE": 2,
+          "UA": 34.48
+        },
+        "year": 2024
+      }
+    }
+  },
+  "rd_spending": {
+    "label": "R&D spending",
+    "unit": "% of GDP",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {
+          "BE": 3.36,
+          "BG": 0.77,
+          "CZ": 1.82,
+          "DK": 3.01,
+          "DE": 3.13,
+          "EE": 1.99,
+          "IE": 1.38,
+          "GR": 1.54,
+          "ES": 1.5,
+          "FR": 2.18,
+          "HR": 1.35,
+          "IT": 1.38,
+          "CY": 0.65,
+          "LV": 0.92,
+          "LT": 1.04,
+          "LU": 0.99,
+          "HU": 1.31,
+          "MT": 0.54,
+          "NL": 2.29,
+          "AT": 3.26,
+          "PL": 1.41,
+          "PT": 1.73,
+          "RO": 0.46,
+          "SI": 2.16,
+          "SK": 0.98,
+          "FI": 3.22,
+          "SE": 3.56,
+          "IS": 2.47,
+          "NO": 1.74,
+          "CH": 3.1,
+          "GB": 1.76,
+          "BA": 0.19,
+          "ME": 0.29,
+          "MK": 0.37,
+          "AL": 0.2,
+          "RS": 0.93
+        },
+        "year": 2024
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AT": 3.2,
+          "BE": 3.41,
+          "BG": 0.75,
+          "BA": 0.19,
+          "BY": 0.58,
+          "CH": 3.31,
+          "CY": 0.75,
+          "CZ": 1.96,
+          "DE": 3.13,
+          "DK": 2.89,
+          "ES": 1.44,
+          "EE": 1.78,
+          "FI": 2.96,
+          "FR": 2.23,
+          "GB": 2.9,
+          "GR": 1.49,
+          "HR": 1.4,
+          "HU": 1.39,
+          "IE": 0.96,
+          "IS": 2.6,
+          "IT": 1.39,
+          "LT": 1.05,
+          "LU": 0.98,
+          "LV": 0.76,
+          "MD": 0.22,
+          "MK": 0.4,
+          "MT": 0.6,
+          "ME": 0.36,
+          "NL": 2.26,
+          "NO": 1.56,
+          "PL": 1.45,
+          "PT": 1.7,
+          "RO": 0.46,
+          "RS": 0.95,
+          "SK": 0.98,
+          "SI": 2.1,
+          "SE": 3.41,
+          "UA": 0.33
+        },
+        "year": 2023
+      }
+    }
+  },
+  "poverty_rate": {
+    "label": "Poverty rate",
+    "unit": "%",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {},
+        "year": 0
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 19.7,
+          "AT": 14.8,
+          "BE": 12.3,
+          "BG": 21.7,
+          "BA": 16.9,
+          "BY": 3.9,
+          "CH": 15.8,
+          "CY": 13.9,
+          "CZ": 10.2,
+          "DE": 14.8,
+          "DK": 12.4,
+          "ES": 20.2,
+          "EE": 22.5,
+          "FI": 12.2,
+          "FR": 15.6,
+          "GB": 18.6,
+          "GR": 18.8,
+          "HR": 20.3,
+          "HU": 12.1,
+          "IE": 14,
+          "IS": 8.8,
+          "IT": 20.1,
+          "LT": 20.9,
+          "LU": 17.3,
+          "LV": 22.5,
+          "MD": 31.6,
+          "MK": 22.2,
+          "MT": 16.7,
+          "ME": 20,
+          "NL": 14.5,
+          "NO": 12.2,
+          "PL": 13.3,
+          "PT": 16.4,
+          "RO": 19,
+          "RS": 19.7,
+          "SK": 13.7,
+          "SI": 12.7,
+          "SE": 16.1,
+          "UA": 23.2
+        },
+        "year": 2024
+      }
+    }
+  },
+  "infant_mortality": {
+    "label": "Infant mortality",
+    "unit": "per 1,000 births",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {
+          "BE": 3.5,
+          "BG": 4.5,
+          "CZ": 2.3,
+          "DK": 4.3,
+          "DE": 3.3,
+          "EE": 1.4,
+          "IE": 3.3,
+          "GR": 3.7,
+          "ES": 3,
+          "FR": 4.1,
+          "HR": 3.2,
+          "IT": 2.5,
+          "CY": 3,
+          "LV": 1.5,
+          "LT": 2.9,
+          "LU": 5.3,
+          "HU": 3.8,
+          "MT": 5,
+          "NL": 3.3,
+          "AT": 3.1,
+          "PL": 3.6,
+          "PT": 3,
+          "RO": 6.6,
+          "SI": 1.7,
+          "SK": 5.9,
+          "FI": 2.1,
+          "SE": 2,
+          "IS": 1.4,
+          "NO": 2.1,
+          "CH": 3.3,
+          "GB": 3.9,
+          "ME": 1.6,
+          "MD": 10,
+          "MK": 1.9,
+          "AL": 6.1,
+          "RS": 4.6,
+          "UA": 7.2,
+          "BY": 2.5
+        },
+        "year": 2024
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 8.3,
+          "AT": 2.6,
+          "BE": 3,
+          "BG": 5,
+          "BA": 5.3,
+          "BY": 1.9,
+          "CH": 3.5,
+          "CY": 2.9,
+          "CZ": 2.1,
+          "DE": 3.1,
+          "DK": 3,
+          "ES": 2.6,
+          "EE": 1.6,
+          "FI": 1.8,
+          "FR": 3.4,
+          "GB": 4,
+          "GR": 3.2,
+          "HR": 3.9,
+          "HU": 3.2,
+          "IE": 3.4,
+          "IS": 1.9,
+          "IT": 2.3,
+          "LT": 2.8,
+          "LU": 2,
+          "LV": 2.5,
+          "MD": 13.5,
+          "MK": 2.8,
+          "MT": 4.8,
+          "ME": 2.1,
+          "NL": 3.5,
+          "NO": 1.9,
+          "PL": 3.7,
+          "PT": 2.6,
+          "RO": 5.4,
+          "RS": 4.5,
+          "SK": 5.1,
+          "SI": 1.8,
+          "SE": 2,
+          "UA": 7.8
+        },
+        "year": 2023
+      }
+    }
+  },
+  "tertiary_education": {
+    "label": "Tertiary education",
+    "unit": "% gross enrollment",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {
+          "BE": 550999,
+          "BG": 195697,
+          "CZ": 338556,
+          "DK": 290902,
+          "DE": 3272087,
+          "EE": 44377,
+          "IE": 242740,
+          "GR": 872882,
+          "ES": 2444285,
+          "FR": 2879212,
+          "HR": 155387,
+          "IT": 2311826,
+          "CY": 57889,
+          "LV": 74017,
+          "LT": 100744,
+          "LU": 8364,
+          "HU": 310414,
+          "MT": 22276,
+          "NL": 969491,
+          "AT": 442235,
+          "PL": 1397522,
+          "PT": 430226,
+          "RO": 544623,
+          "SI": 80648,
+          "SK": 141119,
+          "FI": 338808,
+          "SE": 494296,
+          "IS": 20287,
+          "NO": 315674,
+          "CH": 337303,
+          "GB": 2618287,
+          "BA": 75016,
+          "ME": 21177,
+          "MK": 56761,
+          "AL": 121352,
+          "RS": 248508
+        },
+        "year": 2024
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 82,
+          "AT": 91.68,
+          "BE": 82.15,
+          "BG": 79.85,
+          "BA": 45.5,
+          "BY": 70.11,
+          "CH": 74.01,
+          "CY": 99.02,
+          "CZ": 66.73,
+          "DE": 78.59,
+          "DK": 81.23,
+          "ES": 93.73,
+          "EE": 67.62,
+          "FI": 108.13,
+          "FR": 70.45,
+          "GB": 80.5,
+          "GR": 165.11,
+          "HR": 81.18,
+          "HU": 56.59,
+          "IE": 76.6,
+          "IS": 76.52,
+          "IT": 75.95,
+          "LT": 77.01,
+          "LU": 21.54,
+          "LV": 85.74,
+          "MD": 74.71,
+          "MK": 55.01,
+          "MT": 80.53,
+          "ME": 55.17,
+          "NL": 86.59,
+          "NO": 95.06,
+          "PL": 76.88,
+          "PT": 77.68,
+          "RO": 55.17,
+          "RS": 73.21,
+          "SK": 53.42,
+          "SI": 80.08,
+          "SE": 81.4,
+          "UA": 85.27
+        },
+        "year": 2024
+      }
+    }
+  },
+  "fdi": {
+    "label": "Foreign Direct Investment",
+    "unit": "% of GDP",
+    "sources": {
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 6.32,
+          "AT": 2.55,
+          "BE": -6.16,
+          "BG": 3.13,
+          "BA": 3.39,
+          "BY": 2.29,
+          "CH": -11.57,
+          "CY": -133.82,
+          "CZ": 3.76,
+          "DE": 1.02,
+          "DK": 4.37,
+          "ES": 2.48,
+          "EE": -7.97,
+          "FI": 2.93,
+          "FR": 1.65,
+          "GB": -0.35,
+          "GR": 2.63,
+          "HR": 4.88,
+          "HU": -27.92,
+          "IE": 0.79,
+          "IS": 8.12,
+          "IT": 1.13,
+          "LT": 5.54,
+          "LU": 113.62,
+          "LV": 3.47,
+          "MD": 2.52,
+          "MK": 6.23,
+          "MT": 170.54,
+          "ME": 7.25,
+          "NL": -1.4,
+          "NO": 2.49,
+          "PL": 2.25,
+          "PT": 4.31,
+          "RO": 1.87,
+          "RS": 6.2,
+          "SK": 3.56,
+          "SI": 2.56,
+          "SE": 4.48,
+          "UA": 2.11
+        },
+        "year": 2024
+      }
+    }
+  },
+  "gdp_growth": {
+    "label": "GDP growth",
+    "unit": "%",
+    "sources": {
+      "imf": {
+        "label": "IMF",
+        "countries": {},
+        "year": 0
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 4.05,
+          "AT": -0.66,
+          "BE": 1.07,
+          "BG": 3.39,
+          "BA": 2.97,
+          "BY": 4.01,
+          "CH": 1.3,
+          "CY": 3.94,
+          "CZ": 1.23,
+          "DE": -0.5,
+          "DK": 3.48,
+          "ES": 3.46,
+          "EE": -0.09,
+          "FI": 0.42,
+          "FR": 1.19,
+          "GB": 1.13,
+          "GR": 2.09,
+          "HR": 3.83,
+          "HU": 0.56,
+          "IE": 2.6,
+          "IS": -0.97,
+          "IT": 0.69,
+          "LT": 2.77,
+          "LU": 0.36,
+          "LV": -0.05,
+          "MD": 0.1,
+          "MK": 2.99,
+          "MT": 6.8,
+          "ME": 3.16,
+          "NL": 1.08,
+          "NO": 2.1,
+          "PL": 3.03,
+          "PT": 2.14,
+          "RO": 0.92,
+          "RS": 3.95,
+          "SK": 1.94,
+          "SI": 1.73,
+          "SE": 0.82,
+          "UA": 2.91
+        },
+        "year": 2024
+      }
+    }
+  },
+  "gdp_per_capita": {
+    "label": "GDP per capita (PPP)",
+    "unit": "int. $",
+    "sources": {
+      "imf": {
+        "label": "IMF",
+        "countries": {},
+        "year": 0
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 26701.67,
+          "AT": 73911.44,
+          "BE": 73514.48,
+          "BG": 41969.45,
+          "BA": 25043.09,
+          "BY": 33010.33,
+          "CH": 96497.69,
+          "CY": 63006.61,
+          "CZ": 57285.42,
+          "DE": 73551.93,
+          "DK": 81878.23,
+          "ES": 57965.29,
+          "EE": 49968.71,
+          "FI": 65378.38,
+          "FR": 62556.92,
+          "GB": 62009.49,
+          "GR": 44327.21,
+          "HR": 49550.79,
+          "HU": 48552.47,
+          "IE": 133437.47,
+          "IS": 84256.85,
+          "IT": 62014.27,
+          "LT": 55285.9,
+          "LU": 155941.29,
+          "LV": 43394.27,
+          "MD": 18614.99,
+          "MK": 26995.43,
+          "MT": 69863.75,
+          "ME": 34062.76,
+          "NL": 86173.63,
+          "NO": 102037.53,
+          "PL": 51262.51,
+          "PT": 51679.89,
+          "RO": 49076.54,
+          "RS": 32832.18,
+          "SK": 48132.36,
+          "SI": 57186.37,
+          "SE": 71844.91,
+          "UA": 18550.46
+        },
+        "year": 2024
+      }
+    }
+  },
+  "gini_coefficient": {
+    "label": "Gini coefficient",
+    "unit": "index (0-100)",
+    "sources": {
+      "eurostat": {
+        "label": "Eurostat",
+        "countries": {
+          "BE": 23.4,
+          "BG": 37.7,
+          "CZ": 24,
+          "DK": 28.6,
+          "DE": 30.1,
+          "EE": 30.9,
+          "IE": 26.4,
+          "GR": 31.8,
+          "ES": 30.8,
+          "FR": 30,
+          "HR": 29.8,
+          "IT": 31,
+          "CY": 30.1,
+          "LV": 35.6,
+          "LT": 35.3,
+          "LU": 30.1,
+          "HU": 28,
+          "MT": 30.8,
+          "NL": 25.9,
+          "AT": 28.4,
+          "PL": 26,
+          "PT": 30.9,
+          "RO": 27.3,
+          "SI": 24.6,
+          "SK": 21.7,
+          "FI": 27.1,
+          "SE": 28.6,
+          "IS": 24,
+          "NO": 24.4,
+          "CH": 31,
+          "GB": 33.5,
+          "ME": 31.5,
+          "MK": 30.3,
+          "AL": 30.2,
+          "RS": 31.9
+        },
+        "year": 2025
+      },
+      "world_bank_wdi": {
+        "label": "World Bank (WDI)",
+        "countries": {
+          "AL": 29.4,
+          "AT": 31.2,
+          "BE": 26.8,
+          "BG": 39.5,
+          "BY": 24.4,
+          "CH": 33.8,
+          "CY": 31.8,
+          "CZ": 25.7,
+          "DE": 32.4,
+          "DK": 29.9,
+          "ES": 33.4,
+          "EE": 30.7,
+          "FI": 27.4,
+          "FR": 31.8,
+          "GB": 32.4,
+          "GR": 33.4,
+          "HR": 30.1,
+          "HU": 30.6,
+          "IE": 29,
+          "IS": 26.8,
+          "IT": 34.3,
+          "LT": 36,
+          "LU": 33.6,
+          "LV": 34,
+          "MD": 26.8,
+          "MK": 33.5,
+          "MT": 34.6,
+          "ME": 34.3,
+          "NL": 25.7,
+          "NO": 26.5,
+          "PL": 28.5,
+          "PT": 33.9,
+          "RO": 29.8,
+          "RS": 32.8,
+          "SK": 23.8,
+          "SI": 24.7,
+          "SE": 29.3,
+          "UA": 25.6
+        },
+        "year": 2023
       }
     }
   }
