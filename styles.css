@@ -84,7 +84,7 @@
   position: relative;
   border-radius: 24px;
   isolation: isolate;
-  background-color: rgb(255 255 255 / 32%);
+  background-color: rgb(255 255 255 / 60%);
   box-shadow:
     0 8px 32px rgb(0 0 0 / 8%),
     0 0 24px rgb(0 0 0 / 4%);
