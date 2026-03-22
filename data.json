@@ -1,12 +1,19 @@
 {
   "_meta": {
-    "lastUpdated": "2026-03-22T22:20:07.145Z",
+    "lastUpdated": "2026-03-22T22:32:25.422Z",
     "generatedBy": "fetch-data.js via GitHub Actions",
-    "indicatorCount": 21
+    "indicatorCount": 21,
+    "categories": {
+      "economy": "💰 Economy",
+      "demographics": "👥 Demographics",
+      "society": "🏛️ Society",
+      "public_services": "📋 Public Services"
+    }
   },
   "unemployment_total": {
     "label": "Unemployment rate - Total",
     "unit": "%",
+    "category": "economy",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -47,11 +54,6 @@
           "RS": 8.7
         },
         "year": 2025
-      },
-      "imf": {
-        "label": "IMF",
-        "countries": {},
-        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -103,54 +105,45 @@
   "unemployment_youth": {
     "label": "Unemployment rate - Youth",
     "unit": "%",
+    "category": "economy",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
-        "countries": {},
-        "year": 0
-      },
-      "youthstats": {
-        "label": "YouthSTATS",
         "countries": {
-          "AL": 25.57,
-          "AT": 11,
-          "BE": 17.78,
-          "BG": 10.15,
-          "BA": 28.2,
-          "BY": 9.18,
-          "CH": 9.04,
-          "CY": 12.71,
-          "CZ": 9.22,
-          "DE": 6.86,
-          "DK": 11.74,
-          "ES": 24.75,
-          "EE": 19.7,
-          "FI": 21.48,
-          "FR": 18.89,
-          "GB": 14.65,
-          "GR": 21.39,
-          "HR": 16.47,
-          "HU": 14.21,
-          "IE": 10.49,
-          "IS": 8.67,
-          "IT": 20.55,
-          "LT": 13.76,
-          "LU": 21.47,
-          "LV": 12.95,
-          "MD": 4.2,
-          "MK": 28.75,
-          "MT": 8.43,
-          "ME": 24.44,
-          "NL": 8.83,
-          "NO": 13.42,
-          "PL": 10.7,
-          "PT": 20.22,
-          "RO": 24.54,
-          "RS": 20.93,
-          "SK": 18.43,
-          "SI": 9.54,
-          "SE": 24.31,
-          "UA": 19.15
+          "BE": 17.4,
+          "BG": 13.1,
+          "CZ": 10.4,
+          "DK": 13.8,
+          "DE": 7,
+          "EE": 20.7,
+          "IE": 11.8,
+          "GR": 19.1,
+          "ES": 24.9,
+          "FR": 19.7,
+          "HR": 18.3,
+          "IT": 20.6,
+          "CY": 13.5,
+          "LV": 14.8,
+          "LT": 14.1,
+          "LU": 18.6,
+          "HU": 13.9,
+          "MT": 9.6,
+          "NL": 8.8,
+          "AT": 11.5,
+          "PL": 12.2,
+          "PT": 19.5,
+          "RO": 26.1,
+          "SI": 12.1,
+          "SK": 15.3,
+          "FI": 21.8,
+          "SE": 24.3,
+          "IS": 9.1,
+          "NO": 14,
+          "CH": 8.8,
+          "BA": 32.5,
+          "ME": 36,
+          "MK": 29.4,
+          "RS": 23.4
         },
         "year": 2025
       },
@@ -204,6 +197,7 @@
   "earnings": {
     "label": "Earnings",
     "unit": "USD/capita",
+    "category": "economy",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -260,6 +254,7 @@
   "intentional_homicide": {
     "label": "Intentional homicide",
     "unit": "per 100k inh.",
+    "category": "society",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -351,6 +346,7 @@
   "migration": {
     "label": "Migration",
     "unit": "net persons",
+    "category": "society",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -442,16 +438,48 @@
   "inflation": {
     "label": "Inflation",
     "unit": "%",
+    "category": "economy",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
-        "countries": {},
-        "year": 0
-      },
-      "imf": {
-        "label": "IMF",
-        "countries": {},
-        "year": 0
+        "countries": {
+          "BE": 3,
+          "BG": 3.5,
+          "CZ": 2.3,
+          "DK": 1.8,
+          "DE": 2.3,
+          "EE": 4.8,
+          "IE": 2.1,
+          "GR": 2.9,
+          "ES": 2.7,
+          "FR": 0.9,
+          "HR": 4.4,
+          "IT": 1.7,
+          "CY": 0.8,
+          "LV": 3.8,
+          "LT": 3.4,
+          "LU": 2.5,
+          "HU": 4.4,
+          "MT": 2.4,
+          "NL": 3,
+          "AT": 3.6,
+          "PL": 3.3,
+          "PT": 2.2,
+          "RO": 6.8,
+          "SI": 2.5,
+          "SK": 4.2,
+          "FI": 1.8,
+          "SE": 2.6,
+          "IS": 3.7,
+          "NO": 2.8,
+          "CH": 0.1,
+          "GB": 1.8,
+          "ME": 4.1,
+          "MK": 4.3,
+          "AL": 2.3,
+          "RS": 4.1
+        },
+        "year": 2025
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -503,6 +531,7 @@
   "population": {
     "label": "Population",
     "unit": "persons",
+    "category": "demographics",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -598,6 +627,7 @@
   "life_expectancy": {
     "label": "Life expectancy",
     "unit": "years",
+    "category": "demographics",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -693,6 +723,7 @@
   "fertility": {
     "label": "Fertility",
     "unit": "births/woman",
+    "category": "demographics",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -788,6 +819,7 @@
   "government_debt": {
     "label": "Government Debt",
     "unit": "% of GDP",
+    "category": "economy",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -822,11 +854,6 @@
         },
         "year": 2024
       },
-      "imf": {
-        "label": "IMF",
-        "countries": {},
-        "year": 0
-      },
       "world_bank": {
         "label": "World Bank",
         "countries": {
@@ -848,6 +875,7 @@
   "healthcare_spending": {
     "label": "Healthcare spending",
     "unit": "% of GDP",
+    "category": "public_services",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -939,6 +967,7 @@
   "education_spending": {
     "label": "Education spending",
     "unit": "% of GDP",
+    "category": "public_services",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -993,6 +1022,7 @@
   "military_spending": {
     "label": "Military spending",
     "unit": "% of GDP",
+    "category": "public_services",
     "sources": {
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -1043,6 +1073,7 @@
   "rd_spending": {
     "label": "R&D spending",
     "unit": "% of GDP",
+    "category": "public_services",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -1135,11 +1166,48 @@
   "poverty_rate": {
     "label": "Poverty rate",
     "unit": "%",
+    "category": "society",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
-        "countries": {},
-        "year": 0
+        "countries": {
+          "BE": 10.9,
+          "BG": 21.2,
+          "CZ": 9.6,
+          "DK": 11.6,
+          "DE": 16.1,
+          "EE": 19.5,
+          "IE": 12.7,
+          "GR": 19.6,
+          "ES": 19.5,
+          "FR": 15.9,
+          "HR": 20.3,
+          "IT": 18.6,
+          "CY": 14.6,
+          "LV": 22,
+          "LT": 21.5,
+          "LU": 18.1,
+          "HU": 14.3,
+          "MT": 16.8,
+          "NL": 13.4,
+          "AT": 14.3,
+          "PL": 13.8,
+          "PT": 15.4,
+          "RO": 18.4,
+          "SI": 14.3,
+          "SK": 14.5,
+          "FI": 13.4,
+          "SE": 15.6,
+          "IS": 8.8,
+          "NO": 11.6,
+          "CH": 16.2,
+          "GB": 18.6,
+          "ME": 20.3,
+          "MK": 22.2,
+          "AL": 19.7,
+          "RS": 19.7
+        },
+        "year": 2025
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -1191,6 +1259,7 @@
   "infant_mortality": {
     "label": "Infant mortality",
     "unit": "per 1,000 births",
+    "category": "demographics",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
@@ -1286,49 +1355,8 @@
   "tertiary_education": {
     "label": "Tertiary education",
     "unit": "% gross enrollment",
+    "category": "public_services",
     "sources": {
-      "eurostat": {
-        "label": "Eurostat",
-        "countries": {
-          "BE": 550999,
-          "BG": 195697,
-          "CZ": 338556,
-          "DK": 290902,
-          "DE": 3272087,
-          "EE": 44377,
-          "IE": 242740,
-          "GR": 872882,
-          "ES": 2444285,
-          "FR": 2879212,
-          "HR": 155387,
-          "IT": 2311826,
-          "CY": 57889,
-          "LV": 74017,
-          "LT": 100744,
-          "LU": 8364,
-          "HU": 310414,
-          "MT": 22276,
-          "NL": 969491,
-          "AT": 442235,
-          "PL": 1397522,
-          "PT": 430226,
-          "RO": 544623,
-          "SI": 80648,
-          "SK": 141119,
-          "FI": 338808,
-          "SE": 494296,
-          "IS": 20287,
-          "NO": 315674,
-          "CH": 337303,
-          "GB": 2618287,
-          "BA": 75016,
-          "ME": 21177,
-          "MK": 56761,
-          "AL": 121352,
-          "RS": 248508
-        },
-        "year": 2024
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -1379,6 +1407,7 @@
   "fdi": {
     "label": "Foreign Direct Investment",
     "unit": "% of GDP",
+    "category": "economy",
     "sources": {
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -1430,12 +1459,8 @@
   "gdp_growth": {
     "label": "GDP growth",
     "unit": "%",
+    "category": "economy",
     "sources": {
-      "imf": {
-        "label": "IMF",
-        "countries": {},
-        "year": 0
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -1486,12 +1511,8 @@
   "gdp_per_capita": {
     "label": "GDP per capita (PPP)",
     "unit": "int. $",
+    "category": "economy",
     "sources": {
-      "imf": {
-        "label": "IMF",
-        "countries": {},
-        "year": 0
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -1542,6 +1563,7 @@
   "gini_coefficient": {
     "label": "Gini coefficient",
     "unit": "index (0-100)",
+    "category": "society",
     "sources": {
       "eurostat": {
         "label": "Eurostat",
