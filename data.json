@@ -1,13 +1,19 @@
 {
   "_meta": {
-    "lastUpdated": "2026-03-24T05:39:30.051Z",
+    "lastUpdated": "2026-03-24T07:15:21.884Z",
     "generatedBy": "fetch-data.js via GitHub Actions",
     "indicatorCount": 22,
+    "sources": [
+      "Eurostat",
+      "World Bank",
+      "OECD",
+      "ILO/YouthSTATS"
+    ],
     "categories": {
-      "economy": "💰 Economy",
-      "demographics": "👥 Demographics",
-      "society": "🏛️ Society",
-      "public_services": "📋 Public Services"
+      "economy": "Economy",
+      "demographics": "Demographics",
+      "society": "Society",
+      "public_services": "Public Services"
     }
   },
   "unemployment_total": {
@@ -54,6 +60,11 @@
           "RS": 8.7
         },
         "year": 2025
+      },
+      "oecd": {
+        "label": "OECD",
+        "countries": {},
+        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -147,6 +158,16 @@
         },
         "year": 2025
       },
+      "oecd": {
+        "label": "OECD",
+        "countries": {},
+        "year": 0
+      },
+      "youthstats": {
+        "label": "YouthSTATS (ILO)",
+        "countries": {},
+        "year": 0
+      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -201,6 +222,11 @@
     "sources": {
       "eurostat": {
         "label": "Eurostat",
+        "countries": {},
+        "year": 0
+      },
+      "oecd": {
+        "label": "OECD",
         "countries": {},
         "year": 0
       },
@@ -487,6 +513,11 @@
           "RS": 4.1
         },
         "year": 2025
+      },
+      "oecd": {
+        "label": "OECD",
+        "countries": {},
+        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -860,6 +891,11 @@
           "SE": 34
         },
         "year": 2024
+      },
+      "oecd": {
+        "label": "OECD",
+        "countries": {},
+        "year": 0
       },
       "world_bank": {
         "label": "World Bank",
