@@ -487,11 +487,10 @@ class DataComparisonMap extends HTMLElement {
 
 
   html() {
-    // Detect desktop: pointer:fine means a mouse, not a finger
     const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    const svgFilter = isDesktop ? `
-<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
+    return `
+${isDesktop ? `<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
   <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
     <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
     <feComponentTransfer in="turbulence" result="mapped">
@@ -506,10 +505,7 @@ class DataComparisonMap extends HTMLElement {
     <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
     <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
   </filter>
-</svg>` : '<!-- SVG glass filter disabled on touch devices -->';
-
-    return `
-${svgFilter}
+</svg>` : ''}
 
 <div class="app">
   <nav class="top-nav">
@@ -530,7 +526,7 @@ ${svgFilter}
   </div>
 
   <div class="main" id="mainContent" style="opacity:0">
-    <div class="map-panel glass">
+    <div class="map-panel">
       <div class="title-row">
         <div>
           <div class="map-title" id="mapTitle">—</div>
@@ -573,6 +569,5 @@ ${svgFilter}
   <div class="tt-disc" id="ttDisc"></div>
 </div>`;
   }
-}
 
 customElements.define('data-comparison-map', DataComparisonMap);
