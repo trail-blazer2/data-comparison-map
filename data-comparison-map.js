@@ -182,7 +182,7 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  drawMap() {
+    drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const lonToX = lon => (lon + 25) * (540 / 75);
@@ -194,6 +194,7 @@ class DataComparisonMap extends HTMLElement {
       return 470 - ((y - mn) / (mx - mn)) * 470;
     };
     const proj = ([lon, lat]) => [lonToX(lon), latToY(lat)];
+    const self = this;
 
     this.geoFeatures.forEach(f => {
       const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
@@ -204,11 +205,35 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.code = a2;
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
-        p.addEventListener('mouseenter', e => this.ttShow(e));
-        p.addEventListener('mousemove', e => this.ttMove(e));
-        p.addEventListener('mouseleave', () => this.ttHide());
+
+        // Desktop: mouse events
+        p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
+        p.addEventListener('mousemove', function(e) { self.ttMove(e); });
+        p.addEventListener('mouseleave', function() { self.ttHide(); });
+
+        // Mobile: touch events
+        p.addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          // Clear previous touched state
+          self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+          p.classList.add('touched');
+          // Position tooltip at touch point
+          var touch = e.touches[0];
+          var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
+          self.ttShow(fakeEvent);
+          self.ttMove(fakeEvent);
+        }, { passive: false });
+
         svg.appendChild(p);
       });
+    });
+
+    // Tap anywhere else on mobile to dismiss tooltip
+    svg.addEventListener('touchstart', function(e) {
+      if (!e.target.classList.contains('cp')) {
+        self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+        self.ttHide();
+      }
     });
   }
 
