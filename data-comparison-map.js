@@ -432,6 +432,17 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
+    // Position legend marker
+    const marker = this.$('#legMarker');
+    if (newVal != null && src) {
+      const vals = Object.values(src.countries).filter(v => v != null);
+      const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+      const pct = max !== min ? ((newVal - min) / (max - min)) * 100 : 50;
+      marker.style.left = pct + '%';
+      marker.classList.add('visible');
+    } else {
+      marker.classList.remove('visible');
+    }
     this.$('#tt').classList.add('visible');
   }
 
@@ -443,6 +454,7 @@ class DataComparisonMap extends HTMLElement {
 
   ttHide() {
     this.$('#tt').classList.remove('visible');
+    this.$('#legMarker').classList.remove('visible');
   }
 
   checkDiscrepancy(code) {
@@ -500,7 +512,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
       <div class="legend">
         <span id="legMin">\u2014</span>
-        <div class="legend-bar"></div>
+        <div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div>
         <span id="legMax">\u2014</span>
       </div>
       <div class="map-wrap">
