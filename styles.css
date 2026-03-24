@@ -198,6 +198,24 @@
   border-radius: 5px;
   background: linear-gradient(90deg, #c8d6e5, #8395a7, #576574, #222f3e, #0a1628);
   border: 1px solid rgba(0,0,0,0.06);
+   position: relative;
+}
+.legend-marker {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 16px;
+  background: #fff;
+  border-radius: 3px;
+  border: 1.5px solid #1e3a5f;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  pointer-events: none;
+}
+.legend-marker.visible {
+  opacity: 1;
 }
 
 .map-wrap { width: 100%; display: flex; justify-content: center; }
