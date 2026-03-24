@@ -492,7 +492,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link">About us</button>
+      <button class="nav-link">About</button>
       <button class="nav-link primary">Support us</button>
     </div>
   </nav>
