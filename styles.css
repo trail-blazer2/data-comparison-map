@@ -79,6 +79,14 @@
   max-width: 340px;
   object-fit: contain;
 }
+
+.logo-mobile { display: none; }
+
+@media (max-width: 960px) {
+  .logo-desktop { display: none; }
+  .logo-mobile { display: block; }
+}
+
 .nav-links {
   display: flex;
   align-items: center;
