@@ -345,9 +345,9 @@
   background: rgba(30, 58, 95, 0.08);
   border: 1.5px solid rgba(30, 58, 95, 0.18);
   border-radius: 12px;
-  transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s ease;
+  transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.1s ease;
   pointer-events: none;
   z-index: 0;
   opacity: 0;
