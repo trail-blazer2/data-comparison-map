@@ -446,24 +446,27 @@ class DataComparisonMap extends HTMLElement {
   }
 
   checkDiscrepancy(code) {
-    const dt = this.DATA[this.currentDataType];
-    if (!dt) return;
-    const vals = [];
-    Object.values(dt.sources).forEach(s => {
-      if (s.countries[code] != null) vals.push(s.countries[code]);
-    });
+    // Data variance feature — hidden for now (paid addon)
     const el = this.$('#ttDisc');
-    if (vals.length >= 2) {
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-      if (diff > 10) {
-        el.style.display = 'block';
-        el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
-        return;
-      }
-    }
     el.style.display = 'none';
+    return;
+    // const dt = this.DATA[this.currentDataType];
+    // if (!dt) return;
+    // const vals = [];
+    // Object.values(dt.sources).forEach(s => {
+    //   if (s.countries[code] != null) vals.push(s.countries[code]);
+    // });
+    // if (vals.length >= 2) {
+    //   const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    //   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    //   const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
+    //   if (diff > 10) {
+    //     el.style.display = 'block';
+    //     el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
+    //     return;
+    //   }
+    // }
+    // el.style.display = 'none';
   }
 
   // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
