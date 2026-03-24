@@ -487,87 +487,86 @@ class DataComparisonMap extends HTMLElement {
 
 
   html() {
-    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    return `
-${isDesktop ? `<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
-  <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
-    <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
-    <feComponentTransfer in="turbulence" result="mapped">
-      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
-      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
-      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
-    </feComponentTransfer>
-    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
-    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
-      <fePointLight x="-200" y="-200" z="300"/>
-    </feSpecularLighting>
-    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
-    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>` : ''}
+    var svgFilter = '';
+    if (isDesktop) {
+      svgFilter = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">'
+        + '<filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">'
+        + '<feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>'
+        + '<feComponentTransfer in="turbulence" result="mapped">'
+        + '<feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>'
+        + '<feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>'
+        + '<feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>'
+        + '</feComponentTransfer>'
+        + '<feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>'
+        + '<feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">'
+        + '<fePointLight x="-200" y="-200" z="300"/>'
+        + '</feSpecularLighting>'
+        + '<feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>'
+        + '<feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>'
+        + '</filter></svg>';
+    }
 
-<div class="app">
-  <nav class="top-nav">
-    <div class="nav-logo">
-      <div class="nav-logo-icon">
-        <img id="navLogo" src="" alt="Logo" />
-      </div>
-    </div>
-    <div class="nav-links">
-      <button class="nav-link">About us</button>
-      <button class="nav-link primary">Support us</button>
-    </div>
-  </nav>
+    return svgFilter + '<div class="app">'
+      + '<nav class="top-nav">'
+      + '<div class="nav-logo">'
+      + '<div class="nav-logo-icon">'
+      + '<img id="navLogo" src="" alt="Logo" />'
+      + '</div>'
+      + '</div>'
+      + '<div class="nav-links">'
+      + '<button class="nav-link">About us</button>'
+      + '<button class="nav-link primary">Support us</button>'
+      + '</div>'
+      + '</nav>'
 
-  <div id="initLoader" class="init-loader">
-    <div class="orbit"></div>
-    <span>Loading map & data…</span>
-  </div>
+      + '<div id="initLoader" class="init-loader">'
+      + '<div class="orbit"></div>'
+      + '<span>Loading map & data…</span>'
+      + '</div>'
 
-  <div class="main" id="mainContent" style="opacity:0">
-    <div class="map-panel">
-      <div class="title-row">
-        <div>
-          <div class="map-title" id="mapTitle">—</div>
-          <div class="map-sub" id="mapSub">—</div>
-        </div>
-      </div>
-      <div class="legend">
-        <span id="legMin">—</span>
-        <div class="legend-bar"></div>
-        <span id="legMax">—</span>
-      </div>
-      <div class="map-wrap">
-        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-    </div>
+      + '<div class="main" id="mainContent" style="opacity:0">'
+      + '<div class="map-panel">'
+      + '<div class="title-row"><div>'
+      + '<div class="map-title" id="mapTitle">—</div>'
+      + '<div class="map-sub" id="mapSub">—</div>'
+      + '</div></div>'
+      + '<div class="legend">'
+      + '<span id="legMin">—</span>'
+      + '<div class="legend-bar"></div>'
+      + '<span id="legMax">—</span>'
+      + '</div>'
+      + '<div class="map-wrap">'
+      + '<svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>'
+      + '</div>'
+      + '</div>'
 
-    <div class="controls glass">
-      <div>
-        <div class="sec-title">Category</div>
-        <div class="cat-tabs" id="catBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Data Type</div>
-        <div class="btn-group" id="dtBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Source</div>
-        <div class="btn-group" id="srcBtns"></div>
-      </div>
-    </div>
-  </div>
+      + '<div class="controls glass">'
+      + '<div>'
+      + '<div class="sec-title">Category</div>'
+      + '<div class="cat-tabs" id="catBtns"></div>'
+      + '</div>'
+      + '<div>'
+      + '<div class="sec-title">Data Type</div>'
+      + '<div class="btn-group" id="dtBtns"></div>'
+      + '</div>'
+      + '<div>'
+      + '<div class="sec-title">Source</div>'
+      + '<div class="btn-group" id="srcBtns"></div>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
 
-  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
-</div>
+      + '<div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>'
+      + '</div>'
 
-<div class="tooltip" id="tt">
-  <div class="tt-name" id="ttName">—</div>
-  <div><span class="tt-val" id="ttVal">—</span><span class="tt-unit" id="ttUnit"></span></div>
-  <div class="tt-src" id="ttSrc"></div>
-  <div class="tt-disc" id="ttDisc"></div>
-</div>`;
+      + '<div class="tooltip" id="tt">'
+      + '<div class="tt-name" id="ttName">—</div>'
+      + '<div><span class="tt-val" id="ttVal">—</span><span class="tt-unit" id="ttUnit"></span></div>'
+      + '<div class="tt-src" id="ttSrc"></div>'
+      + '<div class="tt-disc" id="ttDisc"></div>'
+      + '</div>';
   }
 
 customElements.define('data-comparison-map', DataComparisonMap);
