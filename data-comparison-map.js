@@ -136,20 +136,16 @@ class DataComparisonMap extends HTMLElement {
     this.shadowRoot.prepend(link);
     await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
-    // Cache-bust data.json to avoid stale data
-    const cacheBust = '?v=' + Date.now();
     const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
-      fetch(baseUrl + 'data.json' + cacheBust).then(r => r.json()),
+      fetch(baseUrl + 'data.json').then(r => r.json()),
       fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
 
-    // Parse all data types (skip _meta)
     Object.entries(dataRaw).forEach(([k, v]) => {
       if (k !== '_meta') this.DATA[k] = v;
     });
 
-    // Build category → data-type-key mapping
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
       const cat = dt.category || 'other';
@@ -157,19 +153,20 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
 
-    // Debug: log what we loaded
-    console.log('[DataMap] Loaded', Object.keys(this.DATA).length, 'indicators');
-    Object.entries(this.categories).forEach(([cat, keys]) => {
-      console.log(`  ${cat}: ${keys.join(', ')}`);
-    });
-
-    if (dataRaw._meta?.lastUpdated) {
+    if (dataRaw._meta && dataRaw._meta.lastUpdated) {
       const d = new Date(dataRaw._meta.lastUpdated);
-      this.$('#lastUpdated').textContent = `Data updated: ${d.toLocaleDateString()}`;
+      this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
     const logoEl = this.$('#navLogo');
     if (logoEl) logoEl.src = baseUrl + 'logo.png';
+
+    // BLUR FIX: inject SVG filter only on desktop, after init
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const filterDiv = document.createElement('div');
+      filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
+      this.shadowRoot.appendChild(filterDiv.firstChild);
+    }
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
     this.geoFeatures = all.features.filter(f =>
@@ -178,7 +175,8 @@ class DataComparisonMap extends HTMLElement {
 
     this.drawMap();
     this.buildCategoryButtons();
-    this.selectCategory(Object.keys(this.categories)[0]);
+    const firstCat = Object.keys(this.categories)[0];
+    if (firstCat) this.selectCategory(firstCat);
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -224,7 +222,6 @@ class DataComparisonMap extends HTMLElement {
     return [];
   }
 
-  // ===== SLIDING INDICATOR =====
   moveSlider(container, activeBtn) {
     let slider = container.querySelector('.slider');
     if (!slider) {
@@ -232,23 +229,17 @@ class DataComparisonMap extends HTMLElement {
       slider.className = 'slider';
       container.prepend(slider);
     }
-
     if (!activeBtn) {
       slider.classList.remove('visible');
       return;
     }
-
-    // Use offsetTop/offsetHeight for reliable positioning within the container
-    // getBoundingClientRect can be unreliable when the container is scrollable
     const top = activeBtn.offsetTop;
     const height = activeBtn.offsetHeight;
-
     slider.style.top = top + 'px';
     slider.style.height = height + 'px';
     slider.classList.add('visible');
   }
 
-  // ===== CATEGORIES =====
   buildCategoryButtons() {
     const c = this.$('#catBtns');
     c.innerHTML = '';
@@ -257,11 +248,7 @@ class DataComparisonMap extends HTMLElement {
       const b = document.createElement('button');
       b.className = 'cat-btn';
       b.dataset.key = catKey;
-      b.innerHTML = `
-        <span class="cat-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${meta.icon}</svg>
-        </span>
-        <span class="cat-label">${meta.label}</span>`;
+      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
       b.onclick = () => this.selectCategory(catKey);
       c.appendChild(b);
     });
@@ -273,16 +260,13 @@ class DataComparisonMap extends HTMLElement {
     this.buildDataTypeButtons(catKey);
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    const first = this.categories[catKey]?.[0];
-    if (first) this.selectDataType(first);
+    const keys = this.categories[catKey];
+    if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
-  // ===== DATA TYPES =====
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
     c.innerHTML = '';
-
-    // Create slider element first
     const slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
@@ -290,35 +274,27 @@ class DataComparisonMap extends HTMLElement {
     const keys = this.categories[catKey] || [];
     keys.forEach(key => {
       const dt = this.DATA[key];
-      if (!dt) return; // safety check
+      if (!dt) return;
       const b = document.createElement('button');
       b.className = 'btn';
       b.dataset.key = key;
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
-      b.innerHTML = `
-        <span style="display:flex;align-items:center;gap:8px">
-          <span class="btn-dot"></span>
-          <span>${dt.label}</span>
-        </span>
-        <span class="badge">${okCount}/${srcCount}</span>`;
+      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
     });
   }
 
-  // ===== SOURCES =====
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
     c.innerHTML = '';
-
     const slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
 
     const dt = this.DATA[dtKey];
     if (!dt) return;
-
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
       const isEmpty = count === 0;
@@ -326,19 +302,9 @@ class DataComparisonMap extends HTMLElement {
       b.className = 'btn' + (isEmpty ? ' disabled' : '');
       b.dataset.key = key;
       if (isEmpty) {
-        b.innerHTML = `
-          <span style="display:flex;align-items:center;gap:8px">
-            <span class="btn-dot"></span>
-            <span>${src.label}</span>
-          </span>
-          <span class="badge badge-empty">No data</span>`;
+        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
       } else {
-        b.innerHTML = `
-          <span style="display:flex;align-items:center;gap:8px">
-            <span class="btn-dot"></span>
-            <span>${src.label}</span>
-          </span>
-          <span class="badge">${count} · ${src.year}</span>`;
+        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>';
         b.onclick = () => this.selectSource(key);
       }
       c.appendChild(b);
@@ -348,23 +314,16 @@ class DataComparisonMap extends HTMLElement {
   selectDataType(k) {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-
-    // Slider — use double-rAF to ensure layout is fully settled
     const dtContainer = this.$('#dtBtns');
-    const activeBtn = dtContainer.querySelector(`.btn[data-key="${k}"]`);
+    const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.moveSlider(dtContainer, activeBtn);
-      });
+      requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
     });
-
     this._lastTtVal = null;
     this._lastTtDataType = k;
-
     this.buildSourceButtons(k);
     const dt = this.DATA[k];
     if (!dt) return;
-
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
     if (firstOk) {
       this.selectSource(firstOk[0]);
@@ -372,8 +331,8 @@ class DataComparisonMap extends HTMLElement {
       this.currentSource = null;
       this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
-      this.$('#legMin').textContent = '—';
-      this.$('#legMax').textContent = '—';
+      this.$('#legMin').textContent = '\u2014';
+      this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
   }
@@ -383,15 +342,11 @@ class DataComparisonMap extends HTMLElement {
     this.$$('#srcBtns .btn').forEach(b => {
       if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
-
     const srcContainer = this.$('#srcBtns');
     const activeBtn = srcContainer.querySelector('.btn.active');
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.moveSlider(srcContainer, activeBtn);
-      });
+      requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
     });
-
     this.paint();
   }
 
@@ -401,16 +356,16 @@ class DataComparisonMap extends HTMLElement {
     const src = dt.sources[this.currentSource];
     if (!src) return;
     this.$('#mapTitle').textContent = dt.label;
-    this.$('#mapSub').textContent = `${src.label} · ${src.year} · ${dt.unit}`;
+    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
 
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) {
-      this.$('#legMin').textContent = '—';
-      this.$('#legMax').textContent = '—';
+      this.$('#legMin').textContent = '\u2014';
+      this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
       return;
     }
-    const min = Math.min(...vals), max = Math.max(...vals);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     this.$('#legMin').textContent = fmt(min, dt.unit);
     this.$('#legMax').textContent = fmt(max, dt.unit);
 
@@ -430,12 +385,13 @@ class DataComparisonMap extends HTMLElement {
     const dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
     const src = dt.sources[this.currentSource];
+    if (!src) return;
     const code = e.target.dataset.code;
-    const newVal = src?.countries?.[code] ?? null;
+    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
 
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
-    this.$('#ttSrc').textContent = `${src?.label || '—'} · ${src?.year || '—'}`;
+    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
 
     const valEl = this.$('#ttVal');
     const oldVal = this._lastTtVal;
@@ -473,100 +429,83 @@ class DataComparisonMap extends HTMLElement {
     });
     const el = this.$('#ttDisc');
     if (vals.length >= 2) {
-      const mn = Math.min(...vals), mx = Math.max(...vals);
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
       if (diff > 10) {
         el.style.display = 'block';
-        el.textContent = `⚠️ ${diff.toFixed(0)}% variance across ${vals.length} sources`;
+        el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
         return;
       }
     }
     el.style.display = 'none';
   }
 
-
+  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
+  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
-    var isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    return `<div class="app">
+  <nav class="top-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">
+        <img id="navLogo" src="" alt="Logo" />
+      </div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link">About us</button>
+      <button class="nav-link primary">Support us</button>
+    </div>
+  </nav>
 
-    var svgFilter = '';
-    if (isDesktop) {
-      svgFilter = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">'
-        + '<filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">'
-        + '<feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>'
-        + '<feComponentTransfer in="turbulence" result="mapped">'
-        + '<feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>'
-        + '<feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>'
-        + '<feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>'
-        + '</feComponentTransfer>'
-        + '<feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>'
-        + '<feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">'
-        + '<fePointLight x="-200" y="-200" z="300"/>'
-        + '</feSpecularLighting>'
-        + '<feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>'
-        + '<feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>'
-        + '</filter></svg>';
-    }
+  <div id="initLoader" class="init-loader">
+    <div class="orbit"></div>
+    <span>Loading map & data\u2026</span>
+  </div>
 
-    return svgFilter + '<div class="app">'
-      + '<nav class="top-nav">'
-      + '<div class="nav-logo">'
-      + '<div class="nav-logo-icon">'
-      + '<img id="navLogo" src="" alt="Logo" />'
-      + '</div>'
-      + '</div>'
-      + '<div class="nav-links">'
-      + '<button class="nav-link">About us</button>'
-      + '<button class="nav-link primary">Support us</button>'
-      + '</div>'
-      + '</nav>'
+  <div class="main" id="mainContent" style="opacity:0">
+    <div class="map-panel">
+      <div class="title-row">
+        <div>
+          <div class="map-title" id="mapTitle">\u2014</div>
+          <div class="map-sub" id="mapSub">\u2014</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span id="legMin">\u2014</span>
+        <div class="legend-bar"></div>
+        <span id="legMax">\u2014</span>
+      </div>
+      <div class="map-wrap">
+        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
 
-      + '<div id="initLoader" class="init-loader">'
-      + '<div class="orbit"></div>'
-      + '<span>Loading map & data…</span>'
-      + '</div>'
+    <div class="controls glass">
+      <div>
+        <div class="sec-title">Category</div>
+        <div class="cat-tabs" id="catBtns"></div>
+      </div>
+      <div>
+        <div class="sec-title">Data Type</div>
+        <div class="btn-group" id="dtBtns"></div>
+      </div>
+      <div>
+        <div class="sec-title">Source</div>
+        <div class="btn-group" id="srcBtns"></div>
+      </div>
+    </div>
+  </div>
 
-      + '<div class="main" id="mainContent" style="opacity:0">'
-      + '<div class="map-panel">'
-      + '<div class="title-row"><div>'
-      + '<div class="map-title" id="mapTitle">—</div>'
-      + '<div class="map-sub" id="mapSub">—</div>'
-      + '</div></div>'
-      + '<div class="legend">'
-      + '<span id="legMin">—</span>'
-      + '<div class="legend-bar"></div>'
-      + '<span id="legMax">—</span>'
-      + '</div>'
-      + '<div class="map-wrap">'
-      + '<svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>'
-      + '</div>'
-      + '</div>'
+  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
+</div>
 
-      + '<div class="controls glass">'
-      + '<div>'
-      + '<div class="sec-title">Category</div>'
-      + '<div class="cat-tabs" id="catBtns"></div>'
-      + '</div>'
-      + '<div>'
-      + '<div class="sec-title">Data Type</div>'
-      + '<div class="btn-group" id="dtBtns"></div>'
-      + '</div>'
-      + '<div>'
-      + '<div class="sec-title">Source</div>'
-      + '<div class="btn-group" id="srcBtns"></div>'
-      + '</div>'
-      + '</div>'
-      + '</div>'
-
-      + '<div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>'
-      + '</div>'
-
-      + '<div class="tooltip" id="tt">'
-      + '<div class="tt-name" id="ttName">—</div>'
-      + '<div><span class="tt-val" id="ttVal">—</span><span class="tt-unit" id="ttUnit"></span></div>'
-      + '<div class="tt-src" id="ttSrc"></div>'
-      + '<div class="tt-disc" id="ttDisc"></div>'
-      + '</div>';
+<div class="tooltip" id="tt">
+  <div class="tt-name" id="ttName">\u2014</div>
+  <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
+  <div class="tt-src" id="ttSrc"></div>
+  <div class="tt-disc" id="ttDisc"></div>
+</div>`;
   }
+}
 
 customElements.define('data-comparison-map', DataComparisonMap);
