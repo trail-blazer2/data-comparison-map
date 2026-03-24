@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "lastUpdated": "2026-03-24T07:15:21.884Z",
+    "lastUpdated": "2026-03-24T07:24:46.691Z",
     "generatedBy": "fetch-data.js via GitHub Actions",
     "indicatorCount": 22,
     "sources": [
@@ -60,11 +60,6 @@
           "RS": 8.7
         },
         "year": 2025
-      },
-      "oecd": {
-        "label": "OECD",
-        "countries": {},
-        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -158,16 +153,6 @@
         },
         "year": 2025
       },
-      "oecd": {
-        "label": "OECD",
-        "countries": {},
-        "year": 0
-      },
-      "youthstats": {
-        "label": "YouthSTATS (ILO)",
-        "countries": {},
-        "year": 0
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -220,16 +205,6 @@
     "unit": "USD/capita",
     "category": "economy",
     "sources": {
-      "eurostat": {
-        "label": "Eurostat",
-        "countries": {},
-        "year": 0
-      },
-      "oecd": {
-        "label": "OECD",
-        "countries": {},
-        "year": 0
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
@@ -513,11 +488,6 @@
           "RS": 4.1
         },
         "year": 2025
-      },
-      "oecd": {
-        "label": "OECD",
-        "countries": {},
-        "year": 0
       },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
@@ -892,11 +862,6 @@
         },
         "year": 2024
       },
-      "oecd": {
-        "label": "OECD",
-        "countries": {},
-        "year": 0
-      },
       "world_bank": {
         "label": "World Bank",
         "countries": {
@@ -1012,11 +977,6 @@
     "unit": "% of GDP",
     "category": "public_services",
     "sources": {
-      "eurostat": {
-        "label": "Eurostat",
-        "countries": {},
-        "year": 0
-      },
       "world_bank_wdi": {
         "label": "World Bank (WDI)",
         "countries": {
