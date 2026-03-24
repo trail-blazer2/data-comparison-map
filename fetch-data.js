@@ -420,6 +420,75 @@ async function fetchOECD(agency, dataflow, version, filterKey, label) {
   return { countries: {}, year: 0 };
 }
 
+
+// ============================================================
+// ILO FETCHER — uses rplumber.ilo.org direct API (CSV)
+// ============================================================
+async function fetchILO(indicatorId, params) {
+  console.log('  [ILO] ' + indicatorId + '...');
+
+  var url = 'https://rplumber.ilo.org/data/indicator?id=' + indicatorId
+    + '&timefrom=2018&timeto=2025&type=code&format=.csv';
+  if (params) {
+    Object.entries(params).forEach(function([k, v]) {
+      url += '&' + k + '=' + v;
+    });
+  }
+
+  var countries = {};
+  var dataYear = 0;
+
+  try {
+    console.log('  [ILO] ' + url.substring(0, 160));
+    var raw = await httpGet(url, 'text/csv');
+    var lines = raw.split('\n');
+    if (lines.length < 2) {
+      console.log('  [ILO] Empty CSV');
+      return { countries: {}, year: 0 };
+    }
+
+    // Parse CSV header
+    var header = lines[0].replace(/"/g, '').split(',');
+    var refCol = header.indexOf('ref_area');
+    var timeCol = header.indexOf('time');
+    var valCol = header.indexOf('obs_value');
+
+    if (refCol < 0 || timeCol < 0 || valCol < 0) {
+      console.log('  [ILO] CSV missing columns. Header: ' + header.join(', '));
+      return { countries: {}, year: 0 };
+    }
+
+    for (var i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      var cols = lines[i].replace(/"/g, '').split(',');
+      var code = cols[refCol];
+      var year = parseInt(cols[timeCol]);
+      var val = parseFloat(cols[valCol]);
+
+      if (!code || isNaN(year) || isNaN(val)) continue;
+
+      var a2 = A3_TO_A2[code];
+      if (!a2 && EURO_SET.has(code)) a2 = code;
+      if (!a2) continue;
+
+      if (!countries[a2] || year > countries[a2].year) {
+        countries[a2] = { value: val, year: year };
+        if (year > dataYear) dataYear = year;
+      }
+    }
+  } catch (e) {
+    console.warn('  [ILO] FAILED: ' + e.message.substring(0, 200));
+  }
+
+  var result = {};
+  Object.entries(countries).forEach(function([a2, d]) {
+    result[a2] = Math.round(d.value * 100) / 100;
+  });
+  console.log('  [ILO] ' + indicatorId + ': ' + Object.keys(result).length + ' countries, year ' + dataYear);
+  await sleep(1000);
+  return { countries: result, year: dataYear };
+}
+
 // ============================================================
 // FETCH ALL INDICATORS
 // ============================================================
@@ -450,11 +519,18 @@ async function fetchAll() {
   console.log('\n📊 Unemployment rate - Youth');
   var uy_eu = await fetchEurostat('une_rt_a', { age: 'Y15-24', sex: 'T', unit: 'PC_ACT' });
   var uy_wb = await fetchWorldBank('SL.UEM.1524.ZS');
+  // ILO direct API — indicator from rshiny.ilo.org
+  var uy_ilo = await fetchILO('UNE_3EAP_SEX_AGE_DSB_RT_A', {
+    sex: 'SEX_T',
+    classif1: 'AGE_YTHADULT_Y15-24',
+    classif2: 'DSB_AGGREGATE_TOTAL'
+  });
   data.unemployment_youth = {
     label: 'Unemployment rate - Youth', unit: '%',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...uy_eu },
+      youthstats: { label: 'YouthSTATS (ILO)', ...uy_ilo },
       world_bank_wdi: { label: 'World Bank (WDI)', ...uy_wb }
     }
   };
