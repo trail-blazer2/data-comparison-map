@@ -1,6 +1,6 @@
 // ============================================================
 // DATA COMPARISON MAP — Wix Custom Element
-// Styles are loaded from styles.css — edit that file for theming!
+// Styles in styles.css · Data in data.json
 // ============================================================
 
 const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
@@ -28,22 +28,38 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
+// SVG icon paths (solid, clean)
 const CATEGORY_META = {
-  economy:         { icon: '💰', label: 'Economy' },
-  demographics:    { icon: '👥', label: 'Demographics' },
-  society:         { icon: '🏛️', label: 'Society' },
-  public_services: { icon: '📋', label: 'Public Services' }
+  economy: {
+    label: 'Economy',
+    // Coins/chart icon
+    icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>'
+  },
+  demographics: {
+    label: 'Demographics',
+    // People icon
+    icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>'
+  },
+  society: {
+    label: 'Society',
+    // Shield / institution icon
+    icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>'
+  },
+  public_services: {
+    label: 'Services',
+    // Clipboard / services icon
+    icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>'
+  }
 };
 
 // ===== Navy Blue color scale =====
 function getColor(t) {
-  // Light grey-blue → medium slate → deep navy → near-black navy
   const c = [
-    [200, 214, 229],  // #c8d6e5
-    [131, 149, 167],  // #8395a7
-    [87, 101, 116],   // #576574
-    [34, 47, 62],     // #222f3e
-    [10, 22, 40]      // #0a1628
+    [200, 214, 229],
+    [131, 149, 167],
+    [87, 101, 116],
+    [34, 47, 62],
+    [10, 22, 40]
   ];
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
@@ -77,8 +93,27 @@ function loadScript(url) {
   });
 }
 
-// ============================================================
-// WEB COMPONENT
+// ===== Animated number counter =====
+function animateValue(el, startVal, endVal, unit, duration = 350) {
+  if (startVal === endVal) return;
+  if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
+  if (startVal == null || isNaN(startVal)) startVal = 0;
+
+  const startTime = performance.now();
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = startVal + (endVal - startVal) * ease;
+    el.textContent = fmt(current, unit);
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = fmt(endVal, unit); // Snap to exact final
+  }
+  requestAnimationFrame(tick);
+}
+
 // ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
@@ -90,6 +125,7 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
+    this._lastTtVal = null; // Track last tooltip value for animation
   }
 
   connectedCallback() {
@@ -101,7 +137,6 @@ class DataComparisonMap extends HTMLElement {
   $$(s) { return this.shadowRoot.querySelectorAll(s); }
 
   async init() {
-    // Resolve base URL for co-located files
     const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
     let baseUrl = '';
     if (scripts.length) {
@@ -109,28 +144,23 @@ class DataComparisonMap extends HTMLElement {
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
 
-    // Load external stylesheet into shadow DOM
+    // Load external CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = baseUrl + 'styles.css';
     this.shadowRoot.prepend(link);
-
-    // Wait for CSS to load before showing content
     await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
-    // Load topojson + data + map geometry in parallel
     const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
       fetch(baseUrl + 'data.json').then(r => r.json()),
       fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
 
-    // Parse data
     Object.entries(dataRaw).forEach(([k, v]) => {
       if (k !== '_meta') this.DATA[k] = v;
     });
 
-    // Build categories
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
       const cat = dt.category || 'other';
@@ -156,9 +186,6 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  // ============================================================
-  // MAP
-  // ============================================================
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
@@ -199,18 +226,20 @@ class DataComparisonMap extends HTMLElement {
     return [];
   }
 
-  // ============================================================
-  // CATEGORY BUTTONS
-  // ============================================================
+  // ===== CATEGORIES =====
   buildCategoryButtons() {
     const c = this.$('#catBtns');
     c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '📊', label: catKey };
+      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
       const b = document.createElement('button');
       b.className = 'cat-btn';
       b.dataset.key = catKey;
-      b.innerHTML = `<span class="cat-icon">${meta.icon}</span><span class="cat-label">${meta.label}</span>`;
+      b.innerHTML = `
+        <span class="cat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${meta.icon}</svg>
+        </span>
+        <span class="cat-label">${meta.label}</span>`;
       b.onclick = () => this.selectCategory(catKey);
       c.appendChild(b);
     });
@@ -224,9 +253,7 @@ class DataComparisonMap extends HTMLElement {
     if (first) this.selectDataType(first);
   }
 
-  // ============================================================
-  // DATA TYPE BUTTONS
-  // ============================================================
+  // ===== DATA TYPES =====
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
     c.innerHTML = '';
@@ -237,15 +264,18 @@ class DataComparisonMap extends HTMLElement {
       b.dataset.key = key;
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
-      b.innerHTML = `<span>${dt.label}</span><span class="badge">${okCount}/${srcCount}</span>`;
+      b.innerHTML = `
+        <span style="display:flex;align-items:center;gap:8px">
+          <span class="btn-dot"></span>
+          <span>${dt.label}</span>
+        </span>
+        <span class="badge">${okCount}/${srcCount}</span>`;
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
     });
   }
 
-  // ============================================================
-  // SOURCE BUTTONS (greyed out when empty)
-  // ============================================================
+  // ===== SOURCES =====
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
     c.innerHTML = '';
@@ -257,9 +287,19 @@ class DataComparisonMap extends HTMLElement {
       b.className = 'btn' + (isEmpty ? ' disabled' : '');
       b.dataset.key = key;
       if (isEmpty) {
-        b.innerHTML = `<span>${src.label}</span><span class="badge badge-empty">No data</span>`;
+        b.innerHTML = `
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="btn-dot"></span>
+            <span>${src.label}</span>
+          </span>
+          <span class="badge badge-empty">No data</span>`;
       } else {
-        b.innerHTML = `<span>${src.label}</span><span class="badge">${count} 🌍 · ${src.year}</span>`;
+        b.innerHTML = `
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="btn-dot"></span>
+            <span>${src.label}</span>
+          </span>
+          <span class="badge">${count} · ${src.year}</span>`;
         b.onclick = () => this.selectSource(key);
       }
       c.appendChild(b);
@@ -292,14 +332,10 @@ class DataComparisonMap extends HTMLElement {
     this.paint();
   }
 
-  // ============================================================
-  // PAINT MAP
-  // ============================================================
   paint() {
     const dt = this.DATA[this.currentDataType];
     const src = dt.sources[this.currentSource];
     if (!src) return;
-
     this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = `${src.label} · ${src.year} · ${dt.unit}`;
 
@@ -310,7 +346,6 @@ class DataComparisonMap extends HTMLElement {
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
       return;
     }
-
     const min = Math.min(...vals), max = Math.max(...vals);
     this.$('#legMin').textContent = fmt(min, dt.unit);
     this.$('#legMax').textContent = fmt(max, dt.unit);
@@ -327,28 +362,43 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ============================================================
-  // TOOLTIP
-  // ============================================================
+  // ===== TOOLTIP with animated number =====
   ttShow(e) {
     const dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
     const src = dt.sources[this.currentSource];
     const code = e.target.dataset.code;
-    const val = src?.countries?.[code];
+    const newVal = src?.countries?.[code] ?? null;
+
     this.$('#ttName').textContent = e.target.dataset.name;
-    this.$('#ttVal').textContent = fmt(val, dt.unit);
-    this.$('#ttUnit').textContent = val != null ? dt.unit : '';
+    this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = `${src?.label || '—'} · ${src?.year || '—'}`;
+
+    // Animate the number transition
+    const oldVal = this._lastTtVal;
+    const valEl = this.$('#ttVal');
+
+    if (newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
+      animateValue(valEl, oldVal, newVal, dt.unit, 300);
+    } else {
+      valEl.textContent = fmt(newVal, dt.unit);
+    }
+    this._lastTtVal = newVal;
+
     this.checkDiscrepancy(code);
     this.$('#tt').classList.add('visible');
   }
+
   ttMove(e) {
     const tt = this.$('#tt');
     tt.style.left = (e.clientX + 18) + 'px';
     tt.style.top = (e.clientY - 12) + 'px';
   }
-  ttHide() { this.$('#tt').classList.remove('visible'); }
+
+  ttHide() {
+    this.$('#tt').classList.remove('visible');
+    // Don't reset _lastTtVal here so next hover animates from last value
+  }
 
   checkDiscrepancy(code) {
     const dt = this.DATA[this.currentDataType];
@@ -370,12 +420,9 @@ class DataComparisonMap extends HTMLElement {
     el.style.display = 'none';
   }
 
-  // ============================================================
-  // HTML TEMPLATE (includes SVG filter for liquid glass)
-  // ============================================================
   html() {
     return `
-<!-- SVG Filter for Liquid Glass (Apple-style) -->
+<!-- SVG Filter for Liquid Glass -->
 <svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
   <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
     <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
@@ -394,16 +441,32 @@ class DataComparisonMap extends HTMLElement {
 </svg>
 
 <div class="app">
-  <div class="header">
-    <h1>Interactive Data Comparison Map</h1>
-    <p>Compare data across sources — hover over countries for details</p>
-  </div>
+  <!-- TOP NAVIGATION BAR -->
+  <nav class="top-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+      </div>
+      <div class="nav-logo-text">
+        <span class="nav-logo-title">DataMap Europe</span>
+        <span class="nav-logo-sub">Compare data across sources</span>
+      </div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link">About us</button>
+      <button class="nav-link primary">Support us</button>
+    </div>
+  </nav>
 
+  <!-- LOADER -->
   <div id="initLoader" class="init-loader">
     <div class="orbit"></div>
     <span>Loading map & data…</span>
   </div>
 
+  <!-- MAIN CONTENT -->
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel glass">
       <div class="title-row">
@@ -428,17 +491,17 @@ class DataComparisonMap extends HTMLElement {
         <div class="cat-tabs" id="catBtns"></div>
       </div>
       <div>
-        <div class="sec-title">📊 Data Type</div>
+        <div class="sec-title">Data Type</div>
         <div class="btn-group" id="dtBtns"></div>
       </div>
       <div>
-        <div class="sec-title">🏛️ Source</div>
+        <div class="sec-title">Source</div>
         <div class="btn-group" id="srcBtns"></div>
       </div>
     </div>
   </div>
 
-  <div class="footer" id="lastUpdated">Data auto-updated via Eurostat & World Bank APIs</div>
+  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
 </div>
 
 <div class="tooltip" id="tt">
