@@ -160,6 +160,8 @@ class DataComparisonMap extends HTMLElement {
 
     const logoEl = this.$('#navLogo');
     if (logoEl) logoEl.src = baseUrl + 'logo.png';
+    const logoMob = this.$('#navLogoMobile');
+    if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     // BLUR FIX: inject SVG filter only on desktop, after init
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
@@ -488,7 +490,8 @@ class DataComparisonMap extends HTMLElement {
   <nav class="top-nav">
     <div class="nav-logo">
       <div class="nav-logo-icon">
-        <img id="navLogo" src="" alt="Logo" />
+        <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
+        <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
       </div>
     </div>
     <div class="nav-links">
