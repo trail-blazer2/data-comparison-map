@@ -48,13 +48,7 @@ const CATEGORY_META = {
 };
 
 function getColor(t) {
-  const c = [
-    [200, 214, 229],
-    [131, 149, 167],
-    [87, 101, 116],
-    [34, 47, 62],
-    [10, 22, 40]
-  ];
+  const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
   const f = (t * n) - i;
@@ -65,8 +59,8 @@ function fmt(val, unit) {
   if (val == null) return 'No data';
   if (unit === 'persons' && Math.abs(val) >= 1e6) return (val/1e6).toFixed(1) + 'M';
   if (unit === 'persons') return val.toLocaleString();
-  if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val/1e6).toFixed(1) + 'M';
-  if (unit === 'net persons') return val.toLocaleString();
+  if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val > 0 ? '+' : '') + (val/1e6).toFixed(1) + 'M';
+  if (unit === 'net persons') return (val > 0 ? '+' : '') + val.toLocaleString();
   if (unit === 'USD/capita' || unit === 'int. $') return '$' + Math.round(val).toLocaleString();
   if (unit === '% of GDP' || unit === '%') return val.toFixed(1) + '%';
   if (unit === 'births/woman') return val.toFixed(2);
@@ -87,12 +81,10 @@ function loadScript(url) {
   });
 }
 
-// ===== Animated number counter =====
 function animateValue(el, startVal, endVal, unit, duration = 300) {
   if (startVal === endVal) { el.textContent = fmt(endVal, unit); return; }
   if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
   if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit); return; }
-
   const startTime = performance.now();
   function tick(now) {
     const elapsed = now - startTime;
@@ -117,7 +109,6 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
-    // Animation tracking — scoped per data type
     this._lastTtVal = null;
     this._lastTtDataType = null;
   }
@@ -167,7 +158,7 @@ class DataComparisonMap extends HTMLElement {
       this.$('#lastUpdated').textContent = `Data updated: ${d.toLocaleDateString()}`;
     }
 
-    // Set logo — loads from same directory as JS/data
+    // Logo — use baseUrl so it resolves correctly in Shadow DOM
     const logoEl = this.$('#navLogo');
     if (logoEl) logoEl.src = baseUrl + 'logo.png';
 
@@ -224,6 +215,33 @@ class DataComparisonMap extends HTMLElement {
     return [];
   }
 
+  // ===== SLIDING INDICATOR helper =====
+  // Moves a `.slider` div to cover the active button's position
+  moveSlider(container, activeBtn) {
+    let slider = container.querySelector('.slider');
+    if (!slider) {
+      slider = document.createElement('div');
+      slider.className = 'slider';
+      container.prepend(slider);
+    }
+
+    if (!activeBtn) {
+      slider.classList.remove('visible');
+      return;
+    }
+
+    // Calculate position relative to container
+    const containerRect = container.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    const top = btnRect.top - containerRect.top + container.scrollTop;
+    const height = btnRect.height;
+
+    slider.style.top = top + 'px';
+    slider.style.height = height + 'px';
+    slider.classList.add('visible');
+  }
+
+  // ===== CATEGORIES =====
   buildCategoryButtons() {
     const c = this.$('#catBtns');
     c.innerHTML = '';
@@ -246,16 +264,25 @@ class DataComparisonMap extends HTMLElement {
     this.currentCategory = catKey;
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
     this.buildDataTypeButtons(catKey);
-    // Reset animation tracking when category changes
     this._lastTtVal = null;
     this._lastTtDataType = null;
     const first = this.categories[catKey]?.[0];
     if (first) this.selectDataType(first);
   }
 
+  // ===== DATA TYPES =====
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
+    // Remove old slider
+    const oldSlider = c.querySelector('.slider');
+    if (oldSlider) oldSlider.remove();
+
     c.innerHTML = '';
+    // Add fresh slider
+    const slider = document.createElement('div');
+    slider.className = 'slider';
+    c.appendChild(slider);
+
     (this.categories[catKey] || []).forEach(key => {
       const dt = this.DATA[key];
       const b = document.createElement('button');
@@ -274,9 +301,15 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
+  // ===== SOURCES =====
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
     c.innerHTML = '';
+
+    const slider = document.createElement('div');
+    slider.className = 'slider';
+    c.appendChild(slider);
+
     const dt = this.DATA[dtKey];
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
@@ -307,12 +340,17 @@ class DataComparisonMap extends HTMLElement {
   selectDataType(k) {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-    this.buildSourceButtons(k);
 
-    // Reset animation when data type changes
+    // Move the data-type slider
+    const dtContainer = this.$('#dtBtns');
+    const activeBtn = dtContainer.querySelector(`.btn[data-key="${k}"]`);
+    // Defer so layout has settled
+    requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
+
     this._lastTtVal = null;
     this._lastTtDataType = k;
 
+    this.buildSourceButtons(k);
     const dt = this.DATA[k];
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
     if (firstOk) {
@@ -332,8 +370,12 @@ class DataComparisonMap extends HTMLElement {
     this.$$('#srcBtns .btn').forEach(b => {
       if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
-    // Keep animation alive within same data type (different sources is fine)
-    // Don't reset _lastTtVal here — same unit, comparable numbers
+
+    // Move the source slider
+    const srcContainer = this.$('#srcBtns');
+    const activeBtn = srcContainer.querySelector(`.btn.active`);
+    requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
+
     this.paint();
   }
 
@@ -367,7 +409,6 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ===== TOOLTIP — number animation scoped to same data type =====
   ttShow(e) {
     const dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
@@ -383,8 +424,6 @@ class DataComparisonMap extends HTMLElement {
     const oldVal = this._lastTtVal;
     const sameDataType = this._lastTtDataType === this.currentDataType;
 
-    // Only animate if we're within the same data type
-    // (same unit, comparable numbers — e.g. switching countries or sources)
     if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
       animateValue(valEl, oldVal, newVal, dt.unit, 300);
     } else {
@@ -451,11 +490,7 @@ class DataComparisonMap extends HTMLElement {
   <nav class="top-nav">
     <div class="nav-logo">
       <div class="nav-logo-icon">
-        <img id="navLogo" src="" alt="Logo" style="width:28px;height:28px;object-fit:contain;border-radius:4px;" />
-      </div>
-      <div class="nav-logo-text">
-        <span class="nav-logo-title">DataMap Europe</span>
-        <span class="nav-logo-sub">Compare data across sources</span>
+        <img id="navLogo" src="" alt="Logo" />
       </div>
     </div>
     <div class="nav-links">
