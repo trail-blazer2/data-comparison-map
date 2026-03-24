@@ -13,13 +13,14 @@ const http = require('http');
 // ============================================================
 const MAX_RESPONSE_SIZE = 50 * 1024 * 1024;
 
-function get(url, maxRedirects) {
+function httpGet(url, accept, maxRedirects) {
   if (maxRedirects === undefined) maxRedirects = 5;
+  if (!accept) accept = 'application/json';
   return new Promise(function(resolve, reject) {
     var client = url.startsWith('https') ? https : http;
     var req = client.get(url, {
       headers: {
-        'Accept': 'application/vnd.sdmx.data+json;version=2.0.0',
+        'Accept': accept,
         'User-Agent': 'DataMap/1.0'
       },
       timeout: 90000
@@ -29,7 +30,7 @@ function get(url, maxRedirects) {
         var next = res.headers.location.startsWith('http')
           ? res.headers.location
           : new URL(res.headers.location, url).toString();
-        return resolve(get(next, maxRedirects - 1));
+        return resolve(httpGet(next, accept, maxRedirects - 1));
       }
       if (res.statusCode >= 400) {
         var body = '';
@@ -53,10 +54,6 @@ function get(url, maxRedirects) {
     req.on('error', reject);
     req.on('timeout', function() { req.destroy(); reject(new Error('Timeout: ' + url)); });
   });
-}
-
-function getJSON(url) {
-  return get(url).then(function(raw) { return JSON.parse(raw); });
 }
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
@@ -108,7 +105,8 @@ async function fetchWorldBank(indicator) {
     var page = 1, totalPages = 1;
     while (page <= totalPages && page <= 5) {
       var url = 'https://api.worldbank.org/v2/country/' + WB_CODES + '/indicator/' + indicator + '?date=2015:2025&format=json&per_page=500&page=' + page;
-      var json = await getJSON(url);
+      var raw = await httpGet(url, 'application/json');
+      var json = JSON.parse(raw);
       if (!json[1] || json[1].length === 0) break;
       totalPages = json[0].pages || 1;
 
@@ -138,7 +136,7 @@ async function fetchWorldBank(indicator) {
 }
 
 // ============================================================
-// EUROSTAT FETCHER
+// EUROSTAT FETCHER — uses Accept: application/json
 // ============================================================
 async function fetchEurostat(datasetCode, filters) {
   if (!filters) filters = {};
@@ -149,7 +147,8 @@ async function fetchEurostat(datasetCode, filters) {
   Object.entries(filters).forEach(function([key, val]) { url += '&' + key + '=' + val; });
 
   try {
-    var json = await getJSON(url);
+    var raw = await httpGet(url, 'application/json');
+    var json = JSON.parse(raw);
     if (!json.dimension || json.value === undefined) {
       console.log('  [EU] ' + datasetCode + ': Empty response');
       return { countries: {}, year: 0 };
@@ -217,116 +216,99 @@ async function fetchEurostat(datasetCode, filters) {
 }
 
 // ============================================================
-// SDMX-JSON PARSER — handles all known OECD/ILO response formats
-// Searches for country codes everywhere in the structure.
+// SDMX-JSON PARSER — handles OECD's response format
+//
+// OECD returns:
+//   json.data.dataSets[0].observations  (flat, with dimensionAtObservation=AllDimensions)
+//   json.data.dataSets[0].series        (series-based, without that param)
+//   json.data.structures[0].dimensions  (note: "structures" plural!)
 // ============================================================
 function resolveCountryCode(code) {
-  // Try ISO3 -> ISO2
   if (A3_TO_A2[code]) return A3_TO_A2[code];
-  // Already ISO2?
   if (EURO_SET.has(code)) return code;
   return null;
 }
 
-function dumpStructure(json, label) {
-  // Log the top-level keys so we can see what format the API returned
-  console.log('  [DEBUG] ' + label + ' top keys: ' + Object.keys(json).join(', '));
-  if (json.data) {
-    console.log('  [DEBUG] json.data keys: ' + Object.keys(json.data).join(', '));
-    if (json.data.dataSets && json.data.dataSets[0]) {
-      var ds = json.data.dataSets[0];
-      console.log('  [DEBUG] dataSets[0] keys: ' + Object.keys(ds).join(', '));
-      if (ds.series) {
-        var seriesKeys = Object.keys(ds.series);
-        console.log('  [DEBUG] series count: ' + seriesKeys.length + ', first key: ' + (seriesKeys[0] || 'none'));
-      }
-      if (ds.observations) {
-        console.log('  [DEBUG] observations count: ' + Object.keys(ds.observations).length);
-      }
-    }
-    if (json.data.structure && json.data.structure.dimensions) {
-      var dims = json.data.structure.dimensions;
-      if (dims.series) {
-        console.log('  [DEBUG] series dims: ' + dims.series.map(function(d) { return d.id + '(' + d.values.length + ')'; }).join(', '));
-      }
-      if (dims.observation) {
-        console.log('  [DEBUG] obs dims: ' + dims.observation.map(function(d) { return d.id + '(' + d.values.length + ')'; }).join(', '));
-      }
-    }
+function findDimIndex(dims, names) {
+  for (var i = 0; i < dims.length; i++) {
+    if (names.indexOf(dims[i].id) >= 0) return i;
   }
-  if (json.dataSets) {
-    console.log('  [DEBUG] root dataSets keys: ' + Object.keys(json.dataSets[0] || {}).join(', '));
+  // Fallback: check values for country codes or year patterns
+  return -1;
+}
+
+function findCountryDimByValues(dims) {
+  for (var i = 0; i < dims.length; i++) {
+    var hasCountry = dims[i].values.some(function(v) { return resolveCountryCode(v.id) !== null; });
+    if (hasCountry) return i;
   }
-  if (json.structure && json.structure.dimensions) {
-    var dims = json.structure.dimensions;
-    if (dims.series) {
-      console.log('  [DEBUG] root series dims: ' + dims.series.map(function(d) { return d.id + '(' + d.values.length + ')'; }).join(', '));
-    }
-    if (dims.observation) {
-      console.log('  [DEBUG] root obs dims: ' + dims.observation.map(function(d) { return d.id + '(' + d.values.length + ')'; }).join(', '));
-    }
+  return -1;
+}
+
+function findTimeDimByValues(dims) {
+  for (var i = 0; i < dims.length; i++) {
+    var hasYear = dims[i].values.some(function(v) { return /^\d{4}$/.test(v.id); });
+    if (hasYear) return i;
   }
+  return -1;
 }
 
 function parseSdmxJson(json, label) {
-  dumpStructure(json, label);
-
   var countries = {};
   var dataYear = 0;
 
-  // Find the dataSets and structure objects wherever they are
-  var dataSets = null;
+  // Find dataSets and structure from wherever they are in the response
+  var dataSet = null;
   var structure = null;
 
-  if (json.data && json.data.dataSets && json.data.dataSets.length > 0) {
-    dataSets = json.data.dataSets[0];
-    structure = json.data.structure;
-  } else if (json.dataSets && json.dataSets.length > 0) {
-    dataSets = json.dataSets[0];
+  // OECD format: json.data.dataSets + json.data.structures (plural!)
+  if (json.data) {
+    if (json.data.dataSets && json.data.dataSets.length > 0) {
+      dataSet = json.data.dataSets[0];
+    }
+    // KEY FIX: structures (plural) not structure (singular)
+    if (json.data.structures && json.data.structures.length > 0) {
+      structure = json.data.structures[0];
+    }
+    if (json.data.structure) {
+      structure = json.data.structure;
+    }
+  }
+  // Older SDMX-JSON v1: root-level dataSets + structure
+  if (!dataSet && json.dataSets && json.dataSets.length > 0) {
+    dataSet = json.dataSets[0];
+  }
+  if (!structure && json.structure) {
     structure = json.structure;
   }
 
-  if (!dataSets || !structure) {
-    console.log('  [PARSE] No dataSets or structure found');
+  if (!dataSet) {
+    console.log('  [PARSE] ' + label + ': no dataSet found');
+    return { countries: {}, year: 0 };
+  }
+  if (!structure) {
+    console.log('  [PARSE] ' + label + ': no structure found');
     return { countries: {}, year: 0 };
   }
 
   var dims = structure.dimensions || {};
+  var countryNames = ['REF_AREA', 'LOCATION', 'COU', 'COUNTRY', 'CNTRY'];
+  var timeNames = ['TIME_PERIOD', 'TIME', 'PERIOD'];
 
   // ---- CASE A: Flat observations (dimensionAtObservation=AllDimensions) ----
-  if (dataSets.observations && Object.keys(dataSets.observations).length > 0) {
+  if (dataSet.observations && Object.keys(dataSet.observations).length > 0) {
     var obsDims = dims.observation || [];
 
-    // Find country and time dimension by trying multiple known names
-    var countryNames = ['REF_AREA', 'LOCATION', 'COU', 'COUNTRY', 'CNTRY'];
-    var timeNames = ['TIME_PERIOD', 'TIME', 'PERIOD'];
-
-    var refIdx = -1, timeIdx = -1;
-    obsDims.forEach(function(d, i) {
-      if (countryNames.indexOf(d.id) >= 0) refIdx = i;
-      if (timeNames.indexOf(d.id) >= 0) timeIdx = i;
-    });
-
-    if (refIdx < 0 || timeIdx < 0) {
-      console.log('  [PARSE] Flat obs: no country/time dim. Dims: ' + obsDims.map(function(d){return d.id;}).join(', '));
-      // Try to find by checking which dimension has ISO3 country codes as values
-      obsDims.forEach(function(d, i) {
-        if (refIdx >= 0) return;
-        var hasCountry = d.values.some(function(v) { return resolveCountryCode(v.id) !== null; });
-        if (hasCountry) { refIdx = i; console.log('  [PARSE] Found country dim by values: ' + d.id + ' at index ' + i); }
-      });
-      obsDims.forEach(function(d, i) {
-        if (timeIdx >= 0) return;
-        var hasYear = d.values.some(function(v) { return /^\d{4}$/.test(v.id); });
-        if (hasYear) { timeIdx = i; console.log('  [PARSE] Found time dim by values: ' + d.id + ' at index ' + i); }
-      });
-    }
+    var refIdx = findDimIndex(obsDims, countryNames);
+    var timeIdx = findDimIndex(obsDims, timeNames);
+    if (refIdx < 0) refIdx = findCountryDimByValues(obsDims);
+    if (timeIdx < 0) timeIdx = findTimeDimByValues(obsDims);
 
     if (refIdx >= 0 && timeIdx >= 0) {
       var refValues = obsDims[refIdx].values;
       var timeValues = obsDims[timeIdx].values;
 
-      Object.entries(dataSets.observations).forEach(function([key, valArr]) {
+      Object.entries(dataSet.observations).forEach(function([key, valArr]) {
         var parts = key.split(':');
         var refObj = refValues[parseInt(parts[refIdx])];
         var timeObj = timeValues[parseInt(parts[timeIdx])];
@@ -346,34 +328,24 @@ function parseSdmxJson(json, label) {
         }
       });
 
-      console.log('  [PARSE] Flat obs parsed: ' + Object.keys(countries).length + ' countries');
+      console.log('  [PARSE] ' + label + ' flat: ' + Object.keys(countries).length + ' countries');
+    } else {
+      console.log('  [PARSE] ' + label + ' flat: no country/time dim. Dims: ' + obsDims.map(function(d){return d.id;}).join(', '));
     }
   }
 
   // ---- CASE B: Series-based observations ----
-  if (Object.keys(countries).length === 0 && dataSets.series && Object.keys(dataSets.series).length > 0) {
+  if (Object.keys(countries).length === 0 && dataSet.series && Object.keys(dataSet.series).length > 0) {
     var seriesDims = dims.series || [];
     var obsDimsB = dims.observation || [];
 
-    var countryNames = ['REF_AREA', 'LOCATION', 'COU', 'COUNTRY', 'CNTRY'];
-    var countryDimIdx = -1;
-    seriesDims.forEach(function(d, i) {
-      if (countryNames.indexOf(d.id) >= 0) countryDimIdx = i;
-    });
-
-    // Fallback: find by checking values for ISO3 codes
-    if (countryDimIdx < 0) {
-      seriesDims.forEach(function(d, i) {
-        if (countryDimIdx >= 0) return;
-        var hasCountry = d.values.some(function(v) { return resolveCountryCode(v.id) !== null; });
-        if (hasCountry) { countryDimIdx = i; console.log('  [PARSE] Found country series dim by values: ' + d.id); }
-      });
-    }
+    var countryDimIdx = findDimIndex(seriesDims, countryNames);
+    if (countryDimIdx < 0) countryDimIdx = findCountryDimByValues(seriesDims);
 
     var timePeriods = obsDimsB.length > 0 ? obsDimsB[0].values : [];
 
     if (countryDimIdx >= 0) {
-      Object.entries(dataSets.series).forEach(function([seriesKey, sData]) {
+      Object.entries(dataSet.series).forEach(function([seriesKey, sData]) {
         var keyParts = seriesKey.split(':');
         var locObj = seriesDims[countryDimIdx].values[parseInt(keyParts[countryDimIdx])];
         if (!locObj) return;
@@ -397,9 +369,9 @@ function parseSdmxJson(json, label) {
         });
       });
 
-      console.log('  [PARSE] Series parsed: ' + Object.keys(countries).length + ' countries');
+      console.log('  [PARSE] ' + label + ' series: ' + Object.keys(countries).length + ' countries');
     } else {
-      console.log('  [PARSE] Series: could not find country dimension');
+      console.log('  [PARSE] ' + label + ' series: no country dim. Dims: ' + seriesDims.map(function(d){return d.id;}).join(', '));
     }
   }
 
@@ -409,7 +381,7 @@ function parseSdmxJson(json, label) {
 }
 
 // ============================================================
-// OECD FETCHER — tries URL with and without dimensionAtObservation
+// OECD FETCHER — uses Accept: application/vnd.sdmx.data+json
 // ============================================================
 async function fetchOECD(agency, dataflow, version, filterKey, label) {
   if (!label) label = dataflow;
@@ -419,6 +391,9 @@ async function fetchOECD(agency, dataflow, version, filterKey, label) {
     + agency + ',' + dataflow + ',' + version
     + '/' + filterKey;
 
+  // OECD SDMX API needs this Accept header for JSON
+  var accept = 'application/vnd.sdmx.data+json;version=2.0.0';
+
   var urls = [
     baseUrl + '?dimensionAtObservation=AllDimensions',
     baseUrl
@@ -426,8 +401,8 @@ async function fetchOECD(agency, dataflow, version, filterKey, label) {
 
   for (var i = 0; i < urls.length; i++) {
     try {
-      console.log('  [OECD] Try ' + (i+1) + ': ' + urls[i].substring(0, 180));
-      var raw = await get(urls[i]);
+      console.log('  [OECD] Try ' + (i+1) + ': ' + urls[i].substring(0, 200));
+      var raw = await httpGet(urls[i], accept);
       var json = JSON.parse(raw);
       var parsed = parseSdmxJson(json, label + ' try' + (i+1));
       if (Object.keys(parsed.countries).length > 0) {
@@ -446,45 +421,12 @@ async function fetchOECD(agency, dataflow, version, filterKey, label) {
 }
 
 // ============================================================
-// ILO FETCHER
-// ============================================================
-async function fetchILO(dataflowId, filterKey) {
-  console.log('  [ILO] ' + dataflowId + '...');
-
-  var base = 'https://sdmx.ilo.org/rest/data/' + dataflowId + '/' + filterKey;
-  var urls = [
-    base + '?startPeriod=2018&endPeriod=2025&dimensionAtObservation=AllDimensions',
-    base + '?startPeriod=2018&endPeriod=2025'
-  ];
-
-  for (var i = 0; i < urls.length; i++) {
-    try {
-      console.log('  [ILO] Try ' + (i+1) + ': ' + urls[i].substring(0, 180));
-      var raw = await get(urls[i]);
-      var json = JSON.parse(raw);
-      var parsed = parseSdmxJson(json, 'ILO try' + (i+1));
-      if (Object.keys(parsed.countries).length > 0) {
-        console.log('  [ILO] ' + dataflowId + ': ' + Object.keys(parsed.countries).length + ' countries, year ' + parsed.year);
-        await sleep(1000);
-        return parsed;
-      }
-    } catch (e) {
-      console.warn('  [ILO] Try ' + (i+1) + ' failed: ' + e.message.substring(0, 200));
-    }
-  }
-
-  console.log('  [ILO] ' + dataflowId + ': 0 countries, year 0');
-  await sleep(1000);
-  return { countries: {}, year: 0 };
-}
-
-// ============================================================
 // FETCH ALL INDICATORS
 // ============================================================
 async function fetchAll() {
   console.log('=== DATA COMPARISON MAP — Data Fetch ===');
   console.log('Run at: ' + new Date().toISOString());
-  console.log('Sources: Eurostat, World Bank, OECD, ILO');
+  console.log('Sources: Eurostat, World Bank, OECD');
   console.log('European countries: ' + EURO_A2.length + '\n');
 
   var OC = OECD_EUR;
@@ -519,7 +461,8 @@ async function fetchAll() {
   await sleep(1000);
 
   // 3. EARNINGS
-  // From friend's URL: dq=AUT+BEL+EST+FIN+FRA+DEU+GRC+IRL+ITA+LVA+LTU+LUX+NLD+PRT+SVK+SVN+ESP+HRV..EUR..Q..
+  // From friend's OECD URL: agency=OECD.ELS.SAE, df=DSD_EARNINGS@AV_AN_WAGE, v=1.0
+  // dq= AUT+BEL+EST+...EUR..Q..
   console.log('\n📊 Earnings');
   var earn_eu = await fetchEurostat('earn_nt_net', { estruct: 'SNG_NCHI', ecase: 'AW', currency: 'EUR' });
   var earn_wb = await fetchWorldBank('NY.GNP.PCAP.PP.CD');
@@ -539,7 +482,8 @@ async function fetchAll() {
   await sleep(1000);
 
   // 4. INTENTIONAL HOMICIDE
-  // From friend's URL: dq=A.CTRY.BEL+CZE+...HOMIC...CS_10P5PS
+  // From friend's OECD URL: agency=OECD.CFE.EDS, df=DSD_REG_SOC@DF_SAFETY, v=2.2
+  // dq= A.CTRY.BEL+CZE+...HOMIC...CS_10P5PS
   console.log('\n📊 Intentional Homicide');
   var hom_eu = await fetchEurostat('crim_off_cat', { iccs: 'ICCS0101', unit: 'P_HTHAB' });
   var hom_wb = await fetchWorldBank('VC.IHR.PSRC.P5');
@@ -611,7 +555,8 @@ async function fetchAll() {
   await sleep(1000);
 
   // 8. LIFE EXPECTANCY
-  // From friend's URL: dq=AUT+BEL+CZE+...A.LFEXP..Y0._T.......
+  // From friend's OECD URL: agency=OECD.ELS.HD, df=DSD_HEALTH_STAT@DF_LE, v=1.1
+  // dq= AUT+BEL+...A.LFEXP..Y0._T.......
   console.log('\n📊 Life Expectancy');
   var le_eu = await fetchEurostat('demo_mlexpec', { age: 'Y_LT1', sex: 'T' });
   var le_wb = await fetchWorldBank('SP.DYN.LE00.IN');
@@ -645,7 +590,8 @@ async function fetchAll() {
   await sleep(1000);
 
   // 10. GOVERNMENT DEBT
-  // From friend's URL: dq=A.BEL+CZE+...GGD.PT_B1GQ...
+  // From friend's OECD URL: agency=OECD.GOV.GIP, df=DSD_GOV@DF_GOV_PF_2025, v=1.0
+  // dq= A.BEL+CZE+...GGD.PT_B1GQ...
   console.log('\n📊 Government Debt');
   var debt_eu = await fetchEurostat('gov_10dd_edpt1', { na_item: 'GD', sector: 'S13', unit: 'PC_GDP' });
   var debt_wb = await fetchWorldBank('GC.DOD.TOTL.GD.ZS');
