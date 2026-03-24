@@ -13,7 +13,7 @@
 .app {
   max-width: 1840px;
   margin: 0 auto;
-  padding: 0 48px 20px;
+  padding: 0 128px 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
