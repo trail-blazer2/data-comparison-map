@@ -448,7 +448,7 @@ async function fetchILO(indicatorId, params) {
     }
 
     // Parse CSV header
-    var header = lines[0].replace(/"/g, '').split(',');
+    var header = lines[0].replace(/\uFEFF/g, '').replace(/"/g, '').split(',').map(function(h) { return h.trim(); });
     var refCol = header.indexOf('ref_area');
     var timeCol = header.indexOf('time');
     var valCol = header.indexOf('obs_value');
