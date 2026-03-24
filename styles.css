@@ -152,8 +152,13 @@
   border-radius: inherit;
   backdrop-filter: blur(16px) saturate(180%) brightness(1.06);
   -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.06);
-  filter: url(#glass-distortion);
   z-index: -1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass::before {
+    filter: url(#glass-distortion);
+  }
 }
 .glass::after {
   content: '';
