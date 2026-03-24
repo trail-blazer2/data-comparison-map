@@ -264,15 +264,25 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 5. MIGRATION
-  console.log('\n📊 Migration');
-  const mig_eu = await fetchEurostat('migr_imm1ctz', { citizen: 'TOTAL', age: 'TOTAL', sex: 'T' });
-  const mig_wb = await fetchWorldBank('SM.POP.NETM');
-  data.migration = {
-    label: 'Migration', unit: 'net persons',
+  // 5a. IMMIGRATION (total arrivals — Eurostat)
+  console.log('\n📊 Immigration');
+  const imm_eu = await fetchEurostat('migr_imm1ctz', { citizen: 'TOTAL', age: 'TOTAL', sex: 'T' });
+  data.immigration = {
+    label: 'Immigration', unit: 'persons',
     category: 'society',
     sources: {
-      eurostat: { label: 'Eurostat', ...mig_eu },
+      eurostat: { label: 'Eurostat', ...imm_eu }
+    }
+  };
+  await sleep(1000);
+
+  // 5b. NET MIGRATION (immigrants minus emigrants — World Bank)
+  console.log('\n📊 Net migration');
+  const mig_wb = await fetchWorldBank('SM.POP.NETM');
+  data.net_migration = {
+    label: 'Net migration', unit: 'net persons',
+    category: 'society',
+    sources: {
       world_bank_wdi: { label: 'World Bank (WDI)', ...mig_wb }
     }
   };
