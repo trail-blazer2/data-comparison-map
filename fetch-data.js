@@ -1,6 +1,7 @@
 // ============================================================
 // fetch-data.js — Run via GitHub Actions (manual trigger)
-// Fetches from Eurostat + World Bank APIs, outputs data.json
+// Fetches from Eurostat + World Bank + OECD + ILO APIs
+// Outputs data.json
 // ============================================================
 
 const fs = require('fs');
@@ -27,7 +28,7 @@ function get(url, maxRedirects = 5) {
       if (res.statusCode >= 400) {
         let body = '';
         res.on('data', c => body += c);
-        res.on('end', () => reject(new Error(`HTTP ${res.statusCode} for ${url}\n${body.substring(0, 300)}`)));
+        res.on('end', () => reject(new Error('HTTP ' + res.statusCode + ' for ' + url + '\n' + body.substring(0, 300))));
         return;
       }
       let data = '';
@@ -35,7 +36,7 @@ function get(url, maxRedirects = 5) {
       res.on('end', () => resolve(data));
     });
     req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout: ${url}`)); });
+    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout: ' + url)); });
   });
 }
 
@@ -78,18 +79,21 @@ Object.entries(A2_TO_A3).forEach(([a2, a3]) => { A3_TO_A2[a3] = a2; });
 const ESTAT_REMAP = { 'EL': 'GR', 'UK': 'GB' };
 const WB_CODES = Object.values(A2_TO_A3).join(';');
 
+// OECD uses ISO3 codes
+const OECD_A3_LIST = Object.values(A2_TO_A3);
+
 // ============================================================
 // WORLD BANK FETCHER
 // ============================================================
 async function fetchWorldBank(indicator) {
-  console.log(`  [WB] ${indicator}...`);
+  console.log('  [WB] ' + indicator + '...');
   const countries = {};
   let dataYear = 0;
 
   try {
     let page = 1, totalPages = 1;
     while (page <= totalPages && page <= 5) {
-      const url = `https://api.worldbank.org/v2/country/${WB_CODES}/indicator/${indicator}?date=2015:2025&format=json&per_page=500&page=${page}`;
+      const url = 'https://api.worldbank.org/v2/country/' + WB_CODES + '/indicator/' + indicator + '?date=2015:2025&format=json&per_page=500&page=' + page;
       const json = await getJSON(url);
       if (!json[1] || json[1].length === 0) break;
       totalPages = json[0].pages || 1;
@@ -101,7 +105,7 @@ async function fetchWorldBank(indicator) {
         if (!a2) return;
         const year = parseInt(entry.date);
         if (!countries[a2] || year > countries[a2].year) {
-          countries[a2] = { value: entry.value, year };
+          countries[a2] = { value: entry.value, year: year };
           if (year > dataYear) dataYear = year;
         }
       });
@@ -109,12 +113,12 @@ async function fetchWorldBank(indicator) {
       if (page <= totalPages) await sleep(300);
     }
   } catch (e) {
-    console.warn(`  [WB] FAILED ${indicator}: ${e.message}`);
+    console.warn('  [WB] FAILED ' + indicator + ': ' + e.message);
   }
 
   const result = {};
   Object.entries(countries).forEach(([a2, d]) => { result[a2] = Math.round(d.value * 100) / 100; });
-  console.log(`  [WB] ${indicator}: ${Object.keys(result).length} countries, year ${dataYear}`);
+  console.log('  [WB] ' + indicator + ': ' + Object.keys(result).length + ' countries, year ' + dataYear);
   await sleep(500);
   return { countries: result, year: dataYear };
 }
@@ -122,17 +126,18 @@ async function fetchWorldBank(indicator) {
 // ============================================================
 // EUROSTAT FETCHER
 // ============================================================
-async function fetchEurostat(datasetCode, filters = {}) {
-  console.log(`  [EU] ${datasetCode}...`);
+async function fetchEurostat(datasetCode, filters) {
+  if (!filters) filters = {};
+  console.log('  [EU] ' + datasetCode + '...');
 
-  let url = `https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/${datasetCode}?format=JSON&lang=EN`;
-  for (let y = 2025; y >= 2015; y--) url += `&time=${y}`;
-  Object.entries(filters).forEach(([key, val]) => { url += `&${key}=${val}`; });
+  var url = 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/' + datasetCode + '?format=JSON&lang=EN';
+  for (var y = 2025; y >= 2015; y--) url += '&time=' + y;
+  Object.entries(filters).forEach(([key, val]) => { url += '&' + key + '=' + val; });
 
   try {
     const json = await getJSON(url);
     if (!json.dimension || json.value === undefined) {
-      console.log(`  [EU] ${datasetCode}: Empty response`);
+      console.log('  [EU] ' + datasetCode + ': Empty response');
       return { countries: {}, year: 0 };
     }
 
@@ -142,7 +147,7 @@ async function fetchEurostat(datasetCode, filters = {}) {
     const timePos = dimOrder.indexOf('time');
 
     if (geoPos === -1 || timePos === -1) {
-      console.log(`  [EU] ${datasetCode}: Missing geo/time. Dims: [${dimOrder.join(', ')}]`);
+      console.log('  [EU] ' + datasetCode + ': Missing geo/time');
       return { countries: {}, year: 0 };
     }
 
@@ -151,7 +156,7 @@ async function fetchEurostat(datasetCode, filters = {}) {
 
     const strides = new Array(dimOrder.length);
     strides[dimOrder.length - 1] = 1;
-    for (let i = dimOrder.length - 2; i >= 0; i--) {
+    for (var i = dimOrder.length - 2; i >= 0; i--) {
       strides[i] = strides[i + 1] * dimSizes[i + 1];
     }
 
@@ -161,8 +166,7 @@ async function fetchEurostat(datasetCode, filters = {}) {
       fixedIndices[pos] = 0;
     });
 
-    const dimInfo = dimOrder.map((d, i) => `${d}(${dimSizes[i]})`).join(' × ');
-    console.log(`  [EU] ${datasetCode} dims: ${dimInfo}, values: ${Object.keys(json.value).length}`);
+    console.log('  [EU] ' + datasetCode + ': values=' + Object.keys(json.value).length);
 
     const countries = {};
     let dataYear = 0;
@@ -190,12 +194,198 @@ async function fetchEurostat(datasetCode, filters = {}) {
       }
     });
 
-    console.log(`  [EU] ${datasetCode}: ${Object.keys(countries).length} countries, year ${dataYear}`);
-    return { countries, year: dataYear };
+    console.log('  [EU] ' + datasetCode + ': ' + Object.keys(countries).length + ' countries, year ' + dataYear);
+    return { countries: countries, year: dataYear };
   } catch (e) {
-    console.warn(`  [EU] FAILED ${datasetCode}: ${e.message}`);
+    console.warn('  [EU] FAILED ' + datasetCode + ': ' + e.message);
     return { countries: {}, year: 0 };
   }
+}
+
+// ============================================================
+// OECD FETCHER (SDMX REST API v2)
+// ============================================================
+async function fetchOECD(dataflowId, filterKey) {
+  if (!filterKey) filterKey = '.';
+  console.log('  [OECD] ' + dataflowId + '...');
+
+  const countries = {};
+  let dataYear = 0;
+
+  try {
+    // Try the SDMX v2 endpoint
+    var url = 'https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,' + dataflowId + ',1.0/' + filterKey + '?startPeriod=2018&endPeriod=2025&dimensionAtObservation=AllDimensions';
+
+    const raw = await get(url);
+    const json = JSON.parse(raw);
+
+    // SDMX-JSON format: navigate structure
+    if (json.data && json.data.dataSets && json.data.dataSets.length > 0) {
+      const structure = json.data.structure;
+      const observations = json.data.dataSets[0].observations || {};
+      const dimensions = structure.dimensions.observation;
+
+      // Find the REF_AREA (country) and TIME_PERIOD dimension indices
+      let refAreaDimIdx = -1;
+      let timeDimIdx = -1;
+      dimensions.forEach((dim, idx) => {
+        if (dim.id === 'REF_AREA') refAreaDimIdx = idx;
+        if (dim.id === 'TIME_PERIOD') timeDimIdx = idx;
+      });
+
+      if (refAreaDimIdx >= 0 && timeDimIdx >= 0) {
+        const refAreaValues = dimensions[refAreaDimIdx].values;
+        const timeValues = dimensions[timeDimIdx].values;
+
+        Object.entries(observations).forEach(([key, valArr]) => {
+          const indices = key.split(':');
+          const countryCode = refAreaValues[parseInt(indices[refAreaDimIdx])];
+          const timeCode = timeValues[parseInt(indices[timeDimIdx])];
+          if (!countryCode || !timeCode) return;
+
+          const a3 = countryCode.id;
+          const a2 = A3_TO_A2[a3];
+          if (!a2) return;
+
+          const year = parseInt(timeCode.id);
+          const val = valArr[0];
+          if (val === null || val === undefined) return;
+
+          if (!countries[a2] || year > countries[a2].year) {
+            countries[a2] = { value: val, year: year };
+            if (year > dataYear) dataYear = year;
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('  [OECD] FAILED ' + dataflowId + ': ' + e.message);
+
+    // Fallback: try the older stats.oecd.org endpoint
+    try {
+      console.log('  [OECD] Trying legacy endpoint...');
+      var legacyUrl = 'https://stats.oecd.org/SDMX-JSON/data/' + dataflowId + '/' + filterKey + '/all?startTime=2018&endTime=2025';
+      const raw2 = await get(legacyUrl);
+      const json2 = JSON.parse(raw2);
+
+      if (json2.dataSets && json2.dataSets[0] && json2.structure) {
+        const series = json2.dataSets[0].series || {};
+        const dims = json2.structure.dimensions.series;
+        const timeDims = json2.structure.dimensions.observation;
+
+        let refIdx = -1;
+        dims.forEach((d, i) => {
+          if (d.id === 'LOCATION' || d.id === 'REF_AREA' || d.id === 'COU') refIdx = i;
+        });
+
+        const timePeriods = timeDims[0] ? timeDims[0].values : [];
+
+        Object.entries(series).forEach(([seriesKey, seriesData]) => {
+          const keyParts = seriesKey.split(':');
+          if (refIdx < 0 || !keyParts[refIdx]) return;
+
+          const locCode = dims[refIdx].values[parseInt(keyParts[refIdx])];
+          if (!locCode) return;
+          const a3 = locCode.id;
+          const a2 = A3_TO_A2[a3];
+          if (!a2) return;
+
+          const obs = seriesData.observations || {};
+          Object.entries(obs).forEach(([timeIdx, valArr]) => {
+            const tp = timePeriods[parseInt(timeIdx)];
+            if (!tp) return;
+            const year = parseInt(tp.id);
+            const val = valArr[0];
+            if (val === null || val === undefined) return;
+
+            if (!countries[a2] || year > countries[a2].year) {
+              countries[a2] = { value: val, year: year };
+              if (year > dataYear) dataYear = year;
+            }
+          });
+        });
+      }
+    } catch (e2) {
+      console.warn('  [OECD] Legacy also FAILED: ' + e2.message);
+    }
+  }
+
+  const result = {};
+  Object.entries(countries).forEach(([a2, d]) => {
+    result[a2] = Math.round(d.value * 100) / 100;
+  });
+  console.log('  [OECD] ' + dataflowId + ': ' + Object.keys(result).length + ' countries, year ' + dataYear);
+  await sleep(1000);
+  return { countries: result, year: dataYear };
+}
+
+// ============================================================
+// ILO/ILOSTAT FETCHER (for YouthSTATS)
+// ============================================================
+async function fetchILO(indicator, filters) {
+  if (!filters) filters = '';
+  console.log('  [ILO] ' + indicator + '...');
+
+  const countries = {};
+  let dataYear = 0;
+
+  try {
+    var url = 'https://www.ilo.org/ilostat-files/WEB_bulk_download/indicator/' + indicator + '.csv.gz';
+
+    // ILO bulk is CSV/gzip — too heavy. Use the SDMX REST API instead.
+    var sdmxUrl = 'https://www.ilo.org/sdmx/rest/data/ILO,DF_' + indicator + '/' + (filters || '.') + '?startPeriod=2018&endPeriod=2025&format=jsondata';
+
+    const raw = await get(sdmxUrl);
+    const json = JSON.parse(raw);
+
+    if (json.data && json.data.dataSets && json.data.dataSets[0]) {
+      const structure = json.data.structure;
+      const dims = structure.dimensions.observation || [];
+      const observations = json.data.dataSets[0].observations || {};
+
+      let refAreaIdx = -1;
+      let timeIdx = -1;
+      dims.forEach((d, i) => {
+        if (d.id === 'REF_AREA') refAreaIdx = i;
+        if (d.id === 'TIME_PERIOD') timeIdx = i;
+      });
+
+      if (refAreaIdx >= 0 && timeIdx >= 0) {
+        const refValues = dims[refAreaIdx].values;
+        const timeValues = dims[timeIdx].values;
+
+        Object.entries(observations).forEach(([key, valArr]) => {
+          const parts = key.split(':');
+          var refObj = refValues[parseInt(parts[refAreaIdx])];
+          var timeObj = timeValues[parseInt(parts[timeIdx])];
+          if (!refObj || !timeObj) return;
+
+          var code = refObj.id;
+          var a2 = A3_TO_A2[code] || (EURO_SET.has(code) ? code : null);
+          if (!a2) return;
+
+          var year = parseInt(timeObj.id);
+          var val = valArr[0];
+          if (val === null || val === undefined) return;
+
+          if (!countries[a2] || year > countries[a2].year) {
+            countries[a2] = { value: val, year: year };
+            if (year > dataYear) dataYear = year;
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('  [ILO] FAILED ' + indicator + ': ' + e.message);
+  }
+
+  const result = {};
+  Object.entries(countries).forEach(([a2, d]) => {
+    result[a2] = Math.round(d.value * 100) / 100;
+  });
+  console.log('  [ILO] ' + indicator + ': ' + Object.keys(result).length + ' countries, year ' + dataYear);
+  await sleep(1000);
+  return { countries: result, year: dataYear };
 }
 
 // ============================================================
@@ -203,8 +393,9 @@ async function fetchEurostat(datasetCode, filters = {}) {
 // ============================================================
 async function fetchAll() {
   console.log('=== DATA COMPARISON MAP — Data Fetch ===');
-  console.log(`Run at: ${new Date().toISOString()}`);
-  console.log(`European countries: ${EURO_A2.length}\n`);
+  console.log('Run at: ' + new Date().toISOString());
+  console.log('Sources: Eurostat, World Bank, OECD, ILO');
+  console.log('European countries: ' + EURO_A2.length + '\n');
 
   const data = {};
 
@@ -212,39 +403,47 @@ async function fetchAll() {
   console.log('\n📊 Unemployment rate - Total');
   const unemp_eu = await fetchEurostat('une_rt_a', { age: 'Y15-74', sex: 'T', unit: 'PC_ACT' });
   const unemp_wb = await fetchWorldBank('SL.UEM.TOTL.ZS');
+  const unemp_oecd = await fetchOECD('DSD_LFS@DF_IALFS_UNE_M', 'AUT+BEL+BGR+HRV+CYP+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ITA+LVA+LTU+LUX+MLT+NLD+NOR+POL+PRT+ROU+SVK+SVN+ESP+SWE+CHE+GBR.UNE..Y15T74.M+F._T.A');
   data.unemployment_total = {
     label: 'Unemployment rate - Total', unit: '%',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...unemp_eu },
+      oecd: { label: 'OECD', ...unemp_oecd },
       world_bank_wdi: { label: 'World Bank (WDI)', ...unemp_wb }
     }
   };
   await sleep(1000);
 
-  // 2. UNEMPLOYMENT YOUTH — FIX: Y15-24 instead of Y_LT25
+  // 2. UNEMPLOYMENT YOUTH
   console.log('\n📊 Unemployment rate - Youth');
   const uy_eu = await fetchEurostat('une_rt_a', { age: 'Y15-24', sex: 'T', unit: 'PC_ACT' });
   const uy_wb = await fetchWorldBank('SL.UEM.1524.ZS');
+  const uy_oecd = await fetchOECD('DSD_LFS@DF_IALFS_UNE_M', 'AUT+BEL+BGR+HRV+CYP+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ITA+LVA+LTU+LUX+MLT+NLD+NOR+POL+PRT+ROU+SVK+SVN+ESP+SWE+CHE+GBR.UNE..Y15T24.M+F._T.A');
+  const uy_ilo = await fetchILO('UNE_DEAP_SEX_AGE_RT', '..SEX_T.AGE_YTHADULT_Y15-24');
   data.unemployment_youth = {
     label: 'Unemployment rate - Youth', unit: '%',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...uy_eu },
+      oecd: { label: 'OECD', ...uy_oecd },
+      youthstats: { label: 'YouthSTATS (ILO)', ...uy_ilo },
       world_bank_wdi: { label: 'World Bank (WDI)', ...uy_wb }
     }
   };
   await sleep(1000);
 
-  // 3. EARNINGS — FIX: use earn_nt_net for Eurostat
+  // 3. EARNINGS
   console.log('\n📊 Earnings');
   const earn_eu = await fetchEurostat('earn_nt_net', { estruct: 'SNG_NCHI', ecase: 'AW', currency: 'EUR' });
   const earn_wb = await fetchWorldBank('NY.GNP.PCAP.PP.CD');
+  const earn_oecd = await fetchOECD('DSD_ANA@DF_AV_AN_WAGE', '.');
   data.earnings = {
     label: 'Earnings', unit: 'USD/capita',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...earn_eu },
+      oecd: { label: 'OECD', ...earn_oecd },
       world_bank_wdi: { label: 'World Bank (WDI)', ...earn_wb }
     }
   };
@@ -264,7 +463,7 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 5a. IMMIGRATION (total arrivals — Eurostat)
+  // 5a. IMMIGRATION
   console.log('\n📊 Immigration');
   const imm_eu = await fetchEurostat('migr_imm1ctz', { citizen: 'TOTAL', age: 'TOTAL', sex: 'T' });
   data.immigration = {
@@ -276,7 +475,7 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 5b. NET MIGRATION (immigrants minus emigrants — World Bank)
+  // 5b. NET MIGRATION
   console.log('\n📊 Net migration');
   const mig_wb = await fetchWorldBank('SM.POP.NETM');
   data.net_migration = {
@@ -288,15 +487,17 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 6. INFLATION — FIX: no freq, use unit=RCH_A_AVG
+  // 6. INFLATION
   console.log('\n📊 Inflation');
   const inf_eu = await fetchEurostat('prc_hicp_aind', { coicop: 'CP00', unit: 'RCH_A_AVG' });
   const inf_wb = await fetchWorldBank('FP.CPI.TOTL.ZG');
+  const inf_oecd = await fetchOECD('DSD_PRICES@DF_PRICES_ALL', '.');
   data.inflation = {
     label: 'Inflation', unit: '%',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...inf_eu },
+      oecd: { label: 'OECD', ...inf_oecd },
       world_bank_wdi: { label: 'World Bank (WDI)', ...inf_wb }
     }
   };
@@ -348,11 +549,13 @@ async function fetchAll() {
   console.log('\n📊 Government Debt');
   const debt_eu = await fetchEurostat('gov_10dd_edpt1', { na_item: 'GD', sector: 'S13', unit: 'PC_GDP' });
   const debt_wb = await fetchWorldBank('GC.DOD.TOTL.GD.ZS');
+  const debt_oecd = await fetchOECD('DSD_GOV@DF_GOV_PF', '.');
   data.government_debt = {
     label: 'Government Debt', unit: '% of GDP',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...debt_eu },
+      oecd: { label: 'OECD', ...debt_oecd },
       world_bank: { label: 'World Bank', ...debt_wb }
     }
   };
@@ -372,7 +575,7 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 12. EDUCATION SPENDING — FIX: remove invalid sector filter
+  // 12. EDUCATION SPENDING
   console.log('\n📊 Education spending');
   const edu_eu = await fetchEurostat('educ_uoe_fine09', { isced11: 'ED0-8', unit: 'PC_GDP' });
   const edu_wb = await fetchWorldBank('SE.XPD.TOTL.GD.ZS');
@@ -412,7 +615,7 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // 15. POVERTY RATE — FIX: remove invalid hhtyp filter
+  // 15. POVERTY RATE
   console.log('\n📊 Poverty rate');
   const pov_eu = await fetchEurostat('ilc_li02', { indic_il: 'LI_R_MD60', unit: 'PC' });
   const pov_wb = await fetchWorldBank('SI.POV.NAHC');
@@ -510,11 +713,12 @@ async function fetchAll() {
       lastUpdated: new Date().toISOString(),
       generatedBy: 'fetch-data.js via GitHub Actions',
       indicatorCount: Object.keys(data).length,
+      sources: ['Eurostat', 'World Bank', 'OECD', 'ILO/YouthSTATS'],
       categories: {
-        economy: '💰 Economy',
-        demographics: '👥 Demographics',
-        society: '🏛️ Society',
-        public_services: '📋 Public Services'
+        economy: 'Economy',
+        demographics: 'Demographics',
+        society: 'Society',
+        public_services: 'Public Services'
       }
     },
     ...data
@@ -532,7 +736,7 @@ async function fetchAll() {
   let total = 0, empty = 0, low = 0, ok = 0;
 
   Object.entries(data).forEach(([key, dt]) => {
-    console.log(`\n  ${dt.label} (${dt.unit}):`);
+    console.log('\n  ' + dt.label + ' (' + dt.unit + '):');
     Object.entries(dt.sources).forEach(([sk, src]) => {
       total++;
       const n = Object.keys(src.countries).length;
@@ -540,18 +744,18 @@ async function fetchAll() {
       if (n === 0) { icon = '❌ EMPTY'; empty++; }
       else if (n < 10) { icon = '⚠️  LOW '; low++; }
       else { icon = '✅     '; ok++; }
-      console.log(`    ${icon} ${src.label}: ${n} countries (year: ${src.year})`);
+      console.log('    ' + icon + ' ' + src.label + ': ' + n + ' countries (year: ' + src.year + ')');
     });
   });
 
-  console.log(`\n${'='.repeat(70)}`);
-  console.log(`  Indicators: ${Object.keys(data).length}`);
-  console.log(`  Total sources: ${total} | ✅ OK: ${ok} | ⚠️ Low: ${low} | ❌ Empty: ${empty}`);
-  console.log(`  Output: data.json (${(fs.statSync('data.json').size / 1024).toFixed(1)} KB)`);
+  console.log('\n' + '='.repeat(70));
+  console.log('  Indicators: ' + Object.keys(data).length);
+  console.log('  Total sources: ' + total + ' | OK: ' + ok + ' | Low: ' + low + ' | Empty: ' + empty);
+  console.log('  Output: data.json (' + (fs.statSync('data.json').size / 1024).toFixed(1) + ' KB)');
   console.log('='.repeat(70));
 }
 
 fetchAll().catch(e => {
-  console.error('\n💥 Fatal error:', e);
+  console.error('\n Fatal error:', e);
   process.exit(1);
 });
