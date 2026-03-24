@@ -474,7 +474,13 @@
     -webkit-backdrop-filter: none;
     filter: none;
     background: rgb(255 255 255 / 65%);
-  }
+   }
+   .nav-link {
+    font-size: 0.7rem;
+   }
+   .nav-logo-icon img {
+    max-width: 140px;
+   }
 }
 @media (max-width: 480px) {
   .cat-tabs { grid-template-columns: 1fr; }
