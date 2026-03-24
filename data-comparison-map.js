@@ -28,31 +28,25 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
-// SVG icon paths (solid, clean)
 const CATEGORY_META = {
   economy: {
     label: 'Economy',
-    // Coins/chart icon
     icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>'
   },
   demographics: {
     label: 'Demographics',
-    // People icon
     icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>'
   },
   society: {
     label: 'Society',
-    // Shield / institution icon
     icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>'
   },
   public_services: {
     label: 'Services',
-    // Clipboard / services icon
     icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>'
   }
 };
 
-// ===== Navy Blue color scale =====
 function getColor(t) {
   const c = [
     [200, 214, 229],
@@ -94,22 +88,20 @@ function loadScript(url) {
 }
 
 // ===== Animated number counter =====
-function animateValue(el, startVal, endVal, unit, duration = 350) {
-  if (startVal === endVal) return;
+function animateValue(el, startVal, endVal, unit, duration = 300) {
+  if (startVal === endVal) { el.textContent = fmt(endVal, unit); return; }
   if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
-  if (startVal == null || isNaN(startVal)) startVal = 0;
+  if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit); return; }
 
   const startTime = performance.now();
-
   function tick(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
     const ease = 1 - Math.pow(1 - progress, 3);
     const current = startVal + (endVal - startVal) * ease;
     el.textContent = fmt(current, unit);
     if (progress < 1) requestAnimationFrame(tick);
-    else el.textContent = fmt(endVal, unit); // Snap to exact final
+    else el.textContent = fmt(endVal, unit);
   }
   requestAnimationFrame(tick);
 }
@@ -125,7 +117,9 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
-    this._lastTtVal = null; // Track last tooltip value for animation
+    // Animation tracking — scoped per data type
+    this._lastTtVal = null;
+    this._lastTtDataType = null;
   }
 
   connectedCallback() {
@@ -143,8 +137,8 @@ class DataComparisonMap extends HTMLElement {
       const src = scripts[scripts.length - 1].src;
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
+    this._baseUrl = baseUrl;
 
-    // Load external CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = baseUrl + 'styles.css';
@@ -172,6 +166,10 @@ class DataComparisonMap extends HTMLElement {
       const d = new Date(dataRaw._meta.lastUpdated);
       this.$('#lastUpdated').textContent = `Data updated: ${d.toLocaleDateString()}`;
     }
+
+    // Set logo — loads from same directory as JS/data
+    const logoEl = this.$('#navLogo');
+    if (logoEl) logoEl.src = baseUrl + 'logo.png';
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
     this.geoFeatures = all.features.filter(f =>
@@ -226,7 +224,6 @@ class DataComparisonMap extends HTMLElement {
     return [];
   }
 
-  // ===== CATEGORIES =====
   buildCategoryButtons() {
     const c = this.$('#catBtns');
     c.innerHTML = '';
@@ -249,11 +246,13 @@ class DataComparisonMap extends HTMLElement {
     this.currentCategory = catKey;
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
     this.buildDataTypeButtons(catKey);
+    // Reset animation tracking when category changes
+    this._lastTtVal = null;
+    this._lastTtDataType = null;
     const first = this.categories[catKey]?.[0];
     if (first) this.selectDataType(first);
   }
 
-  // ===== DATA TYPES =====
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
     c.innerHTML = '';
@@ -275,7 +274,6 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ===== SOURCES =====
   buildSourceButtons(dtKey) {
     const c = this.$('#srcBtns');
     c.innerHTML = '';
@@ -310,6 +308,11 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     this.buildSourceButtons(k);
+
+    // Reset animation when data type changes
+    this._lastTtVal = null;
+    this._lastTtDataType = k;
+
     const dt = this.DATA[k];
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
     if (firstOk) {
@@ -329,6 +332,8 @@ class DataComparisonMap extends HTMLElement {
     this.$$('#srcBtns .btn').forEach(b => {
       if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
+    // Keep animation alive within same data type (different sources is fine)
+    // Don't reset _lastTtVal here — same unit, comparable numbers
     this.paint();
   }
 
@@ -362,7 +367,7 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ===== TOOLTIP with animated number =====
+  // ===== TOOLTIP — number animation scoped to same data type =====
   ttShow(e) {
     const dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
@@ -374,16 +379,20 @@ class DataComparisonMap extends HTMLElement {
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = `${src?.label || '—'} · ${src?.year || '—'}`;
 
-    // Animate the number transition
-    const oldVal = this._lastTtVal;
     const valEl = this.$('#ttVal');
+    const oldVal = this._lastTtVal;
+    const sameDataType = this._lastTtDataType === this.currentDataType;
 
-    if (newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
+    // Only animate if we're within the same data type
+    // (same unit, comparable numbers — e.g. switching countries or sources)
+    if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
       animateValue(valEl, oldVal, newVal, dt.unit, 300);
     } else {
       valEl.textContent = fmt(newVal, dt.unit);
     }
+
     this._lastTtVal = newVal;
+    this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
     this.$('#tt').classList.add('visible');
@@ -397,7 +406,6 @@ class DataComparisonMap extends HTMLElement {
 
   ttHide() {
     this.$('#tt').classList.remove('visible');
-    // Don't reset _lastTtVal here so next hover animates from last value
   }
 
   checkDiscrepancy(code) {
@@ -422,7 +430,6 @@ class DataComparisonMap extends HTMLElement {
 
   html() {
     return `
-<!-- SVG Filter for Liquid Glass -->
 <svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden">
   <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
     <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
@@ -441,13 +448,10 @@ class DataComparisonMap extends HTMLElement {
 </svg>
 
 <div class="app">
-  <!-- TOP NAVIGATION BAR -->
   <nav class="top-nav">
     <div class="nav-logo">
       <div class="nav-logo-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
+        <img id="navLogo" src="" alt="Logo" style="width:28px;height:28px;object-fit:contain;border-radius:4px;" />
       </div>
       <div class="nav-logo-text">
         <span class="nav-logo-title">DataMap Europe</span>
@@ -460,13 +464,11 @@ class DataComparisonMap extends HTMLElement {
     </div>
   </nav>
 
-  <!-- LOADER -->
   <div id="initLoader" class="init-loader">
     <div class="orbit"></div>
     <span>Loading map & data…</span>
   </div>
 
-  <!-- MAIN CONTENT -->
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel glass">
       <div class="title-row">
