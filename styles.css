@@ -141,11 +141,6 @@
     filter: url(#glass-distortion);
   }
 }
-@media (max-width: 1024px) {
-  .glass::before {
-    filter: none !important;
-  }
-}
 .glass::after {
   content: '';
   position: absolute;
@@ -159,31 +154,17 @@
 }
 .glass > * { position: relative; z-index: 2; }
 
-/* ===== MAP PANEL — clean, no blur ===== */
+/* ===== MAP PANEL — standalone, no glass, no blur ===== */
 .map-panel {
+  position: relative;
   padding: 24px 24px 16px;
-  background: rgb(255 255 255 / 28%);
   border-radius: 24px;
+  background: rgb(255 255 255 / 32%);
+  border: 1.5px solid rgb(255 255 255 / 40%);
   box-shadow:
     0 8px 32px rgb(0 0 0 / 6%),
-    0 0 24px rgb(0 0 0 / 3%);
-  border: 1px solid rgb(255 255 255 / 35%);
-}
-
-/* Override glass pseudo-elements on map panel — no blur, no distortion */
-.map-panel::before {
-  display: none !important;
-}
-.map-panel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow:
     inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 40%),
     inset -1px -1px 1px 1px rgb(255 255 255 / 20%);
-  pointer-events: none;
-  z-index: 3;
 }
 
 
