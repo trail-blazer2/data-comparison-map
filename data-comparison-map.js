@@ -136,16 +136,20 @@ class DataComparisonMap extends HTMLElement {
     this.shadowRoot.prepend(link);
     await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
+    // Cache-bust data.json to avoid stale data
+    const cacheBust = '?v=' + Date.now();
     const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
-      fetch(baseUrl + 'data.json').then(r => r.json()),
+      fetch(baseUrl + 'data.json' + cacheBust).then(r => r.json()),
       fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
 
+    // Parse all data types (skip _meta)
     Object.entries(dataRaw).forEach(([k, v]) => {
       if (k !== '_meta') this.DATA[k] = v;
     });
 
+    // Build category → data-type-key mapping
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
       const cat = dt.category || 'other';
@@ -153,12 +157,17 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
 
+    // Debug: log what we loaded
+    console.log('[DataMap] Loaded', Object.keys(this.DATA).length, 'indicators');
+    Object.entries(this.categories).forEach(([cat, keys]) => {
+      console.log(`  ${cat}: ${keys.join(', ')}`);
+    });
+
     if (dataRaw._meta?.lastUpdated) {
       const d = new Date(dataRaw._meta.lastUpdated);
       this.$('#lastUpdated').textContent = `Data updated: ${d.toLocaleDateString()}`;
     }
 
-    // Logo — use baseUrl so it resolves correctly in Shadow DOM
     const logoEl = this.$('#navLogo');
     if (logoEl) logoEl.src = baseUrl + 'logo.png';
 
@@ -215,8 +224,7 @@ class DataComparisonMap extends HTMLElement {
     return [];
   }
 
-  // ===== SLIDING INDICATOR helper =====
-  // Moves a `.slider` div to cover the active button's position
+  // ===== SLIDING INDICATOR =====
   moveSlider(container, activeBtn) {
     let slider = container.querySelector('.slider');
     if (!slider) {
@@ -230,11 +238,10 @@ class DataComparisonMap extends HTMLElement {
       return;
     }
 
-    // Calculate position relative to container
-    const containerRect = container.getBoundingClientRect();
-    const btnRect = activeBtn.getBoundingClientRect();
-    const top = btnRect.top - containerRect.top + container.scrollTop;
-    const height = btnRect.height;
+    // Use offsetTop/offsetHeight for reliable positioning within the container
+    // getBoundingClientRect can be unreliable when the container is scrollable
+    const top = activeBtn.offsetTop;
+    const height = activeBtn.offsetHeight;
 
     slider.style.top = top + 'px';
     slider.style.height = height + 'px';
@@ -273,18 +280,17 @@ class DataComparisonMap extends HTMLElement {
   // ===== DATA TYPES =====
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns');
-    // Remove old slider
-    const oldSlider = c.querySelector('.slider');
-    if (oldSlider) oldSlider.remove();
-
     c.innerHTML = '';
-    // Add fresh slider
+
+    // Create slider element first
     const slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
 
-    (this.categories[catKey] || []).forEach(key => {
+    const keys = this.categories[catKey] || [];
+    keys.forEach(key => {
       const dt = this.DATA[key];
+      if (!dt) return; // safety check
       const b = document.createElement('button');
       b.className = 'btn';
       b.dataset.key = key;
@@ -311,6 +317,8 @@ class DataComparisonMap extends HTMLElement {
     c.appendChild(slider);
 
     const dt = this.DATA[dtKey];
+    if (!dt) return;
+
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
       const isEmpty = count === 0;
@@ -341,17 +349,22 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
 
-    // Move the data-type slider
+    // Slider — use double-rAF to ensure layout is fully settled
     const dtContainer = this.$('#dtBtns');
     const activeBtn = dtContainer.querySelector(`.btn[data-key="${k}"]`);
-    // Defer so layout has settled
-    requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.moveSlider(dtContainer, activeBtn);
+      });
+    });
 
     this._lastTtVal = null;
     this._lastTtDataType = k;
 
     this.buildSourceButtons(k);
     const dt = this.DATA[k];
+    if (!dt) return;
+
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
     if (firstOk) {
       this.selectSource(firstOk[0]);
@@ -371,16 +384,20 @@ class DataComparisonMap extends HTMLElement {
       if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
 
-    // Move the source slider
     const srcContainer = this.$('#srcBtns');
-    const activeBtn = srcContainer.querySelector(`.btn.active`);
-    requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
+    const activeBtn = srcContainer.querySelector('.btn.active');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.moveSlider(srcContainer, activeBtn);
+      });
+    });
 
     this.paint();
   }
 
   paint() {
     const dt = this.DATA[this.currentDataType];
+    if (!dt) return;
     const src = dt.sources[this.currentSource];
     if (!src) return;
     this.$('#mapTitle').textContent = dt.label;
@@ -449,6 +466,7 @@ class DataComparisonMap extends HTMLElement {
 
   checkDiscrepancy(code) {
     const dt = this.DATA[this.currentDataType];
+    if (!dt) return;
     const vals = [];
     Object.values(dt.sources).forEach(s => {
       if (s.countries[code] != null) vals.push(s.countries[code]);
