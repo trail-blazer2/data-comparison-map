@@ -497,7 +497,7 @@
     font-size: 0.7rem;
    }
    .nav-logo-icon img {
-    max-width: 140px;
+    max-width: 100px;
    }
 }
 @media (max-width: 480px) {
