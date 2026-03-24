@@ -127,6 +127,7 @@
     0 0 24px rgb(0 0 0 / 4%);
   overflow: visible;
 }
+
 .glass::before {
   content: '';
   position: absolute;
@@ -135,12 +136,29 @@
   backdrop-filter: blur(16px) saturate(180%) brightness(1.06);
   -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.06);
   z-index: -1;
+  /* No filter here — never. Only added via media query below. */
 }
+
+/* Desktop only: add the liquid glass SVG distortion.
+   Using two conditions to be extra safe:
+   - hover:hover = device has a hover capability (not touch-primary)
+   - pointer:fine = device has precise pointer (mouse, not finger)
+   Both must be true. This excludes all phones and tablets. */
 @media (hover: hover) and (pointer: fine) {
   .glass::before {
     filter: url(#glass-distortion);
   }
 }
+
+/* Nuclear fallback: if the above media query leaks on any
+   mobile browser, this kills it. max-width 1024 covers
+   all phones and most tablets in both orientations. */
+@media (max-width: 1024px) {
+  .glass::before {
+    filter: none !important;
+  }
+}
+
 .glass::after {
   content: '';
   position: absolute;
