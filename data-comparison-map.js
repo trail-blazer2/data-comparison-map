@@ -812,7 +812,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" onclick="window.open('https://2003ivanmazurov.wixsite.com/my-site-3', '_blank');">About</button>
+      <button class="nav-link" onclick="window.open('https://2003ivanmazurov.wixsite.com/my-site-3/landing');">About</button>
       <button class="nav-link primary">Support us</button>
     </div>
   </nav>
