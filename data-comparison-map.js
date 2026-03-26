@@ -98,7 +98,6 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
-// Reliable desktop detection — has hover AND fine pointer (mouse)
 var IS_DESKTOP = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 // ============================================================
@@ -114,12 +113,9 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-
-    // Map pan/zoom state (desktop only)
     this._vb = { x: -30, y: -5, w: 590, h: 490 };
     this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
     this._drag = null;
-    this._zoomAnim = null;
   }
 
   connectedCallback() {
@@ -172,7 +168,6 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    // BLUR FIX: inject SVG filter only on desktop
     if (IS_DESKTOP) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
@@ -196,26 +191,35 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // MAP PAN & ZOOM — desktop only
+  // MAP PAN & ZOOM — desktop only, INSTANT (no animation)
   // ============================================================
   initMapPanZoom() {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     const self = this;
 
-    // Show hint
     var hint = this.$('#mapHint');
     if (hint) hint.style.display = 'block';
-
-    // Add desktop classes
     wrap.classList.add('pannable');
 
-    // --- Wheel zoom ---
+    // --- Instant wheel zoom ---
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      var factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
-      self.smoothZoom(factor, e);
+      var factor = e.deltaY > 0 ? 1.1 : 1 / 1.1;
+      var minW = 120, maxW = 1200;
+      var newW = self._vb.w * factor;
+      var newH = self._vb.h * factor;
+      if (newW < minW || newW > maxW) return;
+
+      var rect = svg.getBoundingClientRect();
+      var cx = (e.clientX - rect.left) / rect.width;
+      var cy = (e.clientY - rect.top) / rect.height;
+      self._vb.x += (self._vb.w - newW) * cx;
+      self._vb.y += (self._vb.h - newH) * cy;
+      self._vb.w = newW;
+      self._vb.h = newH;
+      self.applyViewBox();
     }, { passive: false });
 
     // --- Mouse drag pan ---
@@ -246,67 +250,9 @@ class DataComparisonMap extends HTMLElement {
     // --- Double click to reset ---
     wrap.addEventListener('dblclick', function(e) {
       e.preventDefault();
-      self.smoothResetZoom();
+      self._vb = Object.assign({}, self._vbDefault);
+      self.applyViewBox();
     });
-  }
-
-  smoothZoom(factor, mouseEvent) {
-    var self = this;
-    var svg = this.$('#mapSvg');
-    var minW = 120, maxW = 1200;
-    var targetW = this._vb.w * factor;
-    var targetH = this._vb.h * factor;
-    if (targetW < minW || targetW > maxW) return;
-
-    var cx = 0.5, cy = 0.5;
-    if (mouseEvent) {
-      var rect = svg.getBoundingClientRect();
-      cx = (mouseEvent.clientX - rect.left) / rect.width;
-      cy = (mouseEvent.clientY - rect.top) / rect.height;
-    }
-
-    var startVb = Object.assign({}, this._vb);
-    var endX = startVb.x + (startVb.w - targetW) * cx;
-    var endY = startVb.y + (startVb.h - targetH) * cy;
-
-    if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
-
-    var startTime = performance.now();
-    var duration = 160;
-
-    function tick(now) {
-      var t = Math.min((now - startTime) / duration, 1);
-      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      self._vb.x = startVb.x + (endX - startVb.x) * ease;
-      self._vb.y = startVb.y + (endY - startVb.y) * ease;
-      self._vb.w = startVb.w + (targetW - startVb.w) * ease;
-      self._vb.h = startVb.h + (targetH - startVb.h) * ease;
-      self.applyViewBox();
-      if (t < 1) self._zoomAnim = requestAnimationFrame(tick);
-      else self._zoomAnim = null;
-    }
-    this._zoomAnim = requestAnimationFrame(tick);
-  }
-
-  smoothResetZoom() {
-    var self = this;
-    var startVb = Object.assign({}, this._vb);
-    var endVb = Object.assign({}, this._vbDefault);
-    if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
-    var startTime = performance.now();
-    var duration = 300;
-    function tick(now) {
-      var t = Math.min((now - startTime) / duration, 1);
-      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      self._vb.x = startVb.x + (endVb.x - startVb.x) * ease;
-      self._vb.y = startVb.y + (endVb.y - startVb.y) * ease;
-      self._vb.w = startVb.w + (endVb.w - startVb.w) * ease;
-      self._vb.h = startVb.h + (endVb.h - startVb.h) * ease;
-      self.applyViewBox();
-      if (t < 1) self._zoomAnim = requestAnimationFrame(tick);
-      else self._zoomAnim = null;
-    }
-    this._zoomAnim = requestAnimationFrame(tick);
   }
 
   applyViewBox() {
@@ -317,14 +263,16 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // COLLAPSIBLE SECTIONS
+  // COLLAPSIBLE — Data Type only
   // ============================================================
   initCollapsibles() {
     var self = this;
     this.$$('.expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var section = btn.closest('.collapsible-section');
-        section.classList.toggle('expanded');
+        var isExpanded = section.classList.toggle('expanded');
+        var label = btn.querySelector('.expand-label');
+        if (label) label.textContent = isExpanded ? 'Show less' : 'Show more';
       });
     });
   }
@@ -451,7 +399,11 @@ class DataComparisonMap extends HTMLElement {
     });
 
     var section = c.closest('.collapsible-section');
-    if (section) section.classList.remove('expanded');
+    if (section) {
+      section.classList.remove('expanded');
+      var label = section.querySelector('.expand-label');
+      if (label) label.textContent = 'Show more';
+    }
   }
 
   buildSourceButtons(dtKey) {
@@ -477,9 +429,6 @@ class DataComparisonMap extends HTMLElement {
       }
       c.appendChild(b);
     });
-
-    var section = c.closest('.collapsible-section');
-    if (section) section.classList.remove('expanded');
   }
 
   selectDataType(k) {
@@ -657,14 +606,11 @@ class DataComparisonMap extends HTMLElement {
         <div class="collapsible-body">
           <div class="btn-group" id="dtBtns"></div>
         </div>
-        <button class="expand-btn"><span class="chevron"></span></button>
+        <button class="expand-btn"><span class="chevron"></span><span class="expand-label">Show more</span></button>
       </div>
-      <div class="collapsible-section">
+      <div>
         <div class="sec-title">Source</div>
-        <div class="collapsible-body">
-          <div class="btn-group" id="srcBtns"></div>
-        </div>
-        <button class="expand-btn"><span class="chevron"></span></button>
+        <div class="btn-group" id="srcBtns"></div>
       </div>
     </div>
   </div>
