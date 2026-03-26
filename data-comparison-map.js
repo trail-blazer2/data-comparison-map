@@ -28,6 +28,15 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
+// Nearby non-European countries to show greyed out around the map edges
+const NEARBY_NUMERIC = new Set([
+  '012','788','434','818','504','729','148','562','466',  // North Africa / Sahel
+  '792','268','051','031','364','368','400','760','422',  // Turkey, Caucasus, Middle East
+  '682','887','512','634',                                 // Arabian Peninsula
+  '643',                                                   // Russia
+  '398','795','860','417','762',                           // Central Asia
+]);
+
 const CATEGORY_META = {
   economy: {
     label: 'Economy',
@@ -109,12 +118,34 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
+    this.nearbyFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
+
+    // Pan & zoom state (desktop only)
+    this._zoom = 1;
+    this._panX = 0;
+    this._panY = 0;
+    this._isPanning = false;
+    this._panStartX = 0;
+    this._panStartY = 0;
+    this._panStartPanX = 0;
+    this._panStartPanY = 0;
+    this._animFrame = null;
+    this._isDesktop = false;
+
+    // Zoom limits
+    this._minZoom = 1;
+    this._maxZoom = 4;
+
+    // Pan bounds (in SVG units, will be computed relative to viewBox)
+    // These define how far the viewBox center can drift from the Europe center
+    this._boundsPadding = 60; // SVG units of allowed overshoot before elastic snap
   }
 
   connectedCallback() {
     this.shadowRoot.innerHTML = this.html();
+    this._isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     this.init();
   }
 
@@ -164,7 +195,7 @@ class DataComparisonMap extends HTMLElement {
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     // BLUR FIX: inject SVG filter only on desktop, after init
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    if (this._isDesktop) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
@@ -174,30 +205,88 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = all.features.filter(f =>
       EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'))
     );
+    this.nearbyFeatures = all.features.filter(f =>
+      NEARBY_NUMERIC.has(String(f.id).padStart(3, '0'))
+    );
 
     this.drawMap();
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
+    if (this._isDesktop) {
+      this.initZoomPan();
+    }
+
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
-    drawMap() {
+  // ===== PROJECTION HELPERS (shared) =====
+  _lonToX(lon) { return (lon + 25) * (540 / 75); }
+  _latToY(lat) {
+    const r = lat * Math.PI / 180;
+    const y = Math.log(Math.tan(Math.PI / 4 + r / 2));
+    const mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
+    const mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
+    return 470 - ((y - mn) / (mx - mn)) * 470;
+  }
+  _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
+
+  drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
-    const lonToX = lon => (lon + 25) * (540 / 75);
-    const latToY = lat => {
-      const r = lat * Math.PI / 180;
-      const y = Math.log(Math.tan(Math.PI / 4 + r / 2));
-      const mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
-      const mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
-      return 470 - ((y - mn) / (mx - mn)) * 470;
-    };
-    const proj = ([lon, lat]) => [lonToX(lon), latToY(lat)];
+    const proj = c => this._proj(c);
     const self = this;
 
+    // -- Draw nearby (non-European) countries first (behind) --
+    const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    nearbyGroup.setAttribute('class', 'nearby-group');
+    this.nearbyFeatures.forEach(f => {
+      this.geoPaths(f.geometry, proj).forEach(d => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.classList.add('cp-nearby');
+        nearbyGroup.appendChild(p);
+      });
+    });
+    svg.appendChild(nearbyGroup);
+
+    // "COMING SOON" watermark pattern (diagonal text)
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+      <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
+        <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.08)" letter-spacing="3">COMING SOON</text>
+      </pattern>
+    `;
+    svg.appendChild(defs);
+
+    // Overlay rect clipped to nearby countries for the watermark
+    // We create a clip path from all nearby country paths
+    const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+    clipPath.id = 'nearbyClip';
+    this.nearbyFeatures.forEach(f => {
+      this.geoPaths(f.geometry, proj).forEach(d => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        clipPath.appendChild(p);
+      });
+    });
+    defs.appendChild(clipPath);
+
+    const watermarkRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    watermarkRect.setAttribute('x', '-200');
+    watermarkRect.setAttribute('y', '-200');
+    watermarkRect.setAttribute('width', '1200');
+    watermarkRect.setAttribute('height', '1000');
+    watermarkRect.setAttribute('fill', 'url(#comingSoonPattern)');
+    watermarkRect.setAttribute('clip-path', 'url(#nearbyClip)');
+    watermarkRect.classList.add('watermark-overlay');
+    svg.appendChild(watermarkRect);
+
+    // -- Draw European countries on top --
+    const euroGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    euroGroup.setAttribute('class', 'euro-group');
     this.geoFeatures.forEach(f => {
       const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
       if (!a2) return;
@@ -216,19 +305,18 @@ class DataComparisonMap extends HTMLElement {
         // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
-          // Clear previous touched state
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
-          // Position tooltip at touch point
           var touch = e.touches[0];
           var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
           self.ttShow(fakeEvent);
           self.ttMove(fakeEvent);
         }, { passive: false });
 
-        svg.appendChild(p);
+        euroGroup.appendChild(p);
       });
     });
+    svg.appendChild(euroGroup);
 
     // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
@@ -237,6 +325,210 @@ class DataComparisonMap extends HTMLElement {
         self.ttHide();
       }
     });
+  }
+
+  // ===== ZOOM & PAN (desktop only) =====
+  initZoomPan() {
+    const svg = this.$('#mapSvg');
+    const wrap = this.$('.map-wrap');
+    if (!svg || !wrap) return;
+
+    // Store the original/default viewBox
+    this._origVB = { x: -30, y: -5, w: 590, h: 490 };
+    this._zoom = 1;
+    this._panX = 0;
+    this._panY = 0;
+    this._applyTransform();
+
+    // Wheel to zoom
+    wrap.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.12 : 0.12;
+      const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
+
+      // Zoom towards mouse position
+      const rect = svg.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) / rect.width;
+      const my = (e.clientY - rect.top) / rect.height;
+
+      const vb = this._getViewBox();
+      const svgX = vb.x + mx * vb.w;
+      const svgY = vb.y + my * vb.h;
+
+      // Adjust pan so the point under cursor stays fixed
+      const oldW = this._origVB.w / this._zoom;
+      const newW = this._origVB.w / newZoom;
+      const oldH = this._origVB.h / this._zoom;
+      const newH = this._origVB.h / newZoom;
+
+      this._panX += (oldW - newW) * mx;
+      this._panY += (oldH - newH) * my;
+      this._zoom = newZoom;
+
+      this._clampAndApply();
+    }, { passive: false });
+
+    // Mouse drag to pan
+    wrap.addEventListener('mousedown', (e) => {
+      // Only left button, and not on a country path (allow hover)
+      if (e.button !== 0) return;
+      this._isPanning = true;
+      this._panStartX = e.clientX;
+      this._panStartY = e.clientY;
+      this._panStartPanX = this._panX;
+      this._panStartPanY = this._panY;
+      wrap.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!this._isPanning) return;
+      const rect = svg.getBoundingClientRect();
+      const vb = this._getViewBox();
+      // Convert pixel delta to SVG units
+      const dx = (e.clientX - this._panStartX) * (vb.w / rect.width);
+      const dy = (e.clientY - this._panStartY) * (vb.h / rect.height);
+      this._panX = this._panStartPanX - dx;
+      this._panY = this._panStartPanY - dy;
+      this._applyTransform(); // allow slight overshoot during drag
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!this._isPanning) return;
+      this._isPanning = false;
+      wrap.style.cursor = '';
+      // Snap back if out of bounds
+      this._snapBack();
+    });
+
+    // Double-click to reset
+    wrap.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      this._animateTo(1, 0, 0);
+    });
+
+    // Zoom controls
+    const zoomIn = this.$('#zoomIn');
+    const zoomOut = this.$('#zoomOut');
+    const zoomReset = this.$('#zoomReset');
+    if (zoomIn) zoomIn.addEventListener('click', () => {
+      const newZoom = Math.min(this._maxZoom, this._zoom + 0.3);
+      // Zoom toward center
+      const oldW = this._origVB.w / this._zoom;
+      const newW = this._origVB.w / newZoom;
+      const oldH = this._origVB.h / this._zoom;
+      const newH = this._origVB.h / newZoom;
+      const targetPanX = this._panX + (oldW - newW) * 0.5;
+      const targetPanY = this._panY + (oldH - newH) * 0.5;
+      this._animateTo(newZoom, targetPanX, targetPanY);
+    });
+    if (zoomOut) zoomOut.addEventListener('click', () => {
+      const newZoom = Math.max(this._minZoom, this._zoom - 0.3);
+      const oldW = this._origVB.w / this._zoom;
+      const newW = this._origVB.w / newZoom;
+      const oldH = this._origVB.h / this._zoom;
+      const newH = this._origVB.h / newZoom;
+      const targetPanX = this._panX + (oldW - newW) * 0.5;
+      const targetPanY = this._panY + (oldH - newH) * 0.5;
+      this._animateTo(newZoom, targetPanX, targetPanY);
+    });
+    if (zoomReset) zoomReset.addEventListener('click', () => {
+      this._animateTo(1, 0, 0);
+    });
+  }
+
+  _getViewBox() {
+    const w = this._origVB.w / this._zoom;
+    const h = this._origVB.h / this._zoom;
+    const x = this._origVB.x + this._panX;
+    const y = this._origVB.y + this._panY;
+    return { x, y, w, h };
+  }
+
+  _applyTransform() {
+    const svg = this.$('#mapSvg');
+    if (!svg) return;
+    const vb = this._getViewBox();
+    svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
+  }
+
+  _getPanBounds() {
+    // The viewable area at current zoom
+    const vw = this._origVB.w / this._zoom;
+    const vh = this._origVB.h / this._zoom;
+    // Maximum pan: don't let the view drift so that Europe is out of sight
+    // At zoom=1 pan should be 0; at higher zoom allow panning within Europe bounds
+    const maxPanX = Math.max(0, (this._origVB.w - vw) / 2 + this._boundsPadding);
+    const maxPanY = Math.max(0, (this._origVB.h - vh) / 2 + this._boundsPadding);
+    return { minX: -maxPanX, maxX: maxPanX, minY: -maxPanY, maxY: maxPanY };
+  }
+
+  _clampPan() {
+    const b = this._getPanBounds();
+    this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
+    this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
+  }
+
+  _clampAndApply() {
+    this._clampPan();
+    this._applyTransform();
+  }
+
+  _snapBack() {
+    // Animate back to clamped position
+    const b = this._getPanBounds();
+    const targetX = Math.max(b.minX, Math.min(b.maxX, this._panX));
+    const targetY = Math.max(b.minY, Math.min(b.maxY, this._panY));
+    if (Math.abs(targetX - this._panX) < 0.5 && Math.abs(targetY - this._panY) < 0.5) {
+      this._panX = targetX;
+      this._panY = targetY;
+      this._applyTransform();
+      return;
+    }
+    this._animateTo(this._zoom, targetX, targetY, 350);
+  }
+
+  _animateTo(targetZoom, targetPanX, targetPanY, duration) {
+    duration = duration || 400;
+    if (this._animFrame) cancelAnimationFrame(this._animFrame);
+    const startZoom = this._zoom;
+    const startPanX = this._panX;
+    const startPanY = this._panY;
+    // Clamp targets
+    const bAfter = (() => {
+      const vw = this._origVB.w / targetZoom;
+      const vh = this._origVB.h / targetZoom;
+      const maxPanX = Math.max(0, (this._origVB.w - vw) / 2 + this._boundsPadding);
+      const maxPanY = Math.max(0, (this._origVB.h - vh) / 2 + this._boundsPadding);
+      return { minX: -maxPanX, maxX: maxPanX, minY: -maxPanY, maxY: maxPanY };
+    })();
+    targetPanX = Math.max(bAfter.minX, Math.min(bAfter.maxX, targetPanX));
+    targetPanY = Math.max(bAfter.minY, Math.min(bAfter.maxY, targetPanY));
+
+    const startTime = performance.now();
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out back (slight overshoot for elastic feel)
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      const ease = 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
+
+      this._zoom = startZoom + (targetZoom - startZoom) * ease;
+      this._panX = startPanX + (targetPanX - startPanX) * ease;
+      this._panY = startPanY + (targetPanY - startPanY) * ease;
+      this._applyTransform();
+      if (progress < 1) {
+        this._animFrame = requestAnimationFrame(tick);
+      } else {
+        this._zoom = targetZoom;
+        this._panX = targetPanX;
+        this._panY = targetPanY;
+        this._applyTransform();
+        this._animFrame = null;
+      }
+    };
+    this._animFrame = requestAnimationFrame(tick);
   }
 
   geoPaths(geom, proj) {
@@ -460,27 +752,9 @@ class DataComparisonMap extends HTMLElement {
   }
 
   checkDiscrepancy(code) {
-    // Data variance feature — hidden for now (paid addon)
     const el = this.$('#ttDisc');
     el.style.display = 'none';
     return;
-    // const dt = this.DATA[this.currentDataType];
-    // if (!dt) return;
-    // const vals = [];
-    // Object.values(dt.sources).forEach(s => {
-    //   if (s.countries[code] != null) vals.push(s.countries[code]);
-    // });
-    // if (vals.length >= 2) {
-    //   const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-    //   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-    //   const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-    //   if (diff > 10) {
-    //     el.style.display = 'block';
-    //     el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
-    //     return;
-    //   }
-    // }
-    // el.style.display = 'none';
   }
 
   // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
@@ -511,6 +785,17 @@ class DataComparisonMap extends HTMLElement {
         <div>
           <div class="map-title" id="mapTitle">\u2014</div>
           <div class="map-sub" id="mapSub">\u2014</div>
+        </div>
+        <div class="zoom-controls" id="zoomControls">
+          <button class="zoom-btn" id="zoomIn" title="Zoom in">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </button>
+          <button class="zoom-btn" id="zoomReset" title="Reset view">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          </button>
+          <button class="zoom-btn" id="zoomOut" title="Zoom out">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13H5v-2h14v2z"/></svg>
+          </button>
         </div>
       </div>
       <div class="legend">
