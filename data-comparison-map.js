@@ -81,18 +81,17 @@ function loadScript(url) {
   });
 }
 
-function animateValue(el, startVal, endVal, unit, duration = 300) {
+function animateValue(el, startVal, endVal, unit, duration) {
+  duration = duration || 300;
   if (startVal === endVal) { el.textContent = fmt(endVal, unit); return; }
   if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
   if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit); return; }
-  const startTime = performance.now();
+  var startTime = performance.now();
   function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = startVal + (endVal - startVal) * ease;
-    el.textContent = fmt(current, unit);
-    if (progress < 1) requestAnimationFrame(tick);
+    var t = Math.min((now - startTime) / duration, 1);
+    var ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = fmt(startVal + (endVal - startVal) * ease, unit);
+    if (t < 1) requestAnimationFrame(tick);
     else el.textContent = fmt(endVal, unit);
   }
   requestAnimationFrame(tick);
@@ -119,6 +118,16 @@ class DataComparisonMap extends HTMLElement {
   }
 
   connectedCallback() {
+    // FORCE host element to viewport height — works inside Wix iframe
+    var self = this;
+    function forceHeight() {
+      self.style.display = 'block';
+      self.style.width = '100%';
+      self.style.height = window.innerHeight + 'px';
+    }
+    forceHeight();
+    window.addEventListener('resize', forceHeight);
+
     this.shadowRoot.innerHTML = this.html();
     this.init();
   }
@@ -127,75 +136,75 @@ class DataComparisonMap extends HTMLElement {
   $$(s) { return this.shadowRoot.querySelectorAll(s); }
 
   async init() {
-    const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
-    let baseUrl = '';
+    var scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
+    var baseUrl = '';
     if (scripts.length) {
-      const src = scripts[scripts.length - 1].src;
+      var src = scripts[scripts.length - 1].src;
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
     this._baseUrl = baseUrl;
 
-    const link = document.createElement('link');
+    var link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = baseUrl + 'styles.css';
     this.shadowRoot.prepend(link);
-    await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
+    await new Promise(function(resolve) { link.onload = resolve; link.onerror = resolve; });
 
-    const [, dataRaw, topoRaw] = await Promise.all([
+    var results = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
-      fetch(baseUrl + 'data.json').then(r => r.json()),
-      fetch(MAP_TOPO_URL).then(r => r.json())
+      fetch(baseUrl + 'data.json').then(function(r) { return r.json(); }),
+      fetch(MAP_TOPO_URL).then(function(r) { return r.json(); })
     ]);
+    var dataRaw = results[1];
+    var topoRaw = results[2];
 
-    Object.entries(dataRaw).forEach(([k, v]) => {
-      if (k !== '_meta') this.DATA[k] = v;
+    var self = this;
+    Object.entries(dataRaw).forEach(function(e) {
+      if (e[0] !== '_meta') self.DATA[e[0]] = e[1];
     });
 
     this.categories = {};
-    Object.entries(this.DATA).forEach(([key, dt]) => {
-      const cat = dt.category || 'other';
-      if (!this.categories[cat]) this.categories[cat] = [];
-      this.categories[cat].push(key);
+    Object.entries(this.DATA).forEach(function(e) {
+      var cat = e[1].category || 'other';
+      if (!self.categories[cat]) self.categories[cat] = [];
+      self.categories[cat].push(e[0]);
     });
 
     if (dataRaw._meta && dataRaw._meta.lastUpdated) {
-      const d = new Date(dataRaw._meta.lastUpdated);
+      var d = new Date(dataRaw._meta.lastUpdated);
       this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
-    const logoEl = this.$('#navLogo');
+    var logoEl = this.$('#navLogo');
     if (logoEl) logoEl.src = baseUrl + 'logo.png';
-    const logoMob = this.$('#navLogoMobile');
+    var logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     if (IS_DESKTOP) {
-      const filterDiv = document.createElement('div');
+      var filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
     }
 
-    const all = topojson.feature(topoRaw, topoRaw.objects.countries);
-    this.geoFeatures = all.features.filter(f =>
-      EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'))
-    );
+    var all = topojson.feature(topoRaw, topoRaw.objects.countries);
+    this.geoFeatures = all.features.filter(function(f) {
+      return EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'));
+    });
 
     this.drawMap();
     if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
-    const firstCat = Object.keys(this.categories)[0];
+    var firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
-  // ============================================================
-  // MAP PAN & ZOOM — desktop only, instant
-  // ============================================================
   initMapPanZoom() {
-    const svg = this.$('#mapSvg');
-    const wrap = this.$('.map-wrap');
-    const self = this;
+    var svg = this.$('#mapSvg');
+    var wrap = this.$('.map-wrap');
+    var self = this;
     var hint = this.$('#mapHint');
     if (hint) hint.style.display = 'block';
     wrap.classList.add('pannable');
@@ -204,10 +213,9 @@ class DataComparisonMap extends HTMLElement {
       e.preventDefault();
       e.stopPropagation();
       var factor = e.deltaY > 0 ? 1.1 : 1 / 1.1;
-      var minW = 120, maxW = 1200;
       var newW = self._vb.w * factor;
       var newH = self._vb.h * factor;
-      if (newW < minW || newW > maxW) return;
+      if (newW < 120 || newW > 1200) return;
       var rect = svg.getBoundingClientRect();
       var cx = (e.clientX - rect.left) / rect.width;
       var cy = (e.clientY - rect.top) / rect.height;
@@ -243,29 +251,29 @@ class DataComparisonMap extends HTMLElement {
 
   applyViewBox() {
     this.$('#mapSvg').setAttribute('viewBox',
-      this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
-      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1));
+      this._vb.x.toFixed(1)+' '+this._vb.y.toFixed(1)+' '+
+      this._vb.w.toFixed(1)+' '+this._vb.h.toFixed(1));
   }
 
   drawMap() {
-    const svg = this.$('#mapSvg');
+    var svg = this.$('#mapSvg');
     svg.innerHTML = '';
-    const lonToX = lon => (lon + 25) * (540 / 75);
-    const latToY = lat => {
-      const r = lat * Math.PI / 180;
-      const y = Math.log(Math.tan(Math.PI / 4 + r / 2));
-      const mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
-      const mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
+    var lonToX = function(lon) { return (lon + 25) * (540 / 75); };
+    var latToY = function(lat) {
+      var r = lat * Math.PI / 180;
+      var y = Math.log(Math.tan(Math.PI / 4 + r / 2));
+      var mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
+      var mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
       return 470 - ((y - mn) / (mx - mn)) * 470;
     };
-    const proj = ([lon, lat]) => [lonToX(lon), latToY(lat)];
-    const self = this;
+    var proj = function(c) { return [lonToX(c[0]), latToY(c[1])]; };
+    var self = this;
 
-    this.geoFeatures.forEach(f => {
-      const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
+    this.geoFeatures.forEach(function(f) {
+      var a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
       if (!a2) return;
-      this.geoPaths(f.geometry, proj).forEach(d => {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      self.geoPaths(f.geometry, proj).forEach(function(d) {
+        var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         p.setAttribute('d', d);
         p.dataset.code = a2;
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
@@ -293,17 +301,19 @@ class DataComparisonMap extends HTMLElement {
   }
 
   geoPaths(geom, proj) {
-    const ring = r => r.map((c, i) => {
-      const [x, y] = proj(c);
-      return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ') + 'Z';
+    var ring = function(r) {
+      return r.map(function(c, i) {
+        var p = proj(c);
+        return (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join(' ') + 'Z';
+    };
     if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
-    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
+    if (geom.type === 'MultiPolygon') return geom.coordinates.map(function(p) { return p.map(ring).join(' '); });
     return [];
   }
 
   moveSlider(container, activeBtn) {
-    let slider = container.querySelector('.slider');
+    var slider = container.querySelector('.slider');
     if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
     if (!activeBtn) { slider.classList.remove('visible'); return; }
     slider.style.top = activeBtn.offsetTop + 'px';
@@ -312,69 +322,74 @@ class DataComparisonMap extends HTMLElement {
   }
 
   buildCategoryButtons() {
-    const c = this.$('#catBtns');
+    var c = this.$('#catBtns');
     c.innerHTML = '';
-    Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
-      const b = document.createElement('button');
+    var self = this;
+    Object.entries(this.categories).forEach(function(e) {
+      var catKey = e[0];
+      var meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
+      var b = document.createElement('button');
       b.className = 'cat-btn';
       b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
-      b.onclick = () => this.selectCategory(catKey);
+      b.onclick = function() { self.selectCategory(catKey); };
       c.appendChild(b);
     });
   }
 
   selectCategory(catKey) {
     this.currentCategory = catKey;
-    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
+    this.$$('.cat-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.key === catKey); });
     this.buildDataTypeButtons(catKey);
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    const keys = this.categories[catKey];
+    var keys = this.categories[catKey];
     if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
   buildDataTypeButtons(catKey) {
-    const c = this.$('#dtBtns');
+    var c = this.$('#dtBtns');
     c.innerHTML = '';
-    const slider = document.createElement('div');
+    var slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
-    const keys = this.categories[catKey] || [];
-    keys.forEach(key => {
-      const dt = this.DATA[key];
+    var keys = this.categories[catKey] || [];
+    var self = this;
+    keys.forEach(function(key) {
+      var dt = self.DATA[key];
       if (!dt) return;
-      const b = document.createElement('button');
+      var b = document.createElement('button');
       b.className = 'btn';
       b.dataset.key = key;
-      const srcCount = Object.keys(dt.sources).length;
-      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+      var srcCount = Object.keys(dt.sources).length;
+      var okCount = Object.values(dt.sources).filter(function(s) { return Object.keys(s.countries).length > 0; }).length;
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
-      b.onclick = () => this.selectDataType(key);
+      b.onclick = function() { self.selectDataType(key); };
       c.appendChild(b);
     });
   }
 
   buildSourceButtons(dtKey) {
-    const c = this.$('#srcBtns');
+    var c = this.$('#srcBtns');
     c.innerHTML = '';
-    const slider = document.createElement('div');
+    var slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
-    const dt = this.DATA[dtKey];
+    var dt = this.DATA[dtKey];
     if (!dt) return;
-    Object.entries(dt.sources).forEach(([key, src]) => {
-      const count = Object.keys(src.countries).length;
-      const isEmpty = count === 0;
-      const b = document.createElement('button');
+    var self = this;
+    Object.entries(dt.sources).forEach(function(e) {
+      var key = e[0], src = e[1];
+      var count = Object.keys(src.countries).length;
+      var isEmpty = count === 0;
+      var b = document.createElement('button');
       b.className = 'btn' + (isEmpty ? ' disabled' : '');
       b.dataset.key = key;
       if (isEmpty) {
         b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
       } else {
         b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>';
-        b.onclick = () => this.selectSource(key);
+        b.onclick = function() { self.selectSource(key); };
       }
       c.appendChild(b);
     });
@@ -382,16 +397,17 @@ class DataComparisonMap extends HTMLElement {
 
   selectDataType(k) {
     this.currentDataType = k;
-    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-    const dtContainer = this.$('#dtBtns');
-    const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn)); });
+    this.$$('#dtBtns .btn').forEach(function(b) { b.classList.toggle('active', b.dataset.key === k); });
+    var dtContainer = this.$('#dtBtns');
+    var activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
+    var self = this;
+    requestAnimationFrame(function() { requestAnimationFrame(function() { self.moveSlider(dtContainer, activeBtn); }); });
     this._lastTtVal = null;
     this._lastTtDataType = k;
     this.buildSourceButtons(k);
-    const dt = this.DATA[k];
+    var dt = this.DATA[k];
     if (!dt) return;
-    const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
+    var firstOk = Object.entries(dt.sources).find(function(e) { return Object.keys(e[1].countries).length > 0; });
     if (firstOk) { this.selectSource(firstOk[0]); }
     else {
       this.currentSource = null;
@@ -399,67 +415,67 @@ class DataComparisonMap extends HTMLElement {
       this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '\u2014';
       this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
+      this.$$('.cp').forEach(function(p) { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
   }
 
   selectSource(k) {
     this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => {
+    this.$$('#srcBtns .btn').forEach(function(b) {
       if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
     });
-    const srcContainer = this.$('#srcBtns');
-    const activeBtn = srcContainer.querySelector('.btn.active');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn)); });
+    var srcContainer = this.$('#srcBtns');
+    var activeBtn = srcContainer.querySelector('.btn.active');
+    var self = this;
+    requestAnimationFrame(function() { requestAnimationFrame(function() { self.moveSlider(srcContainer, activeBtn); }); });
     this.paint();
   }
 
   paint() {
-    const dt = this.DATA[this.currentDataType];
+    var dt = this.DATA[this.currentDataType];
     if (!dt) return;
-    const src = dt.sources[this.currentSource];
+    var src = dt.sources[this.currentSource];
     if (!src) return;
     this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
-    const vals = Object.values(src.countries).filter(v => v != null);
+    var vals = Object.values(src.countries).filter(function(v) { return v != null; });
     if (!vals.length) {
       this.$('#legMin').textContent = '\u2014';
       this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
+      this.$$('.cp').forEach(function(p) { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
       return;
     }
-    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     this.$('#legMin').textContent = fmt(min, dt.unit);
     this.$('#legMax').textContent = fmt(max, dt.unit);
-    this.$$('.cp').forEach(p => {
-      const v = src.countries[p.dataset.code];
+    this.$$('.cp').forEach(function(p) {
+      var v = src.countries[p.dataset.code];
       if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
       else { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }
     });
   }
 
   ttShow(e) {
-    const dt = this.DATA[this.currentDataType];
+    var dt = this.DATA[this.currentDataType];
     if (!dt || !this.currentSource) return;
-    const src = dt.sources[this.currentSource];
+    var src = dt.sources[this.currentSource];
     if (!src) return;
-    const code = e.target.dataset.code;
-    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
+    var code = e.target.dataset.code;
+    var newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
-    const valEl = this.$('#ttVal');
-    const oldVal = this._lastTtVal;
-    if (this._lastTtDataType === this.currentDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
-      animateValue(valEl, oldVal, newVal, dt.unit, 300);
+    var valEl = this.$('#ttVal');
+    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal)) {
+      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
     } else { valEl.textContent = fmt(newVal, dt.unit); }
     this._lastTtVal = newVal;
     this._lastTtDataType = this.currentDataType;
     this.$('#ttDisc').style.display = 'none';
-    const marker = this.$('#legMarker');
+    var marker = this.$('#legMarker');
     if (newVal != null) {
-      const vs = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+      var vs = Object.values(src.countries).filter(function(v) { return v != null; });
+      var mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
       marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%';
       marker.classList.add('visible');
     } else { marker.classList.remove('visible'); }
@@ -472,31 +488,22 @@ class DataComparisonMap extends HTMLElement {
   html() {
     return `<div class="app">
   <nav class="top-nav">
-    <div class="nav-logo">
-      <div class="nav-logo-icon">
-        <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
-        <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
-      </div>
-    </div>
+    <div class="nav-logo"><div class="nav-logo-icon">
+      <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
+      <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
+    </div></div>
     <div class="nav-links">
       <button class="nav-link">About</button>
       <button class="nav-link primary">Support us</button>
     </div>
   </nav>
-
-  <div id="initLoader" class="init-loader">
-    <div class="orbit"></div>
-    <span>Loading map & data\u2026</span>
-  </div>
-
+  <div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel">
-      <div class="title-row">
-        <div>
-          <div class="map-title" id="mapTitle">\u2014</div>
-          <div class="map-sub" id="mapSub">\u2014</div>
-        </div>
-      </div>
+      <div class="title-row"><div>
+        <div class="map-title" id="mapTitle">\u2014</div>
+        <div class="map-sub" id="mapSub">\u2014</div>
+      </div></div>
       <div class="legend">
         <span id="legMin">\u2014</span>
         <div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div>
@@ -507,26 +514,14 @@ class DataComparisonMap extends HTMLElement {
       </div>
       <div class="map-hint" id="mapHint">Scroll to zoom \u00B7 Drag to pan \u00B7 Double-click to reset</div>
     </div>
-
     <div class="controls glass">
-      <div>
-        <div class="sec-title">Category</div>
-        <div class="cat-tabs" id="catBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Data Type</div>
-        <div class="btn-group" id="dtBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Source</div>
-        <div class="btn-group" id="srcBtns"></div>
-      </div>
+      <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+      <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
+      <div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>
     </div>
   </div>
-
   <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
 </div>
-
 <div class="tooltip" id="tt">
   <div class="tt-name" id="ttName">\u2014</div>
   <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
