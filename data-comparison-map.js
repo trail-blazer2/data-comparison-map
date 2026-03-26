@@ -113,7 +113,7 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    // Pan/zoom state (desktop only)
+    // Pan/zoom (desktop only)
     this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
     this._vb = { x: -30, y: -5, w: 590, h: 490 };
     this._drag = null;
@@ -122,15 +122,24 @@ class DataComparisonMap extends HTMLElement {
   connectedCallback() {
     this.shadowRoot.innerHTML = this.html();
 
-    // Desktop only: --vh trick for viewport-fit
+    // Desktop only: force app to exact viewport height via inline style
     if (IS_DESKTOP) {
       var self = this;
-      function setVh() {
-        self.shadowRoot.host.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+      function fitApp() {
+        var app = self.shadowRoot.querySelector('.app');
+        if (app) app.style.height = window.innerHeight + 'px';
       }
-      setVh();
-      window.addEventListener('resize', setVh);
+      fitApp();
+      window.addEventListener('resize', fitApp);
     }
+
+    // Wix: tell parent our desired height
+    function tellWixHeight() {
+      try { window.parent.postMessage({ type: 'setHeight', height: window.innerHeight }, '*'); } catch(e) {}
+    }
+    tellWixHeight();
+    window.addEventListener('resize', tellWixHeight);
+    setInterval(tellWixHeight, 3000);
 
     this.init();
   }
@@ -180,6 +189,7 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
+    // BLUR FIX: inject SVG filter only on desktop, after init
     if (IS_DESKTOP) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
@@ -202,11 +212,10 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // PAN & ZOOM — desktop only, instant, with bounds clamping
+  // PAN & ZOOM — desktop only, with bounds clamping
   // ============================================================
   clampViewBox() {
     var d = this._vbDefault;
-    // Don't let user drag more than 50% of the default view outside the map
     var padX = d.w * 0.5;
     var padY = d.h * 0.5;
     if (this._vb.x < d.x - padX) this._vb.x = d.x - padX;
@@ -218,8 +227,8 @@ class DataComparisonMap extends HTMLElement {
   applyViewBox() {
     this.clampViewBox();
     this.$('#mapSvg').setAttribute('viewBox',
-      this._vb.x.toFixed(1)+' '+this._vb.y.toFixed(1)+' '+
-      this._vb.w.toFixed(1)+' '+this._vb.h.toFixed(1));
+      this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
+      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1));
   }
 
   initMapPanZoom() {
@@ -228,16 +237,14 @@ class DataComparisonMap extends HTMLElement {
     var self = this;
     var hint = this.$('#mapHint');
     if (hint) hint.style.display = 'block';
-    wrap.classList.add('pannable');
+    wrap.style.cursor = 'grab';
 
-    // Wheel zoom — instant
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       e.stopPropagation();
       var factor = e.deltaY > 0 ? 1.1 : 1 / 1.1;
       var newW = self._vb.w * factor;
       var newH = self._vb.h * factor;
-      // Clamp zoom range
       if (newW < 100 || newW > self._vbDefault.w * 2) return;
       var rect = svg.getBoundingClientRect();
       var cx = (e.clientX - rect.left) / rect.width;
@@ -249,12 +256,11 @@ class DataComparisonMap extends HTMLElement {
       self.applyViewBox();
     }, { passive: false });
 
-    // Mouse drag
     wrap.addEventListener('mousedown', function(e) {
       if (e.target.classList && e.target.classList.contains('cp')) return;
       e.preventDefault();
       self._drag = { sx: e.clientX, sy: e.clientY, vbx: self._vb.x, vby: self._vb.y };
-      wrap.classList.add('dragging');
+      wrap.style.cursor = 'grabbing';
     });
     window.addEventListener('mousemove', function(e) {
       if (!self._drag) return;
@@ -264,10 +270,9 @@ class DataComparisonMap extends HTMLElement {
       self.applyViewBox();
     });
     window.addEventListener('mouseup', function() {
-      if (self._drag) { self._drag = null; wrap.classList.remove('dragging'); }
+      if (self._drag) { self._drag = null; wrap.style.cursor = 'grab'; }
     });
 
-    // Double-click to reset
     wrap.addEventListener('dblclick', function(e) {
       e.preventDefault();
       self._vb = Object.assign({}, self._vbDefault);
@@ -299,10 +304,12 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
+        // Desktop: mouse events
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
+        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -317,6 +324,7 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
+    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
