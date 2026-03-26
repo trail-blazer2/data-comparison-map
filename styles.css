@@ -61,7 +61,6 @@
     inset 1px 1px 1px 0 rgb(255 255 255 / 60%);
   flex-shrink: 0;
 }
-
 .nav-logo {
   display: flex;
   align-items: center;
@@ -336,25 +335,23 @@
   font-weight: 600;
 }
 
-/* ===== COLLAPSIBLE SECTIONS ===== */
+/* ===== COLLAPSIBLE SECTION (Data Type only) ===== */
 .collapsible-section {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* The body: shows ~3 items by default, uses CSS mask for true fade */
+/* Show ~3 items, true transparent fade via CSS mask */
 .collapsible-body {
   max-height: 112px;
   overflow: hidden;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* True transparent fade — not a colored overlay */
-  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  transition: max-height 0.3s ease;
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
-/* Expanded: remove mask, allow scroll, fill available space */
+/* Expanded: remove mask, allow scroll */
 .collapsible-section.expanded .collapsible-body {
   max-height: calc(100vh - 280px);
   overflow-y: auto;
@@ -368,28 +365,36 @@
   background: rgba(0,0,0,0.08); border-radius: 3px;
 }
 
-/* The expand/collapse ▾ button — sits below the list */
+/* Expand button — below the list, chevron + "Show more" text */
 .expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 0 2px;
+  gap: 5px;
+  padding: 5px 0 2px;
   background: none;
   border: none;
   cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
   flex-shrink: 0;
+  font-family: inherit;
 }
-.expand-btn:hover { opacity: 1; }
+.expand-btn:hover .expand-label { color: #576574; }
+.expand-btn:hover .chevron { border-top-color: #576574; }
+
+.expand-label {
+  font-size: 0.55rem;
+  color: #8395a7;
+  font-weight: 500;
+  transition: color 0.2s;
+}
 
 .chevron {
   display: inline-block;
   width: 0; height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid #8395a7;
-  transition: transform 0.25s ease;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #8395a7;
+  transition: transform 0.25s ease, border-top-color 0.2s;
 }
 .collapsible-section.expanded .chevron {
   transform: rotate(180deg);
@@ -427,7 +432,6 @@
   border-color: transparent;
   box-shadow: 0 6px 24px rgba(10, 22, 40, 0.2);
 }
-
 .cat-icon {
   width: 24px; height: 24px;
   border-radius: 7px;
