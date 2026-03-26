@@ -7,6 +7,11 @@
   display: block;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #1a1a2e;
+  /* Lock base font size so Wix iframe scaling doesn't blow it up */
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ===== APP LAYOUT ===== */
@@ -218,7 +223,7 @@
 }
 .glass > * { position: relative; z-index: 2; }
 
-/* ===== MAP PANEL — clean, no glass class, no blur ===== */
+/* ===== MAP PANEL ===== */
 .map-panel {
   position: relative;
   z-index: 2;
@@ -389,17 +394,20 @@
 
 /* ===== NEARBY (non-European) COUNTRY PATHS ===== */
 .cp-nearby {
-  fill: #e8ecf0;
-  stroke: rgba(255, 255, 255, 0.2);
+  fill: #e0e5ea;
+  stroke: rgba(255, 255, 255, 0.15);
   stroke-width: 0.3;
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: default;
   pointer-events: none;
 }
 
-.watermark-overlay {
+/* Pattern overlay: same shape filled with the diagonal "COMING SOON" text */
+.cp-nearby-pattern {
+  fill: url(#comingSoonPattern);
+  stroke: none;
+  opacity: 0.45;
   pointer-events: none;
-  opacity: 1;
 }
 
 /* ===== TOOLTIP ===== */
@@ -656,12 +664,11 @@
 .init-loader span { font-size: 0.82rem; color: #8395a7; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE — MOBILE ===== */
 @media (max-width: 960px) {
   .main { grid-template-columns: 1fr; }
   .controls { position: static; max-height: none; }
 
-  /* Kill all blur on mobile — clean solid background instead */
   .glass::before {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -673,6 +680,14 @@
    }
    .nav-logo-icon img {
     max-width: 100px;
+   }
+
+   /* Force consistent sizing inside Wix iframe on mobile */
+   :host {
+     font-size: 16px !important;
+   }
+   .app {
+     font-size: 16px;
    }
 }
 @media (max-width: 480px) {
