@@ -182,7 +182,7 @@ class DataComparisonMap extends HTMLElement {
     this.drawMap();
     if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
-    this.initCollapsibles();
+    if (IS_DESKTOP) this.initCollapsibles();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
@@ -191,7 +191,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // MAP PAN & ZOOM — desktop only, INSTANT (no animation)
+  // MAP PAN & ZOOM — desktop only, instant
   // ============================================================
   initMapPanZoom() {
     const svg = this.$('#mapSvg');
@@ -202,7 +202,6 @@ class DataComparisonMap extends HTMLElement {
     if (hint) hint.style.display = 'block';
     wrap.classList.add('pannable');
 
-    // --- Instant wheel zoom ---
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -211,7 +210,6 @@ class DataComparisonMap extends HTMLElement {
       var newW = self._vb.w * factor;
       var newH = self._vb.h * factor;
       if (newW < minW || newW > maxW) return;
-
       var rect = svg.getBoundingClientRect();
       var cx = (e.clientX - rect.left) / rect.width;
       var cy = (e.clientY - rect.top) / rect.height;
@@ -222,7 +220,6 @@ class DataComparisonMap extends HTMLElement {
       self.applyViewBox();
     }, { passive: false });
 
-    // --- Mouse drag pan ---
     wrap.addEventListener('mousedown', function(e) {
       if (e.target.classList && e.target.classList.contains('cp')) return;
       e.preventDefault();
@@ -233,21 +230,15 @@ class DataComparisonMap extends HTMLElement {
     window.addEventListener('mousemove', function(e) {
       if (!self._drag) return;
       var rect = svg.getBoundingClientRect();
-      var scaleX = self._vb.w / rect.width;
-      var scaleY = self._vb.h / rect.height;
-      self._vb.x = self._drag.vb.x - (e.clientX - self._drag.startX) * scaleX;
-      self._vb.y = self._drag.vb.y - (e.clientY - self._drag.startY) * scaleY;
+      self._vb.x = self._drag.vb.x - (e.clientX - self._drag.startX) * (self._vb.w / rect.width);
+      self._vb.y = self._drag.vb.y - (e.clientY - self._drag.startY) * (self._vb.h / rect.height);
       self.applyViewBox();
     });
 
     window.addEventListener('mouseup', function() {
-      if (self._drag) {
-        self._drag = null;
-        wrap.classList.remove('dragging');
-      }
+      if (self._drag) { self._drag = null; wrap.classList.remove('dragging'); }
     });
 
-    // --- Double click to reset ---
     wrap.addEventListener('dblclick', function(e) {
       e.preventDefault();
       self._vb = Object.assign({}, self._vbDefault);
@@ -258,12 +249,11 @@ class DataComparisonMap extends HTMLElement {
   applyViewBox() {
     this.$('#mapSvg').setAttribute('viewBox',
       this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
-      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1)
-    );
+      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1));
   }
 
   // ============================================================
-  // COLLAPSIBLE — Data Type only
+  // COLLAPSIBLE — Data Type only, desktop only
   // ============================================================
   initCollapsibles() {
     var self = this;
@@ -300,21 +290,17 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.code = a2;
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
-
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
-
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
           var touch = e.touches[0];
-          var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
-          self.ttShow(fakeEvent);
-          self.ttMove(fakeEvent);
+          self.ttShow({ target: p, clientX: touch.clientX, clientY: touch.clientY });
+          self.ttMove({ clientX: touch.clientX, clientY: touch.clientY });
         }, { passive: false });
-
         svg.appendChild(p);
       });
     });
@@ -339,15 +325,8 @@ class DataComparisonMap extends HTMLElement {
 
   moveSlider(container, activeBtn) {
     let slider = container.querySelector('.slider');
-    if (!slider) {
-      slider = document.createElement('div');
-      slider.className = 'slider';
-      container.prepend(slider);
-    }
-    if (!activeBtn) {
-      slider.classList.remove('visible');
-      return;
-    }
+    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
+    if (!activeBtn) { slider.classList.remove('visible'); return; }
     slider.style.top = activeBtn.offsetTop + 'px';
     slider.style.height = activeBtn.offsetHeight + 'px';
     slider.classList.add('visible');
@@ -383,7 +362,6 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
-
     const keys = this.categories[catKey] || [];
     keys.forEach(key => {
       const dt = this.DATA[key];
@@ -397,7 +375,6 @@ class DataComparisonMap extends HTMLElement {
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
     });
-
     var section = c.closest('.collapsible-section');
     if (section) {
       section.classList.remove('expanded');
@@ -412,7 +389,6 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div');
     slider.className = 'slider';
     c.appendChild(slider);
-
     const dt = this.DATA[dtKey];
     if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
@@ -436,18 +412,15 @@ class DataComparisonMap extends HTMLElement {
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     const dtContainer = this.$('#dtBtns');
     const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn)); });
     this._lastTtVal = null;
     this._lastTtDataType = k;
     this.buildSourceButtons(k);
     const dt = this.DATA[k];
     if (!dt) return;
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
-    if (firstOk) {
-      this.selectSource(firstOk[0]);
-    } else {
+    if (firstOk) { this.selectSource(firstOk[0]); }
+    else {
       this.currentSource = null;
       this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
@@ -464,9 +437,7 @@ class DataComparisonMap extends HTMLElement {
     });
     const srcContainer = this.$('#srcBtns');
     const activeBtn = srcContainer.querySelector('.btn.active');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn)); });
     this.paint();
   }
 
@@ -477,7 +448,6 @@ class DataComparisonMap extends HTMLElement {
     if (!src) return;
     this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
-
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) {
       this.$('#legMin').textContent = '\u2014';
@@ -488,16 +458,10 @@ class DataComparisonMap extends HTMLElement {
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     this.$('#legMin').textContent = fmt(min, dt.unit);
     this.$('#legMax').textContent = fmt(max, dt.unit);
-
     this.$$('.cp').forEach(p => {
       const v = src.countries[p.dataset.code];
-      if (v != null) {
-        p.classList.remove('no-data');
-        p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5));
-      } else {
-        p.classList.add('no-data');
-        p.setAttribute('fill', '#dfe6e9');
-      }
+      if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
+      else { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }
     });
   }
 
@@ -508,36 +472,24 @@ class DataComparisonMap extends HTMLElement {
     if (!src) return;
     const code = e.target.dataset.code;
     const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
-
     const valEl = this.$('#ttVal');
     const oldVal = this._lastTtVal;
-    const sameDataType = this._lastTtDataType === this.currentDataType;
-
-    if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
+    if (this._lastTtDataType === this.currentDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
       animateValue(valEl, oldVal, newVal, dt.unit, 300);
-    } else {
-      valEl.textContent = fmt(newVal, dt.unit);
-    }
-
+    } else { valEl.textContent = fmt(newVal, dt.unit); }
     this._lastTtVal = newVal;
     this._lastTtDataType = this.currentDataType;
-
     this.checkDiscrepancy(code);
-
     const marker = this.$('#legMarker');
-    if (newVal != null && src) {
+    if (newVal != null) {
       const vals = Object.values(src.countries).filter(v => v != null);
-      const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-      const pct = max !== min ? ((newVal - min) / (max - min)) * 100 : 50;
-      marker.style.left = pct + '%';
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%';
       marker.classList.add('visible');
-    } else {
-      marker.classList.remove('visible');
-    }
+    } else { marker.classList.remove('visible'); }
     this.$('#tt').classList.add('visible');
   }
 
@@ -552,10 +504,7 @@ class DataComparisonMap extends HTMLElement {
     this.$('#legMarker').classList.remove('visible');
   }
 
-  checkDiscrepancy(code) {
-    const el = this.$('#ttDisc');
-    el.style.display = 'none';
-  }
+  checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
 
   html() {
     return `<div class="app">
