@@ -98,9 +98,8 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
-// Detect touch device
-var IS_TOUCH = false;
-try { IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0; } catch(e) {}
+// Reliable desktop detection — has hover AND fine pointer (mouse)
+var IS_DESKTOP = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 // ============================================================
 class DataComparisonMap extends HTMLElement {
@@ -174,7 +173,7 @@ class DataComparisonMap extends HTMLElement {
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     // BLUR FIX: inject SVG filter only on desktop
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    if (IS_DESKTOP) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
@@ -186,7 +185,7 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
-    if (!IS_TOUCH) this.initMapPanZoom();
+    if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
     this.initCollapsibles();
     const firstCat = Object.keys(this.categories)[0];
@@ -197,32 +196,37 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // MAP PAN & ZOOM — desktop only, smooth animated zoom
+  // MAP PAN & ZOOM — desktop only
   // ============================================================
   initMapPanZoom() {
     const svg = this.$('#mapSvg');
+    const wrap = this.$('.map-wrap');
     const self = this;
 
-    // Show hint on desktop only
+    // Show hint
     var hint = this.$('#mapHint');
     if (hint) hint.style.display = 'block';
 
-    // --- Smooth animated zoom on wheel ---
-    svg.addEventListener('wheel', function(e) {
+    // Add desktop classes
+    wrap.classList.add('pannable');
+
+    // --- Wheel zoom ---
+    wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
+      e.stopPropagation();
       var factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
       self.smoothZoom(factor, e);
     }, { passive: false });
 
     // --- Mouse drag pan ---
-    svg.addEventListener('mousedown', function(e) {
-      if (e.target.classList.contains('cp')) return;
+    wrap.addEventListener('mousedown', function(e) {
+      if (e.target.classList && e.target.classList.contains('cp')) return;
       e.preventDefault();
       self._drag = { startX: e.clientX, startY: e.clientY, vb: Object.assign({}, self._vb) };
-      svg.style.cursor = 'grabbing';
+      wrap.classList.add('dragging');
     });
 
-    var onMove = function(e) {
+    window.addEventListener('mousemove', function(e) {
       if (!self._drag) return;
       var rect = svg.getBoundingClientRect();
       var scaleX = self._vb.w / rect.width;
@@ -230,19 +234,17 @@ class DataComparisonMap extends HTMLElement {
       self._vb.x = self._drag.vb.x - (e.clientX - self._drag.startX) * scaleX;
       self._vb.y = self._drag.vb.y - (e.clientY - self._drag.startY) * scaleY;
       self.applyViewBox();
-    };
+    });
 
-    var onUp = function() {
-      self._drag = null;
-      svg.style.cursor = 'grab';
-    };
-
-    svg.addEventListener('mousemove', onMove);
-    svg.addEventListener('mouseup', onUp);
-    svg.addEventListener('mouseleave', onUp);
+    window.addEventListener('mouseup', function() {
+      if (self._drag) {
+        self._drag = null;
+        wrap.classList.remove('dragging');
+      }
+    });
 
     // --- Double click to reset ---
-    svg.addEventListener('dblclick', function(e) {
+    wrap.addEventListener('dblclick', function(e) {
       e.preventDefault();
       self.smoothResetZoom();
     });
@@ -256,7 +258,6 @@ class DataComparisonMap extends HTMLElement {
     var targetH = this._vb.h * factor;
     if (targetW < minW || targetW > maxW) return;
 
-    // Zoom toward mouse position
     var cx = 0.5, cy = 0.5;
     if (mouseEvent) {
       var rect = svg.getBoundingClientRect();
@@ -268,15 +269,14 @@ class DataComparisonMap extends HTMLElement {
     var endX = startVb.x + (startVb.w - targetW) * cx;
     var endY = startVb.y + (startVb.h - targetH) * cy;
 
-    // Cancel any running animation
     if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
 
     var startTime = performance.now();
-    var duration = 180; // ms — fast but smooth
+    var duration = 160;
 
     function tick(now) {
       var t = Math.min((now - startTime) / duration, 1);
-      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easeInOut
+      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
       self._vb.x = startVb.x + (endX - startVb.x) * ease;
       self._vb.y = startVb.y + (endY - startVb.y) * ease;
       self._vb.w = startVb.w + (targetW - startVb.w) * ease;
@@ -292,12 +292,9 @@ class DataComparisonMap extends HTMLElement {
     var self = this;
     var startVb = Object.assign({}, this._vb);
     var endVb = Object.assign({}, this._vbDefault);
-
     if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
-
     var startTime = performance.now();
-    var duration = 350;
-
+    var duration = 300;
     function tick(now) {
       var t = Math.min((now - startTime) / duration, 1);
       var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
@@ -320,22 +317,14 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // COLLAPSIBLE SECTIONS — show 3 items, then expand
+  // COLLAPSIBLE SECTIONS
   // ============================================================
   initCollapsibles() {
     var self = this;
-    this.$$('.sec-toggle').forEach(function(btn) {
+    this.$$('.expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var section = btn.closest('.collapsible-section');
-        var isCollapsed = section.classList.contains('expanded');
         section.classList.toggle('expanded');
-        // Scroll active item into view when collapsing
-        if (isCollapsed) {
-          var activeBtn = section.querySelector('.btn.active');
-          if (activeBtn) {
-            setTimeout(function() { activeBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 50);
-          }
-        }
       });
     });
   }
@@ -411,10 +400,8 @@ class DataComparisonMap extends HTMLElement {
       slider.classList.remove('visible');
       return;
     }
-    const top = activeBtn.offsetTop;
-    const height = activeBtn.offsetHeight;
-    slider.style.top = top + 'px';
-    slider.style.height = height + 'px';
+    slider.style.top = activeBtn.offsetTop + 'px';
+    slider.style.height = activeBtn.offsetHeight + 'px';
     slider.classList.add('visible');
   }
 
@@ -463,7 +450,6 @@ class DataComparisonMap extends HTMLElement {
       c.appendChild(b);
     });
 
-    // Reset expand state when category changes
     var section = c.closest('.collapsible-section');
     if (section) section.classList.remove('expanded');
   }
@@ -618,7 +604,6 @@ class DataComparisonMap extends HTMLElement {
   }
 
   checkDiscrepancy(code) {
-    // Data variance feature — hidden for now (paid addon)
     const el = this.$('#ttDisc');
     el.style.display = 'none';
   }
@@ -668,18 +653,18 @@ class DataComparisonMap extends HTMLElement {
         <div class="cat-tabs" id="catBtns"></div>
       </div>
       <div class="collapsible-section">
-        <button class="sec-title sec-toggle">Data Type <span class="chevron"></span></button>
-        <div class="collapsible-list">
+        <div class="sec-title">Data Type</div>
+        <div class="collapsible-body">
           <div class="btn-group" id="dtBtns"></div>
-          <div class="list-fade"></div>
         </div>
+        <button class="expand-btn"><span class="chevron"></span></button>
       </div>
       <div class="collapsible-section">
-        <button class="sec-title sec-toggle">Source <span class="chevron"></span></button>
-        <div class="collapsible-list">
+        <div class="sec-title">Source</div>
+        <div class="collapsible-body">
           <div class="btn-group" id="srcBtns"></div>
-          <div class="list-fade"></div>
         </div>
+        <button class="expand-btn"><span class="chevron"></span></button>
       </div>
     </div>
   </div>
