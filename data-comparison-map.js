@@ -98,6 +98,7 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
+// ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
@@ -110,9 +111,20 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    
-    // Zoom/Pan state
-    this.mapTransform = { x: 0, y: 0, scale: 1 };
+
+    // Zoom & pan state (desktop only)
+    this._isDesktop = false;
+    this._zoom = 1;
+    this._panX = 0;
+    this._panY = 0;
+    this._minZoom = 1;
+    this._maxZoom = 5;
+    this._isDragging = false;
+    this._dragStartX = 0;
+    this._dragStartY = 0;
+    this._dragStartPanX = 0;
+    this._dragStartPanY = 0;
+    this._didDrag = false;
   }
 
   connectedCallback() {
@@ -160,13 +172,19 @@ class DataComparisonMap extends HTMLElement {
       this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const logoEl = this.$('#navLogo');
+    if (logoEl) logoEl.src = baseUrl + 'logo.png';
+    const logoMob = this.$('#navLogoMobile');
+    if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
+
+    // Detect desktop
+    this._isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    // BLUR FIX: inject SVG filter only on desktop, after init
+    if (this._isDesktop) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
-      
-      // Initialize pan/zoom ONLY on PC
-      this.initZoomPan();
     }
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
@@ -179,69 +197,133 @@ class DataComparisonMap extends HTMLElement {
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
+    // Set up zoom & pan for desktop only
+    if (this._isDesktop) {
+      this.initZoomPan();
+    }
+
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
+  // ===== ZOOM & PAN (desktop only) =====
   initZoomPan() {
+    const wrap = this.$('.map-wrap');
     const svg = this.$('#mapSvg');
-    let isDragging = false;
-    let startX = 0, startY = 0;
+    const self = this;
 
-    const updateMapGroup = () => {
-      // Clamp values (restrict bounds)
-      const maxScale = 5;
-      const minScale = 1;
-      this.mapTransform.scale = Math.max(minScale, Math.min(this.mapTransform.scale, maxScale));
-
-      // Bounding box mapping (keeps user from panning infinitely away)
-      const baseWidth = 590;
-      const baseHeight = 490;
-      const panXMax = (baseWidth * this.mapTransform.scale - baseWidth) / 2;
-      const panYMax = (baseHeight * this.mapTransform.scale - baseHeight) / 2;
-
-      this.mapTransform.x = Math.max(-panXMax, Math.min(this.mapTransform.x, panXMax));
-      this.mapTransform.y = Math.max(-panYMax, Math.min(this.mapTransform.y, panYMax));
-
-      const group = this.$('#mapGroup');
-      if (group) {
-        group.setAttribute('transform', `translate(${this.mapTransform.x} ${this.mapTransform.y}) scale(${this.mapTransform.scale})`);
-      }
-    };
-
-    svg.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      startX = e.clientX - this.mapTransform.x;
-      startY = e.clientY - this.mapTransform.y;
-      svg.style.cursor = 'grabbing';
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      this.mapTransform.x = e.clientX - startX;
-      this.mapTransform.y = e.clientY - startY;
-      updateMapGroup();
-    });
-
-    window.addEventListener('mouseup', () => {
-      if(isDragging) {
-          isDragging = false;
-          svg.style.cursor = 'grab';
-      }
-    });
-
-    svg.addEventListener('wheel', (e) => {
+    // Wheel zoom
+    wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
-      const zoomSensitivity = 0.002;
-      const deltaScale = -e.deltaY * zoomSensitivity;
-      this.mapTransform.scale += deltaScale;
-      updateMapGroup();
+      const rect = wrap.getBoundingClientRect();
+      // Mouse position relative to the wrap container (0..1)
+      const mx = (e.clientX - rect.left) / rect.width;
+      const my = (e.clientY - rect.top) / rect.height;
+
+      const oldZoom = self._zoom;
+      const delta = e.deltaY > 0 ? -0.15 : 0.15;
+      let newZoom = oldZoom + delta * oldZoom;
+      newZoom = Math.max(self._minZoom, Math.min(self._maxZoom, newZoom));
+
+      // Zoom toward cursor: adjust pan so the point under cursor stays fixed
+      // The transform is: translate(panX, panY) scale(zoom)
+      // Point in content space under cursor: ((mx * 100) - panX) / oldZoom
+      // After zoom it should still map to mx: panX_new = (mx * 100) - contentX * newZoom
+      const contentX = (mx * 100 - self._panX) / oldZoom;
+      const contentY = (my * 100 - self._panY) / oldZoom;
+      self._panX = mx * 100 - contentX * newZoom;
+      self._panY = my * 100 - contentY * newZoom;
+      self._zoom = newZoom;
+
+      self.clampPan();
+      self.applyTransform();
     }, { passive: false });
+
+    // Mouse drag
+    wrap.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return; // left click only
+      self._isDragging = true;
+      self._didDrag = false;
+      self._dragStartX = e.clientX;
+      self._dragStartY = e.clientY;
+      self._dragStartPanX = self._panX;
+      self._dragStartPanY = self._panY;
+      wrap.classList.add('grabbing');
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e) {
+      if (!self._isDragging) return;
+      const dx = e.clientX - self._dragStartX;
+      const dy = e.clientY - self._dragStartY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) self._didDrag = true;
+
+      const rect = wrap.getBoundingClientRect();
+      // Convert pixel delta to percentage of container
+      self._panX = self._dragStartPanX + (dx / rect.width) * 100;
+      self._panY = self._dragStartPanY + (dy / rect.height) * 100;
+
+      self.clampPan();
+      self.applyTransform();
+
+      // Hide tooltip while dragging
+      self.ttHide();
+    });
+
+    window.addEventListener('mouseup', function() {
+      if (!self._isDragging) return;
+      self._isDragging = false;
+      wrap.classList.remove('grabbing');
+    });
+
+    // Double-click to reset zoom
+    wrap.addEventListener('dblclick', function(e) {
+      e.preventDefault();
+      self.smoothResetZoom();
+    });
+  }
+
+  clampPan() {
+    // Don't allow panning beyond the scaled map edges.
+    // At zoom=1 panX/panY should be 0. At zoom>1, allow panning
+    // but keep the map covering the viewport.
+    const maxPanX = (this._zoom - 1) * 50; // half the overflow in %
+    const maxPanY = (this._zoom - 1) * 50;
+    this._panX = Math.max(-maxPanX, Math.min(maxPanX, this._panX));
+    this._panY = Math.max(-maxPanY, Math.min(maxPanY, this._panY));
+  }
+
+  applyTransform() {
+    const svg = this.$('#mapSvg');
+    svg.style.transformOrigin = '0 0';
+    svg.style.transform =
+      'translate(' + this._panX + '%, ' + this._panY + '%) scale(' + this._zoom + ')';
+  }
+
+  smoothResetZoom() {
+    const self = this;
+    const startZoom = this._zoom;
+    const startPanX = this._panX;
+    const startPanY = this._panY;
+    const duration = 300;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      self._zoom = startZoom + (1 - startZoom) * ease;
+      self._panX = startPanX + (0 - startPanX) * ease;
+      self._panY = startPanY + (0 - startPanY) * ease;
+      self.applyTransform();
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   }
 
   drawMap() {
-    const group = this.$('#mapGroup');
-    group.innerHTML = '';
+    const svg = this.$('#mapSvg');
+    svg.innerHTML = '';
     const lonToX = lon => (lon + 25) * (540 / 75);
     const latToY = lat => {
       const r = lat * Math.PI / 180;
@@ -263,10 +345,16 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
-        p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
-        p.addEventListener('mousemove', function(e) { self.ttMove(e); });
+        // Desktop: mouse events (suppress tooltip if dragging)
+        p.addEventListener('mouseenter', function(e) {
+          if (!self._isDragging) self.ttShow(e);
+        });
+        p.addEventListener('mousemove', function(e) {
+          if (!self._isDragging) self.ttMove(e);
+        });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
+        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -277,11 +365,11 @@ class DataComparisonMap extends HTMLElement {
           self.ttMove(fakeEvent);
         }, { passive: false });
 
-        group.appendChild(p);
+        svg.appendChild(p);
       });
     });
 
-    const svg = this.$('#mapSvg');
+    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -485,6 +573,7 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
+    // Position legend marker
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
@@ -515,6 +604,8 @@ class DataComparisonMap extends HTMLElement {
     return;
   }
 
+  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
+  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
     return `<div class="app">
   <nav class="top-nav">
@@ -549,9 +640,7 @@ class DataComparisonMap extends HTMLElement {
         <span id="legMax">\u2014</span>
       </div>
       <div class="map-wrap">
-        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet">
-            <g id="mapGroup" transform="translate(0 0) scale(1)"></g>
-        </svg>
+        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
     </div>
 
