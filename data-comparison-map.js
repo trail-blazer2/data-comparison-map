@@ -47,8 +47,6 @@ const CATEGORY_META = {
   }
 };
 
-var IS_DESKTOP = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
 function getColor(t) {
   const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
   const n = c.length - 1;
@@ -100,7 +98,6 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
-// ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
@@ -113,34 +110,13 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    // Pan/zoom (desktop only)
-    this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
-    this._vb = { x: -30, y: -5, w: 590, h: 490 };
-    this._drag = null;
+    
+    // Zoom/Pan state
+    this.mapTransform = { x: 0, y: 0, scale: 1 };
   }
 
   connectedCallback() {
     this.shadowRoot.innerHTML = this.html();
-
-    // Desktop only: force app to exact viewport height via inline style
-    if (IS_DESKTOP) {
-      var self = this;
-      function fitApp() {
-        var app = self.shadowRoot.querySelector('.app');
-        if (app) app.style.height = window.innerHeight + 'px';
-      }
-      fitApp();
-      window.addEventListener('resize', fitApp);
-    }
-
-    // Wix: tell parent our desired height
-    function tellWixHeight() {
-      try { window.parent.postMessage({ type: 'setHeight', height: window.innerHeight }, '*'); } catch(e) {}
-    }
-    tellWixHeight();
-    window.addEventListener('resize', tellWixHeight);
-    setInterval(tellWixHeight, 3000);
-
     this.init();
   }
 
@@ -184,16 +160,13 @@ class DataComparisonMap extends HTMLElement {
       this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
-    const logoEl = this.$('#navLogo');
-    if (logoEl) logoEl.src = baseUrl + 'logo.png';
-    const logoMob = this.$('#navLogoMobile');
-    if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
-
-    // BLUR FIX: inject SVG filter only on desktop, after init
-    if (IS_DESKTOP) {
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
+      
+      // Initialize pan/zoom ONLY on PC
+      this.initZoomPan();
     }
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
@@ -202,7 +175,6 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
-    if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
@@ -211,78 +183,65 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  // ============================================================
-  // PAN & ZOOM — desktop only, with bounds clamping
-  // ============================================================
-  clampViewBox() {
-    var d = this._vbDefault;
-    var padX = d.w * 0.5;
-    var padY = d.h * 0.5;
-    if (this._vb.x < d.x - padX) this._vb.x = d.x - padX;
-    if (this._vb.y < d.y - padY) this._vb.y = d.y - padY;
-    if (this._vb.x + this._vb.w > d.x + d.w + padX) this._vb.x = d.x + d.w + padX - this._vb.w;
-    if (this._vb.y + this._vb.h > d.y + d.h + padY) this._vb.y = d.y + d.h + padY - this._vb.h;
-  }
+  initZoomPan() {
+    const svg = this.$('#mapSvg');
+    let isDragging = false;
+    let startX = 0, startY = 0;
 
-  applyViewBox() {
-    this.clampViewBox();
-    this.$('#mapSvg').setAttribute('viewBox',
-      this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
-      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1));
-  }
+    const updateMapGroup = () => {
+      // Clamp values (restrict bounds)
+      const maxScale = 5;
+      const minScale = 1;
+      this.mapTransform.scale = Math.max(minScale, Math.min(this.mapTransform.scale, maxScale));
 
-  initMapPanZoom() {
-    var svg = this.$('#mapSvg');
-    var wrap = this.$('.map-wrap');
-    var self = this;
-    var hint = this.$('#mapHint');
-    if (hint) hint.style.display = 'block';
-    wrap.style.cursor = 'grab';
+      // Bounding box mapping (keeps user from panning infinitely away)
+      const baseWidth = 590;
+      const baseHeight = 490;
+      const panXMax = (baseWidth * this.mapTransform.scale - baseWidth) / 2;
+      const panYMax = (baseHeight * this.mapTransform.scale - baseHeight) / 2;
 
-    wrap.addEventListener('wheel', function(e) {
+      this.mapTransform.x = Math.max(-panXMax, Math.min(this.mapTransform.x, panXMax));
+      this.mapTransform.y = Math.max(-panYMax, Math.min(this.mapTransform.y, panYMax));
+
+      const group = this.$('#mapGroup');
+      if (group) {
+        group.setAttribute('transform', `translate(${this.mapTransform.x} ${this.mapTransform.y}) scale(${this.mapTransform.scale})`);
+      }
+    };
+
+    svg.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX - this.mapTransform.x;
+      startY = e.clientY - this.mapTransform.y;
+      svg.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      this.mapTransform.x = e.clientX - startX;
+      this.mapTransform.y = e.clientY - startY;
+      updateMapGroup();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if(isDragging) {
+          isDragging = false;
+          svg.style.cursor = 'grab';
+      }
+    });
+
+    svg.addEventListener('wheel', (e) => {
       e.preventDefault();
-      e.stopPropagation();
-      var factor = e.deltaY > 0 ? 1.1 : 1 / 1.1;
-      var newW = self._vb.w * factor;
-      var newH = self._vb.h * factor;
-      if (newW < 100 || newW > self._vbDefault.w * 2) return;
-      var rect = svg.getBoundingClientRect();
-      var cx = (e.clientX - rect.left) / rect.width;
-      var cy = (e.clientY - rect.top) / rect.height;
-      self._vb.x += (self._vb.w - newW) * cx;
-      self._vb.y += (self._vb.h - newH) * cy;
-      self._vb.w = newW;
-      self._vb.h = newH;
-      self.applyViewBox();
+      const zoomSensitivity = 0.002;
+      const deltaScale = -e.deltaY * zoomSensitivity;
+      this.mapTransform.scale += deltaScale;
+      updateMapGroup();
     }, { passive: false });
-
-    wrap.addEventListener('mousedown', function(e) {
-      if (e.target.classList && e.target.classList.contains('cp')) return;
-      e.preventDefault();
-      self._drag = { sx: e.clientX, sy: e.clientY, vbx: self._vb.x, vby: self._vb.y };
-      wrap.style.cursor = 'grabbing';
-    });
-    window.addEventListener('mousemove', function(e) {
-      if (!self._drag) return;
-      var rect = svg.getBoundingClientRect();
-      self._vb.x = self._drag.vbx - (e.clientX - self._drag.sx) * (self._vb.w / rect.width);
-      self._vb.y = self._drag.vby - (e.clientY - self._drag.sy) * (self._vb.h / rect.height);
-      self.applyViewBox();
-    });
-    window.addEventListener('mouseup', function() {
-      if (self._drag) { self._drag = null; wrap.style.cursor = 'grab'; }
-    });
-
-    wrap.addEventListener('dblclick', function(e) {
-      e.preventDefault();
-      self._vb = Object.assign({}, self._vbDefault);
-      self.applyViewBox();
-    });
   }
 
   drawMap() {
-    const svg = this.$('#mapSvg');
-    svg.innerHTML = '';
+    const group = this.$('#mapGroup');
+    group.innerHTML = '';
     const lonToX = lon => (lon + 25) * (540 / 75);
     const latToY = lat => {
       const r = lat * Math.PI / 180;
@@ -304,12 +263,10 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
-        // Desktop: mouse events
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
-        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -320,11 +277,11 @@ class DataComparisonMap extends HTMLElement {
           self.ttMove(fakeEvent);
         }, { passive: false });
 
-        svg.appendChild(p);
+        group.appendChild(p);
       });
     });
 
-    // Tap anywhere else on mobile to dismiss tooltip
+    const svg = this.$('#mapSvg');
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -592,9 +549,10 @@ class DataComparisonMap extends HTMLElement {
         <span id="legMax">\u2014</span>
       </div>
       <div class="map-wrap">
-        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet">
+            <g id="mapGroup" transform="translate(0 0) scale(1)"></g>
+        </svg>
       </div>
-      <div class="map-hint" id="mapHint">Scroll to zoom \u00B7 Drag to pan \u00B7 Double-click to reset</div>
     </div>
 
     <div class="controls glass">
