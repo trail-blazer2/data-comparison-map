@@ -28,14 +28,20 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
-// Nearby non-European countries to show greyed out around the map edges
+// Nearby non-European countries to show greyed out around the map edges.
+// Excludes Russia (643), Kazakhstan (398) and other transcontinental giants
+// whose polygons span far outside the European view and cause rendering artifacts.
 const NEARBY_NUMERIC = new Set([
   '012','788','434','818','504','729','148','562','466',  // North Africa / Sahel
   '792','268','051','031','364','368','400','760','422',  // Turkey, Caucasus, Middle East
   '682','887','512','634',                                 // Arabian Peninsula
-  '643',                                                   // Russia
-  '398','795','860','417','762',                           // Central Asia
+  '795','860','417','762',                                 // Central Asia (no Kazakhstan)
 ]);
+
+// SVG coordinate bounding box for clipping nearby countries.
+// Anything outside this box is clipped away so huge polygons (like parts of
+// Russia that leak in via shared borders) don't paint across the ocean.
+const NEARBY_CLIP_BOX = { x: -200, y: -100, w: 1000, h: 700 };
 
 const CATEGORY_META = {
   economy: {
@@ -105,6 +111,65 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
     else el.textContent = fmt(endVal, unit);
   }
   requestAnimationFrame(tick);
+}
+
+// ============================================================
+// Geometry clipping helper — clips polygon rings to a bounding box
+// so that huge countries (Russia etc.) don't paint outside the map area.
+// Uses Sutherland-Hodgman algorithm on each ring.
+// ============================================================
+function clipRingToBox(ring, box) {
+  const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
+  const edges = [
+    (p) => p[0] >= minX, (a, b) => { const t=(minX-a[0])/(b[0]-a[0]); return [minX, a[1]+t*(b[1]-a[1])]; },
+    (p) => p[0] <= maxX, (a, b) => { const t=(maxX-a[0])/(b[0]-a[0]); return [maxX, a[1]+t*(b[1]-a[1])]; },
+    (p) => p[1] >= minY, (a, b) => { const t=(minY-a[1])/(b[1]-a[1]); return [a[0]+t*(b[0]-a[0]), minY]; },
+    (p) => p[1] <= maxY, (a, b) => { const t=(maxY-a[1])/(b[1]-a[1]); return [a[0]+t*(b[0]-a[0]), maxY]; },
+  ];
+  let pts = ring.slice();
+  for (let e = 0; e < edges.length; e += 2) {
+    const inside = edges[e], intersect = edges[e+1];
+    const input = pts; pts = [];
+    if (input.length === 0) return [];
+    let prev = input[input.length - 1];
+    for (let i = 0; i < input.length; i++) {
+      const cur = input[i];
+      if (inside(cur)) {
+        if (!inside(prev)) pts.push(intersect(prev, cur));
+        pts.push(cur);
+      } else if (inside(prev)) {
+        pts.push(intersect(prev, cur));
+      }
+      prev = cur;
+    }
+  }
+  return pts;
+}
+
+function clipGeometry(geom, proj, box) {
+  // Project coordinates, then clip to box, return SVG path strings
+  const ringToPath = (ring) => {
+    const projected = ring.map(c => proj(c));
+    const clipped = clipRingToBox(projected, box);
+    if (clipped.length < 3) return '';
+    return clipped.map((p, i) =>
+      `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`
+    ).join(' ') + 'Z';
+  };
+
+  if (geom.type === 'Polygon') {
+    const d = geom.coordinates.map(ringToPath).filter(s => s).join(' ');
+    return d ? [d] : [];
+  }
+  if (geom.type === 'MultiPolygon') {
+    const paths = [];
+    geom.coordinates.forEach(poly => {
+      const d = poly.map(ringToPath).filter(s => s).join(' ');
+      if (d) paths.push(d);
+    });
+    return paths;
+  }
+  return [];
 }
 
 // ============================================================
@@ -245,18 +310,21 @@ class DataComparisonMap extends HTMLElement {
     svg.appendChild(defs);
 
     // -- Draw nearby (non-European) countries first (behind) --
-    // Each country gets TWO paths stacked: solid grey fill + pattern fill on top
+    // Each country's geometry is CLIPPED to NEARBY_CLIP_BOX before rendering,
+    // so huge polygons (parts of Russia that leak in, trans-continental countries)
+    // are trimmed and never paint outside the European map area.
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
     this.nearbyFeatures.forEach(f => {
-      this.geoPaths(f.geometry, proj).forEach(d => {
+      const clippedPaths = clipGeometry(f.geometry, proj, NEARBY_CLIP_BOX);
+      clippedPaths.forEach(d => {
         // Base fill (grey)
         const pBase = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pBase.setAttribute('d', d);
         pBase.classList.add('cp-nearby');
         nearbyGroup.appendChild(pBase);
 
-        // Pattern overlay (same shape, filled with the text pattern)
+        // Pattern overlay (same clipped shape, filled with the text pattern)
         const pPattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pPattern.setAttribute('d', d);
         pPattern.classList.add('cp-nearby-pattern');
@@ -317,7 +385,6 @@ class DataComparisonMap extends HTMLElement {
     // The original/default viewBox
     this._origVB = { x: -30, y: -5, w: 590, h: 490 };
     // The full content bounding box (Europe + nearby countries)
-    // Generous area so user can pan to see all European countries comfortably
     this._contentBBox = { x: -80, y: -60, w: 750, h: 620 };
     this._zoom = 1;
     this._panX = 0;
@@ -330,7 +397,6 @@ class DataComparisonMap extends HTMLElement {
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
       const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
 
-      // Zoom towards mouse position
       const rect = svg.getBoundingClientRect();
       const mx = (e.clientX - rect.left) / rect.width;
       const my = (e.clientY - rect.top) / rect.height;
@@ -367,7 +433,7 @@ class DataComparisonMap extends HTMLElement {
       const dy = (e.clientY - this._panStartY) * (vb.h / rect.height);
       this._panX = this._panStartPanX - dx;
       this._panY = this._panStartPanY - dy;
-      this._applyTransform(); // allow slight overshoot during drag
+      this._applyTransform();
     });
 
     window.addEventListener('mouseup', () => {
@@ -428,23 +494,10 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _getPanBounds() {
-    // Current view dimensions at this zoom level
     const vw = this._origVB.w / this._zoom;
     const vh = this._origVB.h / this._zoom;
-
-    // The content area the user should be able to see
     const cb = this._contentBBox;
 
-    // The view's top-left (x, y) = origVB.x + panX, origVB.y + panY
-    // We want the view rectangle to always overlap with the content bbox.
-    // Specifically: the view should not go so far that content is off-screen.
-    //
-    // Min panX: view right edge can't go past content left edge
-    //   origVB.x + panX + vw >= cb.x  =>  panX >= cb.x - origVB.x - vw
-    // Max panX: view left edge can't go past content right edge
-    //   origVB.x + panX <= cb.x + cb.w  =>  panX <= cb.x + cb.w - origVB.x
-    //
-    // But we want stricter: keep at least half the view within content
     const minPanX = cb.x - this._origVB.x - vw * 0.5;
     const maxPanX = (cb.x + cb.w) - this._origVB.x - vw * 0.5;
     const minPanY = cb.y - this._origVB.y - vh * 0.5;
@@ -489,7 +542,6 @@ class DataComparisonMap extends HTMLElement {
     const startPanX = this._panX;
     const startPanY = this._panY;
 
-    // Compute bounds at target zoom to clamp targets
     const tvw = this._origVB.w / targetZoom;
     const tvh = this._origVB.h / targetZoom;
     const cb = this._contentBBox;
@@ -504,7 +556,6 @@ class DataComparisonMap extends HTMLElement {
     const tick = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out back (slight overshoot for elastic feel)
       const c1 = 1.70158;
       const c3 = c1 + 1;
       const ease = 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
