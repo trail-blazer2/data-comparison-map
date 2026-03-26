@@ -182,7 +182,6 @@ class DataComparisonMap extends HTMLElement {
     this.drawMap();
     if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
-    if (IS_DESKTOP) this.initCollapsibles();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
@@ -197,7 +196,6 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     const self = this;
-
     var hint = this.$('#mapHint');
     if (hint) hint.style.display = 'block';
     wrap.classList.add('pannable');
@@ -226,7 +224,6 @@ class DataComparisonMap extends HTMLElement {
       self._drag = { startX: e.clientX, startY: e.clientY, vb: Object.assign({}, self._vb) };
       wrap.classList.add('dragging');
     });
-
     window.addEventListener('mousemove', function(e) {
       if (!self._drag) return;
       var rect = svg.getBoundingClientRect();
@@ -234,11 +231,9 @@ class DataComparisonMap extends HTMLElement {
       self._vb.y = self._drag.vb.y - (e.clientY - self._drag.startY) * (self._vb.h / rect.height);
       self.applyViewBox();
     });
-
     window.addEventListener('mouseup', function() {
       if (self._drag) { self._drag = null; wrap.classList.remove('dragging'); }
     });
-
     wrap.addEventListener('dblclick', function(e) {
       e.preventDefault();
       self._vb = Object.assign({}, self._vbDefault);
@@ -250,21 +245,6 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mapSvg').setAttribute('viewBox',
       this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
       this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1));
-  }
-
-  // ============================================================
-  // COLLAPSIBLE — Data Type only, desktop only
-  // ============================================================
-  initCollapsibles() {
-    var self = this;
-    this.$$('.expand-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var section = btn.closest('.collapsible-section');
-        var isExpanded = section.classList.toggle('expanded');
-        var label = btn.querySelector('.expand-label');
-        if (label) label.textContent = isExpanded ? 'Show less' : 'Show more';
-      });
-    });
   }
 
   drawMap() {
@@ -304,7 +284,6 @@ class DataComparisonMap extends HTMLElement {
         svg.appendChild(p);
       });
     });
-
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -375,12 +354,6 @@ class DataComparisonMap extends HTMLElement {
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
     });
-    var section = c.closest('.collapsible-section');
-    if (section) {
-      section.classList.remove('expanded');
-      var label = section.querySelector('.expand-label');
-      if (label) label.textContent = 'Show more';
-    }
   }
 
   buildSourceButtons(dtKey) {
@@ -482,29 +455,19 @@ class DataComparisonMap extends HTMLElement {
     } else { valEl.textContent = fmt(newVal, dt.unit); }
     this._lastTtVal = newVal;
     this._lastTtDataType = this.currentDataType;
-    this.checkDiscrepancy(code);
+    this.$('#ttDisc').style.display = 'none';
     const marker = this.$('#legMarker');
     if (newVal != null) {
-      const vals = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      const vs = Object.values(src.countries).filter(v => v != null);
+      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
       marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%';
       marker.classList.add('visible');
     } else { marker.classList.remove('visible'); }
     this.$('#tt').classList.add('visible');
   }
 
-  ttMove(e) {
-    const tt = this.$('#tt');
-    tt.style.left = (e.clientX + 18) + 'px';
-    tt.style.top = (e.clientY - 12) + 'px';
-  }
-
-  ttHide() {
-    this.$('#tt').classList.remove('visible');
-    this.$('#legMarker').classList.remove('visible');
-  }
-
-  checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
+  ttMove(e) { var tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
+  ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
 
   html() {
     return `<div class="app">
@@ -550,12 +513,9 @@ class DataComparisonMap extends HTMLElement {
         <div class="sec-title">Category</div>
         <div class="cat-tabs" id="catBtns"></div>
       </div>
-      <div class="collapsible-section">
+      <div>
         <div class="sec-title">Data Type</div>
-        <div class="collapsible-body">
-          <div class="btn-group" id="dtBtns"></div>
-        </div>
-        <button class="expand-btn"><span class="chevron"></span><span class="expand-label">Show more</span></button>
+        <div class="btn-group" id="dtBtns"></div>
       </div>
       <div>
         <div class="sec-title">Source</div>
