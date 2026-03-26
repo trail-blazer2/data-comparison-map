@@ -80,9 +80,7 @@
   max-width: 300px;
   object-fit: contain;
 }
-
 .logo-mobile { display: none; }
-
 .nav-links {
   display: flex;
   align-items: center;
@@ -115,7 +113,7 @@
   transform: translateY(-1px);
 }
 
-/* ===== MAIN GRID — fills remaining space ===== */
+/* ===== MAIN GRID ===== */
 .main {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -128,7 +126,7 @@
   min-height: 0;
 }
 
-/* ===== LIQUID GLASS — controls sidebar only ===== */
+/* ===== LIQUID GLASS ===== */
 .glass {
   position: relative;
   border-radius: 20px;
@@ -181,7 +179,6 @@
   flex-direction: column;
   min-height: 0;
 }
-
 .title-row {
   display: flex;
   justify-content: space-between;
@@ -236,12 +233,8 @@
   overflow: hidden;
   border-radius: 12px;
 }
-/* Desktop only: grab cursor */
-@media (hover: hover) and (pointer: fine) {
-  .map-wrap { cursor: grab; }
-  .map-wrap:active { cursor: grabbing; }
-}
-
+.map-wrap.pannable { cursor: grab; }
+.map-wrap.dragging { cursor: grabbing; }
 .map-wrap svg { width: 100%; height: 100%; }
 
 .map-hint {
@@ -250,7 +243,7 @@
   color: #a0aec0;
   padding: 4px 0 0;
   flex-shrink: 0;
-  display: none; /* shown via JS on desktop only */
+  display: none;
 }
 
 /* ===== COUNTRY PATHS ===== */
@@ -341,80 +334,65 @@
   color: #8395a7;
   margin: 0 0 5px;
   font-weight: 600;
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  display: block;
-  width: 100%;
-  text-align: left;
 }
 
 /* ===== COLLAPSIBLE SECTIONS ===== */
-.sec-toggle {
-  cursor: pointer;
+.collapsible-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* The body: shows ~3 items by default, uses CSS mask for true fade */
+.collapsible-body {
+  max-height: 112px;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* True transparent fade — not a colored overlay */
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
+/* Expanded: remove mask, allow scroll, fill available space */
+.collapsible-section.expanded .collapsible-body {
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+  -webkit-mask-image: none;
+  mask-image: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.08) transparent;
+}
+.collapsible-section.expanded .collapsible-body::-webkit-scrollbar { width: 3px; }
+.collapsible-section.expanded .collapsible-body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.08); border-radius: 3px;
+}
+
+/* The expand/collapse ▾ button — sits below the list */
+.expand-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 5px;
+  justify-content: center;
+  padding: 4px 0 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
-.sec-toggle:hover { color: #576574; }
+.expand-btn:hover { opacity: 1; }
 
 .chevron {
   display: inline-block;
   width: 0; height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid #8395a7;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #8395a7;
   transition: transform 0.25s ease;
-  flex-shrink: 0;
 }
-
-/* Default: collapsed to ~3 items. "expanded" = show all */
-.collapsible-list {
-  position: relative;
-  /* 3 buttons at ~34px each + some gap = ~108px */
-  max-height: 108px;
-  overflow: hidden;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* When expanded: fill available space, scrollable */
-.collapsible-section.expanded .collapsible-list {
-  max-height: calc(100vh - 260px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.08) transparent;
-}
-.collapsible-section.expanded .collapsible-list::-webkit-scrollbar { width: 3px; }
-.collapsible-section.expanded .collapsible-list::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.08); border-radius: 3px;
-}
-
-/* Chevron points down when collapsed (default), up when expanded */
 .collapsible-section.expanded .chevron {
   transform: rotate(180deg);
-}
-
-/* Fade-out at bottom — uses transparent to match glass BG, not white */
-.list-fade {
-  position: sticky;
-  bottom: 0;
-  left: 0; right: 0;
-  height: 28px;
-  background: linear-gradient(to bottom,
-    transparent,
-    rgb(220 228 238 / 70%) 60%,
-    rgb(220 228 238 / 95%)
-  );
-  pointer-events: none;
-  flex-shrink: 0;
-  z-index: 5;
-  transition: opacity 0.25s ease;
-}
-/* Hide fade when expanded (user is scrolling) */
-.collapsible-section.expanded .list-fade {
-  opacity: 0;
 }
 
 /* ===== CATEGORY BUTTONS ===== */
@@ -473,7 +451,6 @@
   gap: 2px;
   position: relative;
 }
-
 .btn-group .slider {
   position: absolute;
   left: 0; right: 0;
@@ -572,14 +549,13 @@
     max-height: 220px;
     overflow-y: auto;
   }
-  .collapsible-list { max-height: 100px; }
-  .collapsible-section.expanded .collapsible-list {
-    max-height: calc(100vh - 320px);
+  .collapsible-body { max-height: 100px; }
+  .collapsible-section.expanded .collapsible-body {
+    max-height: calc(100vh - 340px);
   }
   .map-title { font-size: 0.85rem; }
   .legend { margin: 4px 0; }
   .top-nav { margin: 6px 0 6px; padding: 8px 14px; }
-
   .logo-desktop { display: none; }
   .logo-mobile { display: block; }
 
