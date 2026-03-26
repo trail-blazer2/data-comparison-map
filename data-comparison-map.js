@@ -111,6 +111,11 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
+
+    // Map pan/zoom state
+    this._vb = { x: -30, y: -5, w: 590, h: 490 }; // default viewBox
+    this._drag = null;
+    this._pinchDist = 0;
   }
 
   connectedCallback() {
@@ -176,7 +181,9 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
+    this.initMapPanZoom();
     this.buildCategoryButtons();
+    this.initCollapsibles();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
 
@@ -184,7 +191,132 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-    drawMap() {
+  // ============================================================
+  // MAP PAN & ZOOM
+  // ============================================================
+  initMapPanZoom() {
+    const svg = this.$('#mapSvg');
+    const self = this;
+
+    // --- Mouse wheel zoom ---
+    svg.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var factor = e.deltaY > 0 ? 1.12 : 0.89;
+      self.zoomMap(factor, e);
+    }, { passive: false });
+
+    // --- Mouse drag pan ---
+    svg.addEventListener('mousedown', function(e) {
+      if (e.target.classList.contains('cp')) return; // let country hover work
+      e.preventDefault();
+      self._drag = { startX: e.clientX, startY: e.clientY, vb: Object.assign({}, self._vb) };
+    });
+    svg.addEventListener('mousemove', function(e) {
+      if (!self._drag) return;
+      var rect = svg.getBoundingClientRect();
+      var scaleX = self._vb.w / rect.width;
+      var scaleY = self._vb.h / rect.height;
+      var dx = (e.clientX - self._drag.startX) * scaleX;
+      var dy = (e.clientY - self._drag.startY) * scaleY;
+      self._vb.x = self._drag.vb.x - dx;
+      self._vb.y = self._drag.vb.y - dy;
+      self.applyViewBox();
+    });
+    svg.addEventListener('mouseup', function() { self._drag = null; });
+    svg.addEventListener('mouseleave', function() { self._drag = null; });
+
+    // --- Touch pinch zoom + pan ---
+    svg.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        self._pinchDist = Math.sqrt(dx * dx + dy * dy);
+        self._drag = null; // cancel pan during pinch
+      } else if (e.touches.length === 1 && !e.target.classList.contains('cp')) {
+        self._drag = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, vb: Object.assign({}, self._vb) };
+      }
+    }, { passive: false });
+
+    svg.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (self._pinchDist > 0) {
+          var factor = self._pinchDist / dist;
+          self.zoomMap(factor);
+          self._pinchDist = dist;
+        }
+      } else if (e.touches.length === 1 && self._drag) {
+        var rect = svg.getBoundingClientRect();
+        var scaleX = self._vb.w / rect.width;
+        var scaleY = self._vb.h / rect.height;
+        var ddx = (e.touches[0].clientX - self._drag.startX) * scaleX;
+        var ddy = (e.touches[0].clientY - self._drag.startY) * scaleY;
+        self._vb.x = self._drag.vb.x - ddx;
+        self._vb.y = self._drag.vb.y - ddy;
+        self.applyViewBox();
+      }
+    }, { passive: false });
+
+    svg.addEventListener('touchend', function() {
+      self._drag = null;
+      self._pinchDist = 0;
+    });
+
+    // --- Double click to reset ---
+    svg.addEventListener('dblclick', function(e) {
+      e.preventDefault();
+      self._vb = { x: -30, y: -5, w: 590, h: 490 };
+      self.applyViewBox();
+    });
+  }
+
+  zoomMap(factor, mouseEvent) {
+    var svg = this.$('#mapSvg');
+    var minW = 100, maxW = 1400;
+    var newW = this._vb.w * factor;
+    var newH = this._vb.h * factor;
+    if (newW < minW || newW > maxW) return;
+
+    // Zoom toward mouse/center
+    var cx = 0.5, cy = 0.5;
+    if (mouseEvent) {
+      var rect = svg.getBoundingClientRect();
+      cx = (mouseEvent.clientX - rect.left) / rect.width;
+      cy = (mouseEvent.clientY - rect.top) / rect.height;
+    }
+
+    this._vb.x += (this._vb.w - newW) * cx;
+    this._vb.y += (this._vb.h - newH) * cy;
+    this._vb.w = newW;
+    this._vb.h = newH;
+    this.applyViewBox();
+  }
+
+  applyViewBox() {
+    this.$('#mapSvg').setAttribute('viewBox',
+      this._vb.x.toFixed(1) + ' ' + this._vb.y.toFixed(1) + ' ' +
+      this._vb.w.toFixed(1) + ' ' + this._vb.h.toFixed(1)
+    );
+  }
+
+  // ============================================================
+  // COLLAPSIBLE SECTIONS
+  // ============================================================
+  initCollapsibles() {
+    const self = this;
+    this.$$('.sec-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var section = btn.closest('.collapsible-section');
+        section.classList.toggle('collapsed');
+      });
+    });
+  }
+
+  drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const lonToX = lon => (lon + 25) * (540 / 75);
@@ -208,18 +340,14 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
-        // Desktop: mouse events
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
-        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
-          // Clear previous touched state
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
-          // Position tooltip at touch point
           var touch = e.touches[0];
           var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
           self.ttShow(fakeEvent);
@@ -230,7 +358,6 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
-    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -434,7 +561,7 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
-    // Position legend marker
+
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
@@ -463,28 +590,8 @@ class DataComparisonMap extends HTMLElement {
     // Data variance feature — hidden for now (paid addon)
     const el = this.$('#ttDisc');
     el.style.display = 'none';
-    return;
-    // const dt = this.DATA[this.currentDataType];
-    // if (!dt) return;
-    // const vals = [];
-    // Object.values(dt.sources).forEach(s => {
-    //   if (s.countries[code] != null) vals.push(s.countries[code]);
-    // });
-    // if (vals.length >= 2) {
-    //   const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-    //   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-    //   const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-    //   if (diff > 10) {
-    //     el.style.display = 'block';
-    //     el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
-    //     return;
-    //   }
-    // }
-    // el.style.display = 'none';
   }
 
-  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
-  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
     return `<div class="app">
   <nav class="top-nav">
@@ -521,6 +628,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="map-wrap">
         <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
+      <div class="map-hint">Scroll to zoom · Drag to pan · Double-click to reset</div>
     </div>
 
     <div class="controls glass">
@@ -528,13 +636,19 @@ class DataComparisonMap extends HTMLElement {
         <div class="sec-title">Category</div>
         <div class="cat-tabs" id="catBtns"></div>
       </div>
-      <div>
-        <div class="sec-title">Data Type</div>
-        <div class="btn-group" id="dtBtns"></div>
+      <div class="collapsible-section">
+        <button class="sec-title sec-toggle">Data Type <span class="chevron"></span></button>
+        <div class="collapsible-list">
+          <div class="btn-group" id="dtBtns"></div>
+          <div class="list-fade"></div>
+        </div>
       </div>
-      <div>
-        <div class="sec-title">Source</div>
-        <div class="btn-group" id="srcBtns"></div>
+      <div class="collapsible-section">
+        <button class="sec-title sec-toggle">Source <span class="chevron"></span></button>
+        <div class="collapsible-list">
+          <div class="btn-group" id="srcBtns"></div>
+          <div class="list-fade"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -552,3 +666,30 @@ class DataComparisonMap extends HTMLElement {
 }
 
 customElements.define('data-comparison-map', DataComparisonMap);
+
+// ============================================================
+// IFRAME AUTO-RESIZE — eliminates double scroll in Wix
+// ============================================================
+(function() {
+  if (window === window.parent) return;
+  var lastHeight = 0;
+  function postHeight() {
+    var body = document.body;
+    var html = document.documentElement;
+    var height = Math.max(
+      body.scrollHeight, body.offsetHeight,
+      html.scrollHeight, html.offsetHeight
+    );
+    height = Math.ceil(height) + 2;
+    if (height !== lastHeight) {
+      lastHeight = height;
+      window.parent.postMessage({ type: 'datamap-resize', height: height }, '*');
+    }
+  }
+  setInterval(postHeight, 300);
+  window.addEventListener('load', postHeight);
+  window.addEventListener('resize', postHeight);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(postHeight);
+  }
+})();
