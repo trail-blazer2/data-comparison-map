@@ -1,7 +1,7 @@
 /* ============================================================
    DATA COMPARISON MAP — Styles
-   Desktop: locked viewport, no scroll
-   Mobile: scrollable page, generous map + controls
+   Desktop: viewport-locked via --vh
+   Mobile: scrollable page with fixed-height map
    ============================================================ */
 
 :host {
@@ -9,10 +9,10 @@
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 16px;
   color: #1a1a2e;
-  height: 100%;
+  --vh: 1vh; /* overridden by JS with real pixel value */
 }
 
-/* ===== DESKTOP: viewport-locked ===== */
+/* ===== DESKTOP: locked to real viewport via --vh ===== */
 .app {
   max-width: 1840px;
   margin: 0 auto;
@@ -20,7 +20,8 @@
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #dbeafe 0%, #f3e8ff 40%, #d1fae5 100%);
-  height: 100%;
+  /* Use --vh so it works in Wix iframes AND iOS */
+  height: calc(var(--vh) * 100);
   position: relative;
   overflow: hidden;
 }
@@ -58,32 +59,14 @@
 }
 
 /* ===== GLASS ===== */
-.glass {
-  position: relative; border-radius: 20px; isolation: isolate;
-  background-color: rgb(255 255 255 / 12%);
-  box-shadow: 0 8px 32px rgb(0 0 0 / 8%), 0 0 24px rgb(0 0 0 / 4%);
-  overflow: hidden;
-}
-.glass::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  backdrop-filter: blur(16px) saturate(180%) brightness(1.06);
-  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.06); z-index: -1;
-}
+.glass { position: relative; border-radius: 20px; isolation: isolate; background-color: rgb(255 255 255 / 12%); box-shadow: 0 8px 32px rgb(0 0 0 / 8%), 0 0 24px rgb(0 0 0 / 4%); overflow: hidden; }
+.glass::before { content: ''; position: absolute; inset: 0; border-radius: inherit; backdrop-filter: blur(16px) saturate(180%) brightness(1.06); -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.06); z-index: -1; }
 @media (hover: hover) and (pointer: fine) { .glass::before { filter: url(#glass-distortion); } }
-.glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  box-shadow: inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 45%), inset -1px -1px 1px 1px rgb(255 255 255 / 25%);
-  pointer-events: none; z-index: 3;
-}
+.glass::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 45%), inset -1px -1px 1px 1px rgb(255 255 255 / 25%); pointer-events: none; z-index: 3; }
 .glass > * { position: relative; z-index: 2; }
 
 /* ===== MAP PANEL ===== */
-.map-panel {
-  position: relative; padding: 16px 20px 10px; border-radius: 20px;
-  background: rgb(255 255 255 / 18%); border: 1.5px solid rgb(255 255 255 / 40%);
-  box-shadow: 0 8px 32px rgb(0 0 0 / 6%), inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 40%), inset -1px -1px 1px 1px rgb(255 255 255 / 20%);
-  display: flex; flex-direction: column; min-height: 0;
-}
+.map-panel { position: relative; padding: 16px 20px 10px; border-radius: 20px; background: rgb(255 255 255 / 18%); border: 1.5px solid rgb(255 255 255 / 40%); box-shadow: 0 8px 32px rgb(0 0 0 / 6%), inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 40%), inset -1px -1px 1px 1px rgb(255 255 255 / 20%); display: flex; flex-direction: column; min-height: 0; }
 .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; flex-shrink: 0; }
 .map-title { font-size: 0.95rem; font-weight: 600; margin: 0; color: #1e3a5f; }
 .map-sub { font-size: 0.7rem; color: #8395a7; margin: 1px 0 0; }
@@ -92,8 +75,7 @@
 .legend-marker { position: absolute; top: -3px; width: 4px; height: 14px; background: #fff; border-radius: 3px; border: 1.5px solid #1e3a5f; box-shadow: 0 1px 6px rgba(0,0,0,0.25); transform: translateX(-50%); opacity: 0; transition: left 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.15s ease; pointer-events: none; }
 .legend-marker.visible { opacity: 1; }
 .map-wrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; overflow: hidden; border-radius: 12px; }
-.map-wrap.pannable { cursor: grab; }
-.map-wrap.dragging { cursor: grabbing; }
+.map-wrap.pannable { cursor: grab; } .map-wrap.dragging { cursor: grabbing; }
 .map-wrap svg { width: 100%; height: 100%; }
 .map-hint { text-align: center; font-size: 0.55rem; color: #a0aec0; padding: 4px 0 0; flex-shrink: 0; display: none; }
 
@@ -104,7 +86,7 @@
 .cp.no-data:hover, .cp.no-data.touched { filter: none; stroke: rgba(255,255,255,0.35); stroke-width: 0.5; }
 
 /* ===== TOOLTIP ===== */
-.tooltip { position: fixed; pointer-events: none; z-index: 9999; padding: 14px 18px; isolation: isolate; background-color: rgb(255 255 255 / 55%); border-radius: 16px; border: 1px solid rgb(255 255 255 / 50%); box-shadow: 0 12px 48px rgba(0,0,0,0.12), inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 50%), inset -1px -1px 1px 1px rgb(255 255 255 / 25%); backdrop-filter: blur(32px) saturate(200%) brightness(1.12); -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.12); opacity: 0; transition: opacity 0.12s; max-width: 260px; }
+.tooltip { position: fixed; pointer-events: none; z-index: 9999; padding: 14px 18px; background-color: rgb(255 255 255 / 55%); border-radius: 16px; border: 1px solid rgb(255 255 255 / 50%); box-shadow: 0 12px 48px rgba(0,0,0,0.12), inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 50%), inset -1px -1px 1px 1px rgb(255 255 255 / 25%); backdrop-filter: blur(32px) saturate(200%) brightness(1.12); -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.12); opacity: 0; transition: opacity 0.12s; max-width: 260px; }
 .tooltip.visible { opacity: 1; }
 .tt-name { font-weight: 700; font-size: 0.82rem; margin-bottom: 3px; color: #1e3a5f; }
 .tt-val { font-size: 1.15rem; font-weight: 700; color: #0a1628; font-variant-numeric: tabular-nums; display: inline-block; min-width: 45px; }
@@ -113,11 +95,7 @@
 .tt-disc { display: none; }
 
 /* ===== CONTROLS ===== */
-.controls {
-  padding: 12px; display: flex; flex-direction: column; gap: 10px;
-  min-height: 0; overflow-y: auto;
-  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.08) transparent;
-}
+.controls { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.08) transparent; }
 .controls::-webkit-scrollbar { width: 3px; }
 .controls::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 3px; }
 .sec-title { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.12em; color: #8395a7; margin: 0 0 5px; font-weight: 600; }
@@ -158,88 +136,66 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* =============================================================
-   MOBILE — completely different layout: scrollable page
+   MOBILE — scrollable page, map has PIXEL height from JS
    ============================================================= */
 @media (max-width: 960px) {
-  :host {
-    height: auto !important;
-  }
-
   .app {
-    padding: 0 12px 12px;
+    padding: 0 12px 16px;
+    /* Mobile: NOT locked. Let it be a scrollable page. */
     height: auto;
-    min-height: auto;
-    overflow: visible;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   .main {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     flex: none;
   }
 
-  /* Map: fixed height so it never collapses */
+  /* Map: use --vh for a real-pixel height that actually fits */
   .map-panel {
-    padding: 12px 12px 10px;
-    height: 52vh;
-    min-height: 300px;
+    padding: 12px 14px 10px;
+    /* 50% of REAL viewport — not CSS vh which lies on iOS */
+    height: calc(var(--vh) * 50);
+    min-height: 280px;
+    max-height: 500px;
     flex: none;
   }
-  .map-wrap {
-    flex: 1;
-    min-height: 0;
-  }
+  .map-wrap { flex: 1; min-height: 0; }
 
-  /* Controls: full width, NOT constrained, generous spacing */
+  /* Controls: generous spacing, fully visible */
   .controls {
     max-height: none;
     overflow: visible;
-    padding: 16px;
-    gap: 14px;
+    padding: 18px 16px;
+    gap: 16px;
   }
-
-  .sec-title {
-    font-size: 0.62rem;
-    margin-bottom: 8px;
-  }
-
-  .cat-tabs {
-    gap: 8px;
-  }
-
-  .cat-btn {
-    padding: 12px 12px;
-    gap: 10px;
-  }
+  .sec-title { font-size: 0.65rem; margin-bottom: 10px; }
+  .cat-tabs { gap: 8px; }
+  .cat-btn { padding: 12px 14px; gap: 10px; }
   .cat-icon { width: 28px; height: 28px; }
   .cat-icon svg { width: 15px; height: 15px; }
-  .cat-label { font-size: 0.72rem; }
-
-  .btn {
-    padding: 10px 12px;
-    font-size: 0.74rem;
-  }
+  .cat-label { font-size: 0.74rem; }
+  .btn { padding: 11px 12px; font-size: 0.76rem; }
   .btn-dot { width: 6px; height: 6px; }
-  .badge { font-size: 0.56rem; padding: 3px 8px; }
+  .badge { font-size: 0.58rem; padding: 3px 8px; }
   .btn-group { gap: 4px; }
-
-  .map-title { font-size: 0.88rem; }
-  .map-sub { font-size: 0.68rem; }
-  .legend { margin: 5px 0; font-size: 0.62rem; }
-
-  .top-nav { margin: 8px 0 8px; padding: 10px 14px; }
+  .map-title { font-size: 0.9rem; }
+  .map-sub { font-size: 0.7rem; }
+  .legend { margin: 6px 0; font-size: 0.64rem; }
+  .top-nav { margin: 8px 0 10px; padding: 10px 16px; }
   .logo-desktop { display: none; }
   .logo-mobile { display: block; }
-  .nav-link { font-size: 0.68rem; padding: 7px 12px; }
-  .nav-logo-icon img { max-width: 100px; height: 28px; }
-
-  .footer { font-size: 0.58rem; padding: 8px 0; }
-
+  .nav-link { font-size: 0.7rem; padding: 8px 12px; }
+  .nav-logo-icon img { max-width: 110px; height: 30px; }
+  .footer { font-size: 0.6rem; padding: 10px 0; }
   .glass::before { backdrop-filter: none; -webkit-backdrop-filter: none; filter: none; background: rgb(255 255 255 / 65%); }
 }
 
 @media (max-width: 480px) {
   .cat-tabs { grid-template-columns: 1fr; }
-  .map-panel { height: 48vh; min-height: 260px; }
+  .map-panel { height: calc(var(--vh) * 45); min-height: 250px; }
 }
