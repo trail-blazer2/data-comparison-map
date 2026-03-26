@@ -98,6 +98,10 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
+// Detect touch device
+var IS_TOUCH = false;
+try { IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0; } catch(e) {}
+
 // ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
@@ -112,10 +116,11 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtVal = null;
     this._lastTtDataType = null;
 
-    // Map pan/zoom state
-    this._vb = { x: -30, y: -5, w: 590, h: 490 }; // default viewBox
+    // Map pan/zoom state (desktop only)
+    this._vb = { x: -30, y: -5, w: 590, h: 490 };
+    this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
     this._drag = null;
-    this._pinchDist = 0;
+    this._zoomAnim = null;
   }
 
   connectedCallback() {
@@ -168,7 +173,7 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    // BLUR FIX: inject SVG filter only on desktop, after init
+    // BLUR FIX: inject SVG filter only on desktop
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
@@ -181,7 +186,7 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
-    this.initMapPanZoom();
+    if (!IS_TOUCH) this.initMapPanZoom();
     this.buildCategoryButtons();
     this.initCollapsibles();
     const firstCat = Object.keys(this.categories)[0];
@@ -192,96 +197,66 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // MAP PAN & ZOOM
+  // MAP PAN & ZOOM — desktop only, smooth animated zoom
   // ============================================================
   initMapPanZoom() {
     const svg = this.$('#mapSvg');
     const self = this;
 
-    // --- Mouse wheel zoom ---
+    // Show hint on desktop only
+    var hint = this.$('#mapHint');
+    if (hint) hint.style.display = 'block';
+
+    // --- Smooth animated zoom on wheel ---
     svg.addEventListener('wheel', function(e) {
       e.preventDefault();
-      var factor = e.deltaY > 0 ? 1.12 : 0.89;
-      self.zoomMap(factor, e);
+      var factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+      self.smoothZoom(factor, e);
     }, { passive: false });
 
     // --- Mouse drag pan ---
     svg.addEventListener('mousedown', function(e) {
-      if (e.target.classList.contains('cp')) return; // let country hover work
+      if (e.target.classList.contains('cp')) return;
       e.preventDefault();
       self._drag = { startX: e.clientX, startY: e.clientY, vb: Object.assign({}, self._vb) };
+      svg.style.cursor = 'grabbing';
     });
-    svg.addEventListener('mousemove', function(e) {
+
+    var onMove = function(e) {
       if (!self._drag) return;
       var rect = svg.getBoundingClientRect();
       var scaleX = self._vb.w / rect.width;
       var scaleY = self._vb.h / rect.height;
-      var dx = (e.clientX - self._drag.startX) * scaleX;
-      var dy = (e.clientY - self._drag.startY) * scaleY;
-      self._vb.x = self._drag.vb.x - dx;
-      self._vb.y = self._drag.vb.y - dy;
+      self._vb.x = self._drag.vb.x - (e.clientX - self._drag.startX) * scaleX;
+      self._vb.y = self._drag.vb.y - (e.clientY - self._drag.startY) * scaleY;
       self.applyViewBox();
-    });
-    svg.addEventListener('mouseup', function() { self._drag = null; });
-    svg.addEventListener('mouseleave', function() { self._drag = null; });
+    };
 
-    // --- Touch pinch zoom + pan ---
-    svg.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        var dx = e.touches[0].clientX - e.touches[1].clientX;
-        var dy = e.touches[0].clientY - e.touches[1].clientY;
-        self._pinchDist = Math.sqrt(dx * dx + dy * dy);
-        self._drag = null; // cancel pan during pinch
-      } else if (e.touches.length === 1 && !e.target.classList.contains('cp')) {
-        self._drag = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, vb: Object.assign({}, self._vb) };
-      }
-    }, { passive: false });
-
-    svg.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        var dx = e.touches[0].clientX - e.touches[1].clientX;
-        var dy = e.touches[0].clientY - e.touches[1].clientY;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (self._pinchDist > 0) {
-          var factor = self._pinchDist / dist;
-          self.zoomMap(factor);
-          self._pinchDist = dist;
-        }
-      } else if (e.touches.length === 1 && self._drag) {
-        var rect = svg.getBoundingClientRect();
-        var scaleX = self._vb.w / rect.width;
-        var scaleY = self._vb.h / rect.height;
-        var ddx = (e.touches[0].clientX - self._drag.startX) * scaleX;
-        var ddy = (e.touches[0].clientY - self._drag.startY) * scaleY;
-        self._vb.x = self._drag.vb.x - ddx;
-        self._vb.y = self._drag.vb.y - ddy;
-        self.applyViewBox();
-      }
-    }, { passive: false });
-
-    svg.addEventListener('touchend', function() {
+    var onUp = function() {
       self._drag = null;
-      self._pinchDist = 0;
-    });
+      svg.style.cursor = 'grab';
+    };
+
+    svg.addEventListener('mousemove', onMove);
+    svg.addEventListener('mouseup', onUp);
+    svg.addEventListener('mouseleave', onUp);
 
     // --- Double click to reset ---
     svg.addEventListener('dblclick', function(e) {
       e.preventDefault();
-      self._vb = { x: -30, y: -5, w: 590, h: 490 };
-      self.applyViewBox();
+      self.smoothResetZoom();
     });
   }
 
-  zoomMap(factor, mouseEvent) {
+  smoothZoom(factor, mouseEvent) {
+    var self = this;
     var svg = this.$('#mapSvg');
-    var minW = 100, maxW = 1400;
-    var newW = this._vb.w * factor;
-    var newH = this._vb.h * factor;
-    if (newW < minW || newW > maxW) return;
+    var minW = 120, maxW = 1200;
+    var targetW = this._vb.w * factor;
+    var targetH = this._vb.h * factor;
+    if (targetW < minW || targetW > maxW) return;
 
-    // Zoom toward mouse/center
+    // Zoom toward mouse position
     var cx = 0.5, cy = 0.5;
     if (mouseEvent) {
       var rect = svg.getBoundingClientRect();
@@ -289,11 +264,52 @@ class DataComparisonMap extends HTMLElement {
       cy = (mouseEvent.clientY - rect.top) / rect.height;
     }
 
-    this._vb.x += (this._vb.w - newW) * cx;
-    this._vb.y += (this._vb.h - newH) * cy;
-    this._vb.w = newW;
-    this._vb.h = newH;
-    this.applyViewBox();
+    var startVb = Object.assign({}, this._vb);
+    var endX = startVb.x + (startVb.w - targetW) * cx;
+    var endY = startVb.y + (startVb.h - targetH) * cy;
+
+    // Cancel any running animation
+    if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
+
+    var startTime = performance.now();
+    var duration = 180; // ms — fast but smooth
+
+    function tick(now) {
+      var t = Math.min((now - startTime) / duration, 1);
+      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easeInOut
+      self._vb.x = startVb.x + (endX - startVb.x) * ease;
+      self._vb.y = startVb.y + (endY - startVb.y) * ease;
+      self._vb.w = startVb.w + (targetW - startVb.w) * ease;
+      self._vb.h = startVb.h + (targetH - startVb.h) * ease;
+      self.applyViewBox();
+      if (t < 1) self._zoomAnim = requestAnimationFrame(tick);
+      else self._zoomAnim = null;
+    }
+    this._zoomAnim = requestAnimationFrame(tick);
+  }
+
+  smoothResetZoom() {
+    var self = this;
+    var startVb = Object.assign({}, this._vb);
+    var endVb = Object.assign({}, this._vbDefault);
+
+    if (this._zoomAnim) cancelAnimationFrame(this._zoomAnim);
+
+    var startTime = performance.now();
+    var duration = 350;
+
+    function tick(now) {
+      var t = Math.min((now - startTime) / duration, 1);
+      var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      self._vb.x = startVb.x + (endVb.x - startVb.x) * ease;
+      self._vb.y = startVb.y + (endVb.y - startVb.y) * ease;
+      self._vb.w = startVb.w + (endVb.w - startVb.w) * ease;
+      self._vb.h = startVb.h + (endVb.h - startVb.h) * ease;
+      self.applyViewBox();
+      if (t < 1) self._zoomAnim = requestAnimationFrame(tick);
+      else self._zoomAnim = null;
+    }
+    this._zoomAnim = requestAnimationFrame(tick);
   }
 
   applyViewBox() {
@@ -304,14 +320,22 @@ class DataComparisonMap extends HTMLElement {
   }
 
   // ============================================================
-  // COLLAPSIBLE SECTIONS
+  // COLLAPSIBLE SECTIONS — show 3 items, then expand
   // ============================================================
   initCollapsibles() {
-    const self = this;
+    var self = this;
     this.$$('.sec-toggle').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var section = btn.closest('.collapsible-section');
-        section.classList.toggle('collapsed');
+        var isCollapsed = section.classList.contains('expanded');
+        section.classList.toggle('expanded');
+        // Scroll active item into view when collapsing
+        if (isCollapsed) {
+          var activeBtn = section.querySelector('.btn.active');
+          if (activeBtn) {
+            setTimeout(function() { activeBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 50);
+          }
+        }
       });
     });
   }
@@ -438,6 +462,10 @@ class DataComparisonMap extends HTMLElement {
       b.onclick = () => this.selectDataType(key);
       c.appendChild(b);
     });
+
+    // Reset expand state when category changes
+    var section = c.closest('.collapsible-section');
+    if (section) section.classList.remove('expanded');
   }
 
   buildSourceButtons(dtKey) {
@@ -463,6 +491,9 @@ class DataComparisonMap extends HTMLElement {
       }
       c.appendChild(b);
     });
+
+    var section = c.closest('.collapsible-section');
+    if (section) section.classList.remove('expanded');
   }
 
   selectDataType(k) {
@@ -628,7 +659,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="map-wrap">
         <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
-      <div class="map-hint">Scroll to zoom · Drag to pan · Double-click to reset</div>
+      <div class="map-hint" id="mapHint">Scroll to zoom \u00B7 Drag to pan \u00B7 Double-click to reset</div>
     </div>
 
     <div class="controls glass">
@@ -666,30 +697,3 @@ class DataComparisonMap extends HTMLElement {
 }
 
 customElements.define('data-comparison-map', DataComparisonMap);
-
-// ============================================================
-// IFRAME AUTO-RESIZE — eliminates double scroll in Wix
-// ============================================================
-(function() {
-  if (window === window.parent) return;
-  var lastHeight = 0;
-  function postHeight() {
-    var body = document.body;
-    var html = document.documentElement;
-    var height = Math.max(
-      body.scrollHeight, body.offsetHeight,
-      html.scrollHeight, html.offsetHeight
-    );
-    height = Math.ceil(height) + 2;
-    if (height !== lastHeight) {
-      lastHeight = height;
-      window.parent.postMessage({ type: 'datamap-resize', height: height }, '*');
-    }
-  }
-  setInterval(postHeight, 300);
-  window.addEventListener('load', postHeight);
-  window.addEventListener('resize', postHeight);
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(postHeight);
-  }
-})();
