@@ -137,10 +137,6 @@ class DataComparisonMap extends HTMLElement {
     // Zoom limits
     this._minZoom = 1;
     this._maxZoom = 4;
-
-    // Pan bounds (in SVG units, will be computed relative to viewBox)
-    // These define how far the viewBox center can drift from the Europe center
-    this._boundsPadding = 60; // SVG units of allowed overshoot before elastic snap
   }
 
   connectedCallback() {
@@ -239,50 +235,35 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
-    // -- Draw nearby (non-European) countries first (behind) --
-    const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    nearbyGroup.setAttribute('class', 'nearby-group');
-    this.nearbyFeatures.forEach(f => {
-      this.geoPaths(f.geometry, proj).forEach(d => {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.classList.add('cp-nearby');
-        nearbyGroup.appendChild(p);
-      });
-    });
-    svg.appendChild(nearbyGroup);
-
-    // "COMING SOON" watermark pattern (diagonal text)
+    // -- SVG defs: the diagonal "COMING SOON" pattern --
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = `
       <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
-        <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.08)" letter-spacing="3">COMING SOON</text>
+        <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.13)" letter-spacing="3">COMING SOON</text>
       </pattern>
     `;
     svg.appendChild(defs);
 
-    // Overlay rect clipped to nearby countries for the watermark
-    // We create a clip path from all nearby country paths
-    const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
-    clipPath.id = 'nearbyClip';
+    // -- Draw nearby (non-European) countries first (behind) --
+    // Each country gets TWO paths stacked: solid grey fill + pattern fill on top
+    const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    nearbyGroup.setAttribute('class', 'nearby-group');
     this.nearbyFeatures.forEach(f => {
       this.geoPaths(f.geometry, proj).forEach(d => {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        clipPath.appendChild(p);
+        // Base fill (grey)
+        const pBase = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pBase.setAttribute('d', d);
+        pBase.classList.add('cp-nearby');
+        nearbyGroup.appendChild(pBase);
+
+        // Pattern overlay (same shape, filled with the text pattern)
+        const pPattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pPattern.setAttribute('d', d);
+        pPattern.classList.add('cp-nearby-pattern');
+        nearbyGroup.appendChild(pPattern);
       });
     });
-    defs.appendChild(clipPath);
-
-    const watermarkRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    watermarkRect.setAttribute('x', '-200');
-    watermarkRect.setAttribute('y', '-200');
-    watermarkRect.setAttribute('width', '1200');
-    watermarkRect.setAttribute('height', '1000');
-    watermarkRect.setAttribute('fill', 'url(#comingSoonPattern)');
-    watermarkRect.setAttribute('clip-path', 'url(#nearbyClip)');
-    watermarkRect.classList.add('watermark-overlay');
-    svg.appendChild(watermarkRect);
+    svg.appendChild(nearbyGroup);
 
     // -- Draw European countries on top --
     const euroGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -333,8 +314,11 @@ class DataComparisonMap extends HTMLElement {
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
 
-    // Store the original/default viewBox
+    // The original/default viewBox
     this._origVB = { x: -30, y: -5, w: 590, h: 490 };
+    // The full content bounding box (Europe + nearby countries)
+    // Generous area so user can pan to see all European countries comfortably
+    this._contentBBox = { x: -80, y: -60, w: 750, h: 620 };
     this._zoom = 1;
     this._panX = 0;
     this._panY = 0;
@@ -351,11 +335,6 @@ class DataComparisonMap extends HTMLElement {
       const mx = (e.clientX - rect.left) / rect.width;
       const my = (e.clientY - rect.top) / rect.height;
 
-      const vb = this._getViewBox();
-      const svgX = vb.x + mx * vb.w;
-      const svgY = vb.y + my * vb.h;
-
-      // Adjust pan so the point under cursor stays fixed
       const oldW = this._origVB.w / this._zoom;
       const newW = this._origVB.w / newZoom;
       const oldH = this._origVB.h / this._zoom;
@@ -370,7 +349,6 @@ class DataComparisonMap extends HTMLElement {
 
     // Mouse drag to pan
     wrap.addEventListener('mousedown', (e) => {
-      // Only left button, and not on a country path (allow hover)
       if (e.button !== 0) return;
       this._isPanning = true;
       this._panStartX = e.clientX;
@@ -385,7 +363,6 @@ class DataComparisonMap extends HTMLElement {
       if (!this._isPanning) return;
       const rect = svg.getBoundingClientRect();
       const vb = this._getViewBox();
-      // Convert pixel delta to SVG units
       const dx = (e.clientX - this._panStartX) * (vb.w / rect.width);
       const dy = (e.clientY - this._panStartY) * (vb.h / rect.height);
       this._panX = this._panStartPanX - dx;
@@ -397,7 +374,6 @@ class DataComparisonMap extends HTMLElement {
       if (!this._isPanning) return;
       this._isPanning = false;
       wrap.style.cursor = '';
-      // Snap back if out of bounds
       this._snapBack();
     });
 
@@ -413,7 +389,6 @@ class DataComparisonMap extends HTMLElement {
     const zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
       const newZoom = Math.min(this._maxZoom, this._zoom + 0.3);
-      // Zoom toward center
       const oldW = this._origVB.w / this._zoom;
       const newW = this._origVB.w / newZoom;
       const oldH = this._origVB.h / this._zoom;
@@ -453,14 +428,34 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _getPanBounds() {
-    // The viewable area at current zoom
+    // Current view dimensions at this zoom level
     const vw = this._origVB.w / this._zoom;
     const vh = this._origVB.h / this._zoom;
-    // Maximum pan: don't let the view drift so that Europe is out of sight
-    // At zoom=1 pan should be 0; at higher zoom allow panning within Europe bounds
-    const maxPanX = Math.max(0, (this._origVB.w - vw) / 2 + this._boundsPadding);
-    const maxPanY = Math.max(0, (this._origVB.h - vh) / 2 + this._boundsPadding);
-    return { minX: -maxPanX, maxX: maxPanX, minY: -maxPanY, maxY: maxPanY };
+
+    // The content area the user should be able to see
+    const cb = this._contentBBox;
+
+    // The view's top-left (x, y) = origVB.x + panX, origVB.y + panY
+    // We want the view rectangle to always overlap with the content bbox.
+    // Specifically: the view should not go so far that content is off-screen.
+    //
+    // Min panX: view right edge can't go past content left edge
+    //   origVB.x + panX + vw >= cb.x  =>  panX >= cb.x - origVB.x - vw
+    // Max panX: view left edge can't go past content right edge
+    //   origVB.x + panX <= cb.x + cb.w  =>  panX <= cb.x + cb.w - origVB.x
+    //
+    // But we want stricter: keep at least half the view within content
+    const minPanX = cb.x - this._origVB.x - vw * 0.5;
+    const maxPanX = (cb.x + cb.w) - this._origVB.x - vw * 0.5;
+    const minPanY = cb.y - this._origVB.y - vh * 0.5;
+    const maxPanY = (cb.y + cb.h) - this._origVB.y - vh * 0.5;
+
+    return {
+      minX: Math.min(minPanX, 0),
+      maxX: Math.max(maxPanX, 0),
+      minY: Math.min(minPanY, 0),
+      maxY: Math.max(maxPanY, 0)
+    };
   }
 
   _clampPan() {
@@ -475,7 +470,6 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _snapBack() {
-    // Animate back to clamped position
     const b = this._getPanBounds();
     const targetX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     const targetY = Math.max(b.minY, Math.min(b.maxY, this._panY));
@@ -494,16 +488,17 @@ class DataComparisonMap extends HTMLElement {
     const startZoom = this._zoom;
     const startPanX = this._panX;
     const startPanY = this._panY;
-    // Clamp targets
-    const bAfter = (() => {
-      const vw = this._origVB.w / targetZoom;
-      const vh = this._origVB.h / targetZoom;
-      const maxPanX = Math.max(0, (this._origVB.w - vw) / 2 + this._boundsPadding);
-      const maxPanY = Math.max(0, (this._origVB.h - vh) / 2 + this._boundsPadding);
-      return { minX: -maxPanX, maxX: maxPanX, minY: -maxPanY, maxY: maxPanY };
-    })();
-    targetPanX = Math.max(bAfter.minX, Math.min(bAfter.maxX, targetPanX));
-    targetPanY = Math.max(bAfter.minY, Math.min(bAfter.maxY, targetPanY));
+
+    // Compute bounds at target zoom to clamp targets
+    const tvw = this._origVB.w / targetZoom;
+    const tvh = this._origVB.h / targetZoom;
+    const cb = this._contentBBox;
+    const tMinX = Math.min(cb.x - this._origVB.x - tvw * 0.5, 0);
+    const tMaxX = Math.max((cb.x + cb.w) - this._origVB.x - tvw * 0.5, 0);
+    const tMinY = Math.min(cb.y - this._origVB.y - tvh * 0.5, 0);
+    const tMaxY = Math.max((cb.y + cb.h) - this._origVB.y - tvh * 0.5, 0);
+    targetPanX = Math.max(tMinX, Math.min(tMaxX, targetPanX));
+    targetPanY = Math.max(tMinY, Math.min(tMaxY, targetPanY));
 
     const startTime = performance.now();
     const tick = (now) => {
@@ -726,7 +721,6 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
-    // Position legend marker
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
@@ -757,8 +751,6 @@ class DataComparisonMap extends HTMLElement {
     return;
   }
 
-  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
-  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
     return `<div class="app">
   <nav class="top-nav">
