@@ -209,14 +209,12 @@ class DataComparisonMap extends HTMLElement {
   // ===== ZOOM & PAN (desktop only) =====
   initZoomPan() {
     const wrap = this.$('.map-wrap');
-    const svg = this.$('#mapSvg');
     const self = this;
 
     // Wheel zoom
     wrap.addEventListener('wheel', function(e) {
       e.preventDefault();
       const rect = wrap.getBoundingClientRect();
-      // Mouse position relative to the wrap container (0..1)
       const mx = (e.clientX - rect.left) / rect.width;
       const my = (e.clientY - rect.top) / rect.height;
 
@@ -225,10 +223,6 @@ class DataComparisonMap extends HTMLElement {
       let newZoom = oldZoom + delta * oldZoom;
       newZoom = Math.max(self._minZoom, Math.min(self._maxZoom, newZoom));
 
-      // Zoom toward cursor: adjust pan so the point under cursor stays fixed
-      // The transform is: translate(panX, panY) scale(zoom)
-      // Point in content space under cursor: ((mx * 100) - panX) / oldZoom
-      // After zoom it should still map to mx: panX_new = (mx * 100) - contentX * newZoom
       const contentX = (mx * 100 - self._panX) / oldZoom;
       const contentY = (my * 100 - self._panY) / oldZoom;
       self._panX = mx * 100 - contentX * newZoom;
@@ -241,7 +235,7 @@ class DataComparisonMap extends HTMLElement {
 
     // Mouse drag
     wrap.addEventListener('mousedown', function(e) {
-      if (e.button !== 0) return; // left click only
+      if (e.button !== 0) return;
       self._isDragging = true;
       self._didDrag = false;
       self._dragStartX = e.clientX;
@@ -259,14 +253,11 @@ class DataComparisonMap extends HTMLElement {
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) self._didDrag = true;
 
       const rect = wrap.getBoundingClientRect();
-      // Convert pixel delta to percentage of container
       self._panX = self._dragStartPanX + (dx / rect.width) * 100;
       self._panY = self._dragStartPanY + (dy / rect.height) * 100;
 
       self.clampPan();
       self.applyTransform();
-
-      // Hide tooltip while dragging
       self.ttHide();
     });
 
@@ -284,10 +275,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   clampPan() {
-    // Don't allow panning beyond the scaled map edges.
-    // At zoom=1 panX/panY should be 0. At zoom>1, allow panning
-    // but keep the map covering the viewport.
-    const maxPanX = (this._zoom - 1) * 50; // half the overflow in %
+    const maxPanX = (this._zoom - 1) * 50;
     const maxPanY = (this._zoom - 1) * 50;
     this._panX = Math.max(-maxPanX, Math.min(maxPanX, this._panX));
     this._panY = Math.max(-maxPanY, Math.min(maxPanY, this._panY));
@@ -573,7 +561,6 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
-    // Position legend marker
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
@@ -604,8 +591,6 @@ class DataComparisonMap extends HTMLElement {
     return;
   }
 
-  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
-  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
     return `<div class="app">
   <nav class="top-nav">
