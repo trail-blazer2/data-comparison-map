@@ -47,6 +47,8 @@ const CATEGORY_META = {
   }
 };
 
+var IS_DESKTOP = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
 function getColor(t) {
   const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
   const n = c.length - 1;
@@ -111,10 +113,25 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
+    // Pan/zoom state (desktop only)
+    this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
+    this._vb = { x: -30, y: -5, w: 590, h: 490 };
+    this._drag = null;
   }
 
   connectedCallback() {
     this.shadowRoot.innerHTML = this.html();
+
+    // Desktop only: --vh trick for viewport-fit
+    if (IS_DESKTOP) {
+      var self = this;
+      function setVh() {
+        self.shadowRoot.host.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+      }
+      setVh();
+      window.addEventListener('resize', setVh);
+    }
+
     this.init();
   }
 
@@ -163,8 +180,7 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    // BLUR FIX: inject SVG filter only on desktop, after init
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    if (IS_DESKTOP) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
@@ -176,6 +192,7 @@ class DataComparisonMap extends HTMLElement {
     );
 
     this.drawMap();
+    if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
@@ -184,7 +201,81 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-    drawMap() {
+  // ============================================================
+  // PAN & ZOOM — desktop only, instant, with bounds clamping
+  // ============================================================
+  clampViewBox() {
+    var d = this._vbDefault;
+    // Don't let user drag more than 50% of the default view outside the map
+    var padX = d.w * 0.5;
+    var padY = d.h * 0.5;
+    if (this._vb.x < d.x - padX) this._vb.x = d.x - padX;
+    if (this._vb.y < d.y - padY) this._vb.y = d.y - padY;
+    if (this._vb.x + this._vb.w > d.x + d.w + padX) this._vb.x = d.x + d.w + padX - this._vb.w;
+    if (this._vb.y + this._vb.h > d.y + d.h + padY) this._vb.y = d.y + d.h + padY - this._vb.h;
+  }
+
+  applyViewBox() {
+    this.clampViewBox();
+    this.$('#mapSvg').setAttribute('viewBox',
+      this._vb.x.toFixed(1)+' '+this._vb.y.toFixed(1)+' '+
+      this._vb.w.toFixed(1)+' '+this._vb.h.toFixed(1));
+  }
+
+  initMapPanZoom() {
+    var svg = this.$('#mapSvg');
+    var wrap = this.$('.map-wrap');
+    var self = this;
+    var hint = this.$('#mapHint');
+    if (hint) hint.style.display = 'block';
+    wrap.classList.add('pannable');
+
+    // Wheel zoom — instant
+    wrap.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var factor = e.deltaY > 0 ? 1.1 : 1 / 1.1;
+      var newW = self._vb.w * factor;
+      var newH = self._vb.h * factor;
+      // Clamp zoom range
+      if (newW < 100 || newW > self._vbDefault.w * 2) return;
+      var rect = svg.getBoundingClientRect();
+      var cx = (e.clientX - rect.left) / rect.width;
+      var cy = (e.clientY - rect.top) / rect.height;
+      self._vb.x += (self._vb.w - newW) * cx;
+      self._vb.y += (self._vb.h - newH) * cy;
+      self._vb.w = newW;
+      self._vb.h = newH;
+      self.applyViewBox();
+    }, { passive: false });
+
+    // Mouse drag
+    wrap.addEventListener('mousedown', function(e) {
+      if (e.target.classList && e.target.classList.contains('cp')) return;
+      e.preventDefault();
+      self._drag = { sx: e.clientX, sy: e.clientY, vbx: self._vb.x, vby: self._vb.y };
+      wrap.classList.add('dragging');
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!self._drag) return;
+      var rect = svg.getBoundingClientRect();
+      self._vb.x = self._drag.vbx - (e.clientX - self._drag.sx) * (self._vb.w / rect.width);
+      self._vb.y = self._drag.vby - (e.clientY - self._drag.sy) * (self._vb.h / rect.height);
+      self.applyViewBox();
+    });
+    window.addEventListener('mouseup', function() {
+      if (self._drag) { self._drag = null; wrap.classList.remove('dragging'); }
+    });
+
+    // Double-click to reset
+    wrap.addEventListener('dblclick', function(e) {
+      e.preventDefault();
+      self._vb = Object.assign({}, self._vbDefault);
+      self.applyViewBox();
+    });
+  }
+
+  drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const lonToX = lon => (lon + 25) * (540 / 75);
@@ -208,18 +299,14 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
-        // Desktop: mouse events
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
-        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
-          // Clear previous touched state
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
-          // Position tooltip at touch point
           var touch = e.touches[0];
           var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
           self.ttShow(fakeEvent);
@@ -230,7 +317,6 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
-    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -434,7 +520,6 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtDataType = this.currentDataType;
 
     this.checkDiscrepancy(code);
-    // Position legend marker
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
@@ -460,31 +545,11 @@ class DataComparisonMap extends HTMLElement {
   }
 
   checkDiscrepancy(code) {
-    // Data variance feature — hidden for now (paid addon)
     const el = this.$('#ttDisc');
     el.style.display = 'none';
     return;
-    // const dt = this.DATA[this.currentDataType];
-    // if (!dt) return;
-    // const vals = [];
-    // Object.values(dt.sources).forEach(s => {
-    //   if (s.countries[code] != null) vals.push(s.countries[code]);
-    // });
-    // if (vals.length >= 2) {
-    //   const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-    //   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-    //   const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-    //   if (diff > 10) {
-    //     el.style.display = 'block';
-    //     el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
-    //     return;
-    //   }
-    // }
-    // el.style.display = 'none';
   }
 
-  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
-  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
     return `<div class="app">
   <nav class="top-nav">
@@ -521,6 +586,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="map-wrap">
         <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
+      <div class="map-hint" id="mapHint">Scroll to zoom \u00B7 Drag to pan \u00B7 Double-click to reset</div>
     </div>
 
     <div class="controls glass">
