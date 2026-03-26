@@ -4,7 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Comparison Map</title>
-  <style>html, body { margin:0; padding:0; overflow:hidden; height:100%; } data-comparison-map { display:block; width:100%; height:100%; }</style>
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    /* Desktop: lock to viewport, no scroll */
+    @media (min-width: 961px) {
+      html, body { overflow: hidden; }
+    }
+    /* Mobile: allow normal scrolling */
+    @media (max-width: 960px) {
+      html, body { overflow: auto; }
+    }
+    data-comparison-map { display:block; width:100%; height:100%; }
+  </style>
   <script src="data-comparison-map.js"></script>
 </head>
 <body>
