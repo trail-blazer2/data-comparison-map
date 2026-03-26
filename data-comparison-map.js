@@ -48,11 +48,11 @@ const CATEGORY_META = {
 };
 
 function getColor(t) {
-  var c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
-  var n = c.length - 1;
-  var i = Math.min(Math.floor(t * n), n - 1);
-  var f = (t * n) - i;
-  return 'rgb('+Math.round(c[i][0]+(c[i+1][0]-c[i][0])*f)+','+Math.round(c[i][1]+(c[i+1][1]-c[i][1])*f)+','+Math.round(c[i][2]+(c[i+1][2]-c[i][2])*f)+')';
+  const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
+  const n = c.length - 1;
+  const i = Math.min(Math.floor(t * n), n - 1);
+  const f = (t * n) - i;
+  return `rgb(${Math.round(c[i][0]+(c[i+1][0]-c[i][0])*f)},${Math.round(c[i][1]+(c[i+1][1]-c[i][1])*f)},${Math.round(c[i][2]+(c[i+1][2]-c[i][2])*f)})`;
 }
 
 function fmt(val, unit) {
@@ -73,29 +73,30 @@ function fmt(val, unit) {
 }
 
 function loadScript(url) {
-  return new Promise(function(resolve, reject) {
-    if (document.querySelector('script[src="'+url+'"]')) return resolve();
-    var s = document.createElement('script');
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) return resolve();
+    const s = document.createElement('script');
     s.src = url; s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });
 }
 
-function animateValue(el, startVal, endVal, unit, duration) {
-  duration = duration || 300;
-  if (startVal === endVal || endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
+function animateValue(el, startVal, endVal, unit, duration = 300) {
+  if (startVal === endVal) { el.textContent = fmt(endVal, unit); return; }
+  if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
   if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit); return; }
-  var startTime = performance.now();
+  const startTime = performance.now();
   function tick(now) {
-    var t = Math.min((now - startTime) / duration, 1);
-    el.textContent = fmt(startVal + (endVal - startVal) * (1 - Math.pow(1 - t, 3)), unit);
-    if (t < 1) requestAnimationFrame(tick);
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = startVal + (endVal - startVal) * ease;
+    el.textContent = fmt(current, unit);
+    if (progress < 1) requestAnimationFrame(tick);
     else el.textContent = fmt(endVal, unit);
   }
   requestAnimationFrame(tick);
 }
-
-var IS_DESKTOP = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 // ============================================================
 class DataComparisonMap extends HTMLElement {
@@ -110,23 +111,10 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-    this._vb = { x: -30, y: -5, w: 590, h: 490 };
-    this._vbDefault = { x: -30, y: -5, w: 590, h: 490 };
-    this._drag = null;
   }
 
   connectedCallback() {
     this.shadowRoot.innerHTML = this.html();
-    // --vh trick: compute real visible pixel for 1vh, works in iframes + iOS
-    var self = this;
-    function setVh() {
-      var vh = window.innerHeight * 0.01;
-      self.shadowRoot.host.style.setProperty('--vh', vh + 'px');
-    }
-    setVh();
-    window.addEventListener('resize', setVh);
-    // Also recompute on orientation change and after a delay (iOS address bar)
-    window.addEventListener('orientationchange', function() { setTimeout(setVh, 200); });
     this.init();
   }
 
@@ -134,264 +122,432 @@ class DataComparisonMap extends HTMLElement {
   $$(s) { return this.shadowRoot.querySelectorAll(s); }
 
   async init() {
-    var scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
-    var baseUrl = '';
+    const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
+    let baseUrl = '';
     if (scripts.length) {
-      var src = scripts[scripts.length - 1].src;
+      const src = scripts[scripts.length - 1].src;
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
     }
     this._baseUrl = baseUrl;
 
-    var link = document.createElement('link');
+    const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = baseUrl + 'styles.css';
     this.shadowRoot.prepend(link);
-    await new Promise(function(resolve) { link.onload = resolve; link.onerror = resolve; });
+    await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
-    var results = await Promise.all([
+    const [, dataRaw, topoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
-      fetch(baseUrl + 'data.json').then(function(r) { return r.json(); }),
-      fetch(MAP_TOPO_URL).then(function(r) { return r.json(); })
+      fetch(baseUrl + 'data.json').then(r => r.json()),
+      fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
-    var dataRaw = results[1], topoRaw = results[2];
-    var self = this;
 
-    Object.entries(dataRaw).forEach(function(e) { if (e[0] !== '_meta') self.DATA[e[0]] = e[1]; });
+    Object.entries(dataRaw).forEach(([k, v]) => {
+      if (k !== '_meta') this.DATA[k] = v;
+    });
+
     this.categories = {};
-    Object.entries(this.DATA).forEach(function(e) {
-      var cat = e[1].category || 'other';
-      if (!self.categories[cat]) self.categories[cat] = [];
-      self.categories[cat].push(e[0]);
+    Object.entries(this.DATA).forEach(([key, dt]) => {
+      const cat = dt.category || 'other';
+      if (!this.categories[cat]) this.categories[cat] = [];
+      this.categories[cat].push(key);
     });
 
     if (dataRaw._meta && dataRaw._meta.lastUpdated) {
-      this.$('#lastUpdated').textContent = 'Data updated: ' + new Date(dataRaw._meta.lastUpdated).toLocaleDateString();
+      const d = new Date(dataRaw._meta.lastUpdated);
+      this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
-    var logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
-    var logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
+    const logoEl = this.$('#navLogo');
+    if (logoEl) logoEl.src = baseUrl + 'logo.png';
+    const logoMob = this.$('#navLogoMobile');
+    if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    if (IS_DESKTOP) {
-      var fd = document.createElement('div');
-      fd.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
-      this.shadowRoot.appendChild(fd.firstChild);
+    // BLUR FIX: inject SVG filter only on desktop, after init
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const filterDiv = document.createElement('div');
+      filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
+      this.shadowRoot.appendChild(filterDiv.firstChild);
     }
 
-    var all = topojson.feature(topoRaw, topoRaw.objects.countries);
-    this.geoFeatures = all.features.filter(function(f) { return EUROPE_NUMERIC.has(String(f.id).padStart(3, '0')); });
+    const all = topojson.feature(topoRaw, topoRaw.objects.countries);
+    this.geoFeatures = all.features.filter(f =>
+      EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'))
+    );
 
     this.drawMap();
-    if (IS_DESKTOP) this.initMapPanZoom();
     this.buildCategoryButtons();
-    var firstCat = Object.keys(this.categories)[0];
+    const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
+
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
 
-  initMapPanZoom() {
-    var svg = this.$('#mapSvg'), wrap = this.$('.map-wrap'), self = this;
-    var hint = this.$('#mapHint'); if (hint) hint.style.display = 'block';
-    wrap.classList.add('pannable');
-    wrap.addEventListener('wheel', function(e) {
-      e.preventDefault(); e.stopPropagation();
-      var f = e.deltaY > 0 ? 1.1 : 1/1.1, nw = self._vb.w*f, nh = self._vb.h*f;
-      if (nw < 120 || nw > 1200) return;
-      var r = svg.getBoundingClientRect(), cx = (e.clientX-r.left)/r.width, cy = (e.clientY-r.top)/r.height;
-      self._vb.x += (self._vb.w-nw)*cx; self._vb.y += (self._vb.h-nh)*cy;
-      self._vb.w = nw; self._vb.h = nh; self.applyViewBox();
-    }, { passive: false });
-    wrap.addEventListener('mousedown', function(e) {
-      if (e.target.classList && e.target.classList.contains('cp')) return;
-      e.preventDefault(); self._drag = { sx: e.clientX, sy: e.clientY, vb: Object.assign({}, self._vb) }; wrap.classList.add('dragging');
-    });
-    window.addEventListener('mousemove', function(e) {
-      if (!self._drag) return; var r = svg.getBoundingClientRect();
-      self._vb.x = self._drag.vb.x - (e.clientX-self._drag.sx)*(self._vb.w/r.width);
-      self._vb.y = self._drag.vb.y - (e.clientY-self._drag.sy)*(self._vb.h/r.height);
-      self.applyViewBox();
-    });
-    window.addEventListener('mouseup', function() { if (self._drag) { self._drag = null; wrap.classList.remove('dragging'); } });
-    wrap.addEventListener('dblclick', function(e) { e.preventDefault(); self._vb = Object.assign({}, self._vbDefault); self.applyViewBox(); });
-  }
+    drawMap() {
+    const svg = this.$('#mapSvg');
+    svg.innerHTML = '';
+    const lonToX = lon => (lon + 25) * (540 / 75);
+    const latToY = lat => {
+      const r = lat * Math.PI / 180;
+      const y = Math.log(Math.tan(Math.PI / 4 + r / 2));
+      const mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
+      const mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
+      return 470 - ((y - mn) / (mx - mn)) * 470;
+    };
+    const proj = ([lon, lat]) => [lonToX(lon), latToY(lat)];
+    const self = this;
 
-  applyViewBox() {
-    this.$('#mapSvg').setAttribute('viewBox', this._vb.x.toFixed(1)+' '+this._vb.y.toFixed(1)+' '+this._vb.w.toFixed(1)+' '+this._vb.h.toFixed(1));
-  }
+    this.geoFeatures.forEach(f => {
+      const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
+      if (!a2) return;
+      this.geoPaths(f.geometry, proj).forEach(d => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.dataset.code = a2;
+        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p.classList.add('cp', 'no-data');
 
-  drawMap() {
-    var svg = this.$('#mapSvg'); svg.innerHTML = '';
-    var lonToX = function(lon) { return (lon+25)*(540/75); };
-    var latToY = function(lat) { var r=lat*Math.PI/180, y=Math.log(Math.tan(Math.PI/4+r/2)), mn=Math.log(Math.tan(Math.PI/4+(34*Math.PI/180)/2)), mx=Math.log(Math.tan(Math.PI/4+(72*Math.PI/180)/2)); return 470-((y-mn)/(mx-mn))*470; };
-    var proj = function(c) { return [lonToX(c[0]), latToY(c[1])]; };
-    var self = this;
-    this.geoFeatures.forEach(function(f) {
-      var a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3,'0')]; if (!a2) return;
-      self.geoPaths(f.geometry, proj).forEach(function(d) {
-        var p = document.createElementNS('http://www.w3.org/2000/svg','path');
-        p.setAttribute('d',d); p.dataset.code=a2; p.dataset.name=ALPHA2_TO_NAME[a2]||a2;
-        p.classList.add('cp','no-data');
-        p.addEventListener('mouseenter', function(e){self.ttShow(e);});
-        p.addEventListener('mousemove', function(e){self.ttMove(e);});
-        p.addEventListener('mouseleave', function(){self.ttHide();});
-        p.addEventListener('touchstart', function(e){
+        // Desktop: mouse events
+        p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
+        p.addEventListener('mousemove', function(e) { self.ttMove(e); });
+        p.addEventListener('mouseleave', function() { self.ttHide(); });
+
+        // Mobile: touch events
+        p.addEventListener('touchstart', function(e) {
           e.preventDefault();
-          self.$$('.cp.touched').forEach(function(el){el.classList.remove('touched');});
+          // Clear previous touched state
+          self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
-          var t=e.touches[0]; self.ttShow({target:p,clientX:t.clientX,clientY:t.clientY}); self.ttMove({clientX:t.clientX,clientY:t.clientY});
-        }, {passive:false});
+          // Position tooltip at touch point
+          var touch = e.touches[0];
+          var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
+          self.ttShow(fakeEvent);
+          self.ttMove(fakeEvent);
+        }, { passive: false });
+
         svg.appendChild(p);
       });
     });
+
+    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
-      if (!e.target.classList.contains('cp')) { self.$$('.cp.touched').forEach(function(el){el.classList.remove('touched');}); self.ttHide(); }
+      if (!e.target.classList.contains('cp')) {
+        self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+        self.ttHide();
+      }
     });
   }
 
   geoPaths(geom, proj) {
-    var ring = function(r) { return r.map(function(c,i){ var p=proj(c); return (i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ')+'Z'; };
-    if (geom.type==='Polygon') return [geom.coordinates.map(ring).join(' ')];
-    if (geom.type==='MultiPolygon') return geom.coordinates.map(function(p){return p.map(ring).join(' ');});
+    const ring = r => r.map((c, i) => {
+      const [x, y] = proj(c);
+      return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ') + 'Z';
+    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
+    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
     return [];
   }
 
   moveSlider(container, activeBtn) {
-    var slider = container.querySelector('.slider');
-    if (!slider){slider=document.createElement('div');slider.className='slider';container.prepend(slider);}
-    if (!activeBtn){slider.classList.remove('visible');return;}
-    slider.style.top=activeBtn.offsetTop+'px'; slider.style.height=activeBtn.offsetHeight+'px'; slider.classList.add('visible');
+    let slider = container.querySelector('.slider');
+    if (!slider) {
+      slider = document.createElement('div');
+      slider.className = 'slider';
+      container.prepend(slider);
+    }
+    if (!activeBtn) {
+      slider.classList.remove('visible');
+      return;
+    }
+    const top = activeBtn.offsetTop;
+    const height = activeBtn.offsetHeight;
+    slider.style.top = top + 'px';
+    slider.style.height = height + 'px';
+    slider.classList.add('visible');
   }
 
   buildCategoryButtons() {
-    var c=this.$('#catBtns'); c.innerHTML=''; var self=this;
-    Object.entries(this.categories).forEach(function(e){
-      var catKey=e[0], meta=CATEGORY_META[catKey]||{icon:'',label:catKey};
-      var b=document.createElement('button'); b.className='cat-btn'; b.dataset.key=catKey;
-      b.innerHTML='<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'+meta.icon+'</svg></span><span class="cat-label">'+meta.label+'</span>';
-      b.onclick=function(){self.selectCategory(catKey);}; c.appendChild(b);
+    const c = this.$('#catBtns');
+    c.innerHTML = '';
+    Object.entries(this.categories).forEach(([catKey]) => {
+      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
+      const b = document.createElement('button');
+      b.className = 'cat-btn';
+      b.dataset.key = catKey;
+      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
+      b.onclick = () => this.selectCategory(catKey);
+      c.appendChild(b);
     });
   }
 
   selectCategory(catKey) {
-    this.currentCategory=catKey;
-    this.$$('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.key===catKey);});
-    this.buildDataTypeButtons(catKey); this._lastTtVal=null; this._lastTtDataType=null;
-    var keys=this.categories[catKey]; if(keys&&keys[0]) this.selectDataType(keys[0]);
+    this.currentCategory = catKey;
+    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
+    this.buildDataTypeButtons(catKey);
+    this._lastTtVal = null;
+    this._lastTtDataType = null;
+    const keys = this.categories[catKey];
+    if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
   buildDataTypeButtons(catKey) {
-    var c=this.$('#dtBtns'); c.innerHTML=''; var slider=document.createElement('div'); slider.className='slider'; c.appendChild(slider);
-    var keys=this.categories[catKey]||[], self=this;
-    keys.forEach(function(key){
-      var dt=self.DATA[key]; if(!dt) return;
-      var b=document.createElement('button'); b.className='btn'; b.dataset.key=key;
-      var sc=Object.keys(dt.sources).length, oc=Object.values(dt.sources).filter(function(s){return Object.keys(s.countries).length>0;}).length;
-      b.innerHTML='<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>'+dt.label+'</span></span><span class="badge">'+oc+'/'+sc+'</span>';
-      b.onclick=function(){self.selectDataType(key);}; c.appendChild(b);
+    const c = this.$('#dtBtns');
+    c.innerHTML = '';
+    const slider = document.createElement('div');
+    slider.className = 'slider';
+    c.appendChild(slider);
+
+    const keys = this.categories[catKey] || [];
+    keys.forEach(key => {
+      const dt = this.DATA[key];
+      if (!dt) return;
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.dataset.key = key;
+      const srcCount = Object.keys(dt.sources).length;
+      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
+      b.onclick = () => this.selectDataType(key);
+      c.appendChild(b);
     });
   }
 
   buildSourceButtons(dtKey) {
-    var c=this.$('#srcBtns'); c.innerHTML=''; var slider=document.createElement('div'); slider.className='slider'; c.appendChild(slider);
-    var dt=this.DATA[dtKey]; if(!dt) return; var self=this;
-    Object.entries(dt.sources).forEach(function(e){
-      var key=e[0],src=e[1],count=Object.keys(src.countries).length,empty=count===0;
-      var b=document.createElement('button'); b.className='btn'+(empty?' disabled':''); b.dataset.key=key;
-      if(empty) b.innerHTML='<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>'+src.label+'</span></span><span class="badge badge-empty">No data</span>';
-      else { b.innerHTML='<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>'+src.label+'</span></span><span class="badge">'+count+' · '+src.year+'</span>'; b.onclick=function(){self.selectSource(key);}; }
+    const c = this.$('#srcBtns');
+    c.innerHTML = '';
+    const slider = document.createElement('div');
+    slider.className = 'slider';
+    c.appendChild(slider);
+
+    const dt = this.DATA[dtKey];
+    if (!dt) return;
+    Object.entries(dt.sources).forEach(([key, src]) => {
+      const count = Object.keys(src.countries).length;
+      const isEmpty = count === 0;
+      const b = document.createElement('button');
+      b.className = 'btn' + (isEmpty ? ' disabled' : '');
+      b.dataset.key = key;
+      if (isEmpty) {
+        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
+      } else {
+        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>';
+        b.onclick = () => this.selectSource(key);
+      }
       c.appendChild(b);
     });
   }
 
   selectDataType(k) {
-    this.currentDataType=k;
-    this.$$('#dtBtns .btn').forEach(function(b){b.classList.toggle('active',b.dataset.key===k);});
-    var dc=this.$('#dtBtns'),ab=dc.querySelector('.btn[data-key="'+k+'"]'),self=this;
-    requestAnimationFrame(function(){requestAnimationFrame(function(){self.moveSlider(dc,ab);});});
-    this._lastTtVal=null; this._lastTtDataType=k; this.buildSourceButtons(k);
-    var dt=this.DATA[k]; if(!dt) return;
-    var fo=Object.entries(dt.sources).find(function(e){return Object.keys(e[1].countries).length>0;});
-    if(fo) this.selectSource(fo[0]);
-    else { this.currentSource=null; this.$('#mapTitle').textContent=dt.label; this.$('#mapSub').textContent='No data available'; this.$('#legMin').textContent='\u2014'; this.$('#legMax').textContent='\u2014'; this.$$('.cp').forEach(function(p){p.classList.add('no-data');p.setAttribute('fill','#dfe6e9');}); }
+    this.currentDataType = k;
+    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
+    const dtContainer = this.$('#dtBtns');
+    const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
+    });
+    this._lastTtVal = null;
+    this._lastTtDataType = k;
+    this.buildSourceButtons(k);
+    const dt = this.DATA[k];
+    if (!dt) return;
+    const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
+    if (firstOk) {
+      this.selectSource(firstOk[0]);
+    } else {
+      this.currentSource = null;
+      this.$('#mapTitle').textContent = dt.label;
+      this.$('#mapSub').textContent = 'No data available for any source';
+      this.$('#legMin').textContent = '\u2014';
+      this.$('#legMax').textContent = '\u2014';
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
+    }
   }
 
   selectSource(k) {
-    this.currentSource=k;
-    this.$$('#srcBtns .btn').forEach(function(b){if(!b.classList.contains('disabled'))b.classList.toggle('active',b.dataset.key===k);});
-    var sc=this.$('#srcBtns'),ab=sc.querySelector('.btn.active'),self=this;
-    requestAnimationFrame(function(){requestAnimationFrame(function(){self.moveSlider(sc,ab);});});
+    this.currentSource = k;
+    this.$$('#srcBtns .btn').forEach(b => {
+      if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
+    });
+    const srcContainer = this.$('#srcBtns');
+    const activeBtn = srcContainer.querySelector('.btn.active');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
+    });
     this.paint();
   }
 
   paint() {
-    var dt=this.DATA[this.currentDataType]; if(!dt) return;
-    var src=dt.sources[this.currentSource]; if(!src) return;
-    this.$('#mapTitle').textContent=dt.label;
-    this.$('#mapSub').textContent=src.label+' \u00B7 '+src.year+' \u00B7 '+dt.unit;
-    var vals=Object.values(src.countries).filter(function(v){return v!=null;});
-    if(!vals.length){this.$('#legMin').textContent='\u2014';this.$('#legMax').textContent='\u2014';this.$$('.cp').forEach(function(p){p.classList.add('no-data');p.setAttribute('fill','#dfe6e9');});return;}
-    var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
-    this.$('#legMin').textContent=fmt(min,dt.unit); this.$('#legMax').textContent=fmt(max,dt.unit);
-    this.$$('.cp').forEach(function(p){
-      var v=src.countries[p.dataset.code];
-      if(v!=null){p.classList.remove('no-data');p.setAttribute('fill',getColor(max!==min?(v-min)/(max-min):0.5));}
-      else{p.classList.add('no-data');p.setAttribute('fill','#dfe6e9');}
+    const dt = this.DATA[this.currentDataType];
+    if (!dt) return;
+    const src = dt.sources[this.currentSource];
+    if (!src) return;
+    this.$('#mapTitle').textContent = dt.label;
+    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
+
+    const vals = Object.values(src.countries).filter(v => v != null);
+    if (!vals.length) {
+      this.$('#legMin').textContent = '\u2014';
+      this.$('#legMax').textContent = '\u2014';
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
+      return;
+    }
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    this.$('#legMin').textContent = fmt(min, dt.unit);
+    this.$('#legMax').textContent = fmt(max, dt.unit);
+
+    this.$$('.cp').forEach(p => {
+      const v = src.countries[p.dataset.code];
+      if (v != null) {
+        p.classList.remove('no-data');
+        p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5));
+      } else {
+        p.classList.add('no-data');
+        p.setAttribute('fill', '#dfe6e9');
+      }
     });
   }
 
   ttShow(e) {
-    var dt=this.DATA[this.currentDataType]; if(!dt||!this.currentSource) return;
-    var src=dt.sources[this.currentSource]; if(!src) return;
-    var code=e.target.dataset.code, nv=(src.countries&&src.countries[code]!=null)?src.countries[code]:null;
-    this.$('#ttName').textContent=e.target.dataset.name;
-    this.$('#ttUnit').textContent=nv!=null?dt.unit:'';
-    this.$('#ttSrc').textContent=(src.label||'\u2014')+' \u00B7 '+(src.year||'\u2014');
-    var ve=this.$('#ttVal');
-    if(this._lastTtDataType===this.currentDataType&&nv!=null&&this._lastTtVal!=null&&!isNaN(this._lastTtVal)&&!isNaN(nv)) animateValue(ve,this._lastTtVal,nv,dt.unit,300);
-    else ve.textContent=fmt(nv,dt.unit);
-    this._lastTtVal=nv; this._lastTtDataType=this.currentDataType;
-    this.$('#ttDisc').style.display='none';
-    var mk=this.$('#legMarker');
-    if(nv!=null){var vs=Object.values(src.countries).filter(function(v){return v!=null;}),mn=Math.min.apply(null,vs),mx=Math.max.apply(null,vs); mk.style.left=(mx!==mn?((nv-mn)/(mx-mn))*100:50)+'%'; mk.classList.add('visible');}
-    else mk.classList.remove('visible');
+    const dt = this.DATA[this.currentDataType];
+    if (!dt || !this.currentSource) return;
+    const src = dt.sources[this.currentSource];
+    if (!src) return;
+    const code = e.target.dataset.code;
+    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
+
+    this.$('#ttName').textContent = e.target.dataset.name;
+    this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
+    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
+
+    const valEl = this.$('#ttVal');
+    const oldVal = this._lastTtVal;
+    const sameDataType = this._lastTtDataType === this.currentDataType;
+
+    if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
+      animateValue(valEl, oldVal, newVal, dt.unit, 300);
+    } else {
+      valEl.textContent = fmt(newVal, dt.unit);
+    }
+
+    this._lastTtVal = newVal;
+    this._lastTtDataType = this.currentDataType;
+
+    this.checkDiscrepancy(code);
+    // Position legend marker
+    const marker = this.$('#legMarker');
+    if (newVal != null && src) {
+      const vals = Object.values(src.countries).filter(v => v != null);
+      const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+      const pct = max !== min ? ((newVal - min) / (max - min)) * 100 : 50;
+      marker.style.left = pct + '%';
+      marker.classList.add('visible');
+    } else {
+      marker.classList.remove('visible');
+    }
     this.$('#tt').classList.add('visible');
   }
-  ttMove(e){var t=this.$('#tt');t.style.left=(e.clientX+18)+'px';t.style.top=(e.clientY-12)+'px';}
-  ttHide(){this.$('#tt').classList.remove('visible');this.$('#legMarker').classList.remove('visible');}
 
+  ttMove(e) {
+    const tt = this.$('#tt');
+    tt.style.left = (e.clientX + 18) + 'px';
+    tt.style.top = (e.clientY - 12) + 'px';
+  }
+
+  ttHide() {
+    this.$('#tt').classList.remove('visible');
+    this.$('#legMarker').classList.remove('visible');
+  }
+
+  checkDiscrepancy(code) {
+    // Data variance feature — hidden for now (paid addon)
+    const el = this.$('#ttDisc');
+    el.style.display = 'none';
+    return;
+    // const dt = this.DATA[this.currentDataType];
+    // if (!dt) return;
+    // const vals = [];
+    // Object.values(dt.sources).forEach(s => {
+    //   if (s.countries[code] != null) vals.push(s.countries[code]);
+    // });
+    // if (vals.length >= 2) {
+    //   const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    //   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    //   const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
+    //   if (diff > 10) {
+    //     el.style.display = 'block';
+    //     el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
+    //     return;
+    //   }
+    // }
+    // el.style.display = 'none';
+  }
+
+  // BLUR FIX: no SVG filter in HTML — it's injected via JS in init() only on desktop
+  // BLUR FIX: map-panel has NO glass class — no blur/filter touches the map
   html() {
-    return '<div class="app">'
-    +'<nav class="top-nav"><div class="nav-logo"><div class="nav-logo-icon">'
-    +'<img id="navLogo" class="logo-desktop" src="" alt="Logo" />'
-    +'<img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />'
-    +'</div></div><div class="nav-links">'
-    +'<button class="nav-link">About</button>'
-    +'<button class="nav-link primary">Support us</button>'
-    +'</div></nav>'
-    +'<div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>'
-    +'<div class="main" id="mainContent" style="opacity:0">'
-    +'<div class="map-panel"><div class="title-row"><div>'
-    +'<div class="map-title" id="mapTitle">\u2014</div>'
-    +'<div class="map-sub" id="mapSub">\u2014</div>'
-    +'</div></div>'
-    +'<div class="legend"><span id="legMin">\u2014</span>'
-    +'<div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div>'
-    +'<span id="legMax">\u2014</span></div>'
-    +'<div class="map-wrap"><svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg></div>'
-    +'<div class="map-hint" id="mapHint">Scroll to zoom \u00B7 Drag to pan \u00B7 Double-click to reset</div>'
-    +'</div>'
-    +'<div class="controls glass">'
-    +'<div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>'
-    +'<div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>'
-    +'<div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>'
-    +'</div></div>'
-    +'<div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>'
-    +'</div>'
-    +'<div class="tooltip" id="tt">'
-    +'<div class="tt-name" id="ttName">\u2014</div>'
-    +'<div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>'
-    +'<div class="tt-src" id="ttSrc"></div>'
-    +'<div class="tt-disc" id="ttDisc"></div></div>';
+    return `<div class="app">
+  <nav class="top-nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">
+        <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
+        <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
+      </div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link">About</button>
+      <button class="nav-link primary">Support us</button>
+    </div>
+  </nav>
+
+  <div id="initLoader" class="init-loader">
+    <div class="orbit"></div>
+    <span>Loading map & data\u2026</span>
+  </div>
+
+  <div class="main" id="mainContent" style="opacity:0">
+    <div class="map-panel">
+      <div class="title-row">
+        <div>
+          <div class="map-title" id="mapTitle">\u2014</div>
+          <div class="map-sub" id="mapSub">\u2014</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span id="legMin">\u2014</span>
+        <div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div>
+        <span id="legMax">\u2014</span>
+      </div>
+      <div class="map-wrap">
+        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <div class="controls glass">
+      <div>
+        <div class="sec-title">Category</div>
+        <div class="cat-tabs" id="catBtns"></div>
+      </div>
+      <div>
+        <div class="sec-title">Data Type</div>
+        <div class="btn-group" id="dtBtns"></div>
+      </div>
+      <div>
+        <div class="sec-title">Source</div>
+        <div class="btn-group" id="srcBtns"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
+</div>
+
+<div class="tooltip" id="tt">
+  <div class="tt-name" id="ttName">\u2014</div>
+  <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
+  <div class="tt-src" id="ttSrc"></div>
+  <div class="tt-disc" id="ttDisc"></div>
+</div>`;
   }
 }
 
