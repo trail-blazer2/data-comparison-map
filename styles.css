@@ -225,9 +225,7 @@
   transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
   pointer-events: none;
 }
-.legend-marker.visible {
-  opacity: 1;
-}
+.legend-marker.visible { opacity: 1; }
 
 .map-wrap {
   flex: 1;
@@ -236,10 +234,14 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  cursor: grab;
   border-radius: 12px;
 }
-.map-wrap:active { cursor: grabbing; }
+/* Desktop only: grab cursor */
+@media (hover: hover) and (pointer: fine) {
+  .map-wrap { cursor: grab; }
+  .map-wrap:active { cursor: grabbing; }
+}
+
 .map-wrap svg { width: 100%; height: 100%; }
 
 .map-hint {
@@ -248,6 +250,7 @@
   color: #a0aec0;
   padding: 4px 0 0;
   flex-shrink: 0;
+  display: none; /* shown via JS on desktop only */
 }
 
 /* ===== COUNTRY PATHS ===== */
@@ -330,8 +333,6 @@
   min-height: 0;
   overflow: hidden;
 }
-.controls::-webkit-scrollbar { width: 3px; }
-.controls::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
 
 .sec-title {
   font-size: 0.58rem;
@@ -368,37 +369,52 @@
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
-.collapsible-section.collapsed .chevron {
-  transform: rotate(-90deg);
-}
 
+/* Default: collapsed to ~3 items. "expanded" = show all */
 .collapsible-list {
   position: relative;
-  max-height: 160px;
+  /* 3 buttons at ~34px each + some gap = ~108px */
+  max-height: 108px;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When expanded: fill available space, scrollable */
+.collapsible-section.expanded .collapsible-list {
+  max-height: calc(100vh - 260px);
   overflow-y: auto;
-  overflow-x: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.08) transparent;
 }
-.collapsible-list::-webkit-scrollbar { width: 3px; }
-.collapsible-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 3px; }
-
-.collapsible-section.collapsed .collapsible-list {
-  max-height: 0;
-  overflow: hidden;
+.collapsible-section.expanded .collapsible-list::-webkit-scrollbar { width: 3px; }
+.collapsible-section.expanded .collapsible-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.08); border-radius: 3px;
 }
 
-/* Fade-out at bottom of scrollable list */
+/* Chevron points down when collapsed (default), up when expanded */
+.collapsible-section.expanded .chevron {
+  transform: rotate(180deg);
+}
+
+/* Fade-out at bottom — uses transparent to match glass BG, not white */
 .list-fade {
   position: sticky;
   bottom: 0;
   left: 0; right: 0;
-  height: 24px;
-  background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 55%));
+  height: 28px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgb(220 228 238 / 70%) 60%,
+    rgb(220 228 238 / 95%)
+  );
   pointer-events: none;
   flex-shrink: 0;
   z-index: 5;
+  transition: opacity 0.25s ease;
+}
+/* Hide fade when expanded (user is scrolling) */
+.collapsible-section.expanded .list-fade {
+  opacity: 0;
 }
 
 /* ===== CATEGORY BUTTONS ===== */
@@ -460,10 +476,8 @@
 
 .btn-group .slider {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 0;
-  top: 0;
+  left: 0; right: 0;
+  height: 0; top: 0;
   background: rgba(30, 58, 95, 0.08);
   border: 1.5px solid rgba(30, 58, 95, 0.18);
   border-radius: 10px;
@@ -474,9 +488,7 @@
   z-index: 0;
   opacity: 0;
 }
-.btn-group .slider.visible {
-  opacity: 1;
-}
+.btn-group .slider.visible { opacity: 1; }
 
 .btn {
   display: flex;
@@ -498,13 +510,8 @@
   position: relative;
   z-index: 1;
 }
-.btn:hover:not(.disabled):not(.active) {
-  color: #1e3a5f;
-}
-.btn.active {
-  color: #1e3a5f;
-  font-weight: 600;
-}
+.btn:hover:not(.disabled):not(.active) { color: #1e3a5f; }
+.btn.active { color: #1e3a5f; font-weight: 600; }
 
 .btn-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -513,9 +520,7 @@
 }
 .btn.active .btn-dot { background: #1e3a5f; }
 
-.btn.disabled {
-  opacity: 0.35; cursor: not-allowed; color: #aaa;
-}
+.btn.disabled { opacity: 0.35; cursor: not-allowed; color: #aaa; }
 .btn.disabled:hover { color: #aaa; }
 
 .badge {
@@ -567,10 +572,12 @@
     max-height: 220px;
     overflow-y: auto;
   }
-  .collapsible-list { max-height: 120px; }
+  .collapsible-list { max-height: 100px; }
+  .collapsible-section.expanded .collapsible-list {
+    max-height: calc(100vh - 320px);
+  }
   .map-title { font-size: 0.85rem; }
   .legend { margin: 4px 0; }
-  .map-hint { font-size: 0.5rem; }
   .top-nav { margin: 6px 0 6px; padding: 8px 14px; }
 
   .logo-desktop { display: none; }
