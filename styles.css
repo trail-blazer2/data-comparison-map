@@ -7,7 +7,6 @@
   display: block;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #1a1a2e;
-  /* Lock base font size so Wix iframe scaling doesn't blow it up */
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
@@ -402,7 +401,7 @@
   pointer-events: none;
 }
 
-/* Pattern overlay: same shape filled with the diagonal "COMING SOON" text */
+/* Pattern overlay: same clipped shape filled with the diagonal "COMING SOON" text */
 .cp-nearby-pattern {
   fill: url(#comingSoonPattern);
   stroke: none;
@@ -664,8 +663,15 @@
 .init-loader span { font-size: 0.82rem; color: #8395a7; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== RESPONSIVE — MOBILE ===== */
+/* ===== RESPONSIVE — MOBILE =====
+   All font sizes use px instead of rem/em so Wix iframe
+   root font-size changes cannot inflate the UI.
+   ================================ */
 @media (max-width: 960px) {
+  :host {
+    font-size: 16px !important;
+  }
+
   .main { grid-template-columns: 1fr; }
   .controls { position: static; max-height: none; }
 
@@ -674,22 +680,37 @@
     -webkit-backdrop-filter: none;
     filter: none;
     background: rgb(255 255 255 / 65%);
-   }
-   .nav-link {
-    font-size: 0.7rem;
-   }
-   .nav-logo-icon img {
-    max-width: 100px;
-   }
+  }
 
-   /* Force consistent sizing inside Wix iframe on mobile */
-   :host {
-     font-size: 16px !important;
-   }
-   .app {
-     font-size: 16px;
-   }
+  /* --- Force px font sizes on mobile to resist Wix scaling --- */
+  .top-nav { padding: 10px 14px 10px 16px; }
+  .nav-link { font-size: 11px; padding: 6px 12px; }
+  .nav-link.primary { font-size: 11px; }
+  .nav-logo-icon img { max-width: 100px; height: 28px; }
+
+  .map-title { font-size: 15px; }
+  .map-sub { font-size: 11px; }
+  .legend { font-size: 10px; }
+
+  .sec-title { font-size: 9px; }
+
+  .cat-btn { padding: 10px 10px; gap: 6px; }
+  .cat-icon { width: 26px; height: 26px; }
+  .cat-icon svg { width: 13px; height: 13px; }
+  .cat-label { font-size: 11px; }
+
+  .btn { font-size: 12px; padding: 9px 10px; }
+  .badge { font-size: 9px; }
+
+  .tooltip { padding: 12px 16px; }
+  .tt-name { font-size: 13px; }
+  .tt-val { font-size: 18px; }
+  .tt-unit { font-size: 10px; }
+  .tt-src { font-size: 9px; }
+
+  .footer { font-size: 9px; }
 }
+
 @media (max-width: 480px) {
   .cat-tabs { grid-template-columns: 1fr; }
   .app { padding: 0 12px 12px; }
