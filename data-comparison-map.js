@@ -28,21 +28,19 @@ const ALPHA2_TO_NAME = {
 };
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
-// Nearby non-European countries to show greyed out around the map edges.
-// All geometries are clipped to NEARBY_CLIP_BOX before rendering so
-// transcontinental polygons (Russia, Kazakhstan etc.) only show their
-// European/near-European portion.
 const NEARBY_NUMERIC = new Set([
-  '012','788','434','818','504','729','148','562','466',  // North Africa / Sahel
-  '792','268','051','031','364','368','400','760','422',  // Turkey, Caucasus, Middle East
-  '682','887','512','634',                                 // Arabian Peninsula
-  '643',                                                   // Russia (clipped to European portion)
-  '398','795','860','417','762',                           // Central Asia (clipped)
+  '012','788','434','818','504','729','148','562','466',
+  '792','268','051','031','364','368','400','760','422',
+  '682','887','512','634',
+  '643',
+  '398','795','860','417','762',
 ]);
 
-// SVG coordinate bounding box for clipping nearby countries.
-// Anything outside this box is clipped away so huge polygons
-// don't paint across the ocean or outside the map area.
+// Longitude clip window — only keep geometry within this lon range.
+// This cuts off everything east of ~65°E (Urals+buffer) and west of ~30°W.
+const LON_MIN = -30;
+const LON_MAX = 65;
+// SVG coordinate clip box — final safety net after projection
 const NEARBY_CLIP_BOX = { x: -100, y: -80, w: 850, h: 650 };
 
 const CATEGORY_META = {
@@ -116,22 +114,44 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
 }
 
 // ============================================================
-// Geometry clipping — Sutherland-Hodgman algorithm.
-// Clips projected polygon rings to a bounding box so that huge
-// countries don't paint outside the map area.
+// GEOGRAPHIC CLIPPING — multi-layer approach to handle Russia etc.
+//
+// Layer 1: Longitude clipping on raw coordinates BEFORE projection.
+//          Uses Sutherland-Hodgman to clip each ring to [LON_MIN, LON_MAX].
+//          This eliminates antimeridian-crossing artifacts because we
+//          cut the geometry in geographic space before projection distorts it.
+//
+// Layer 2: Antimeridian split — any ring segment that jumps more than
+//          90° longitude between consecutive points is treated as an
+//          antimeridian crossing and the segment is broken.
+//
+// Layer 3: Post-projection SVG coordinate clip — final safety net.
+//
+// Layer 4: Degenerate polygon filter — reject any ring whose projected
+//          bounding box is unreasonably wide (> 400 SVG units).
 // ============================================================
-function clipRingToBox(ring, box) {
-  const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
+
+// Sutherland-Hodgman clip of a coordinate ring to a longitude range
+function clipRingToLonRange(ring, lonMin, lonMax) {
+  // Edge 1: left clip (lon >= lonMin)
+  // Edge 2: right clip (lon <= lonMax)
   const edges = [
-    (p) => p[0] >= minX, (a, b) => { const t=(minX-a[0])/(b[0]-a[0]); return [minX, a[1]+t*(b[1]-a[1])]; },
-    (p) => p[0] <= maxX, (a, b) => { const t=(maxX-a[0])/(b[0]-a[0]); return [maxX, a[1]+t*(b[1]-a[1])]; },
-    (p) => p[1] >= minY, (a, b) => { const t=(minY-a[1])/(b[1]-a[1]); return [a[0]+t*(b[0]-a[0]), minY]; },
-    (p) => p[1] <= maxY, (a, b) => { const t=(maxY-a[1])/(b[1]-a[1]); return [a[0]+t*(b[0]-a[0]), maxY]; },
+    { inside: p => p[0] >= lonMin, intersect: (a, b) => {
+        const t = (lonMin - a[0]) / (b[0] - a[0]);
+        return [lonMin, a[1] + t * (b[1] - a[1])];
+      }
+    },
+    { inside: p => p[0] <= lonMax, intersect: (a, b) => {
+        const t = (lonMax - a[0]) / (b[0] - a[0]);
+        return [lonMax, a[1] + t * (b[1] - a[1])];
+      }
+    }
   ];
   let pts = ring.slice();
-  for (let e = 0; e < edges.length; e += 2) {
-    const inside = edges[e], intersect = edges[e+1];
-    const input = pts; pts = [];
+  for (let e = 0; e < edges.length; e++) {
+    const { inside, intersect } = edges[e];
+    const input = pts;
+    pts = [];
     if (input.length === 0) return [];
     let prev = input[input.length - 1];
     for (let i = 0; i < input.length; i++) {
@@ -148,26 +168,117 @@ function clipRingToBox(ring, box) {
   return pts;
 }
 
-function clipGeometry(geom, proj, box) {
-  const ringToPath = (ring) => {
-    const projected = ring.map(c => proj(c));
-    const clipped = clipRingToBox(projected, box);
-    if (clipped.length < 3) return '';
-    return clipped.map((p, i) =>
-      `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`
-    ).join(' ') + 'Z';
-  };
+// Split a ring at antimeridian crossings (jumps > 90° longitude)
+// Returns an array of ring segments (sub-rings)
+function splitRingAtAntimeridian(ring) {
+  if (ring.length < 2) return [ring];
+  const segments = [];
+  let current = [ring[0]];
+  for (let i = 1; i < ring.length; i++) {
+    const prevLon = ring[i - 1][0];
+    const curLon = ring[i][0];
+    if (Math.abs(curLon - prevLon) > 90) {
+      // Antimeridian crossing — break here
+      if (current.length >= 3) segments.push(current);
+      current = [ring[i]];
+    } else {
+      current.push(ring[i]);
+    }
+  }
+  if (current.length >= 3) segments.push(current);
+  return segments;
+}
+
+// Sutherland-Hodgman clip of a projected ring to an SVG bounding box
+function clipRingToBox(ring, box) {
+  const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
+  const edges = [
+    (p) => p[0] >= minX, (a, b) => { const t = (minX - a[0]) / (b[0] - a[0]); return [minX, a[1] + t * (b[1] - a[1])]; },
+    (p) => p[0] <= maxX, (a, b) => { const t = (maxX - a[0]) / (b[0] - a[0]); return [maxX, a[1] + t * (b[1] - a[1])]; },
+    (p) => p[1] >= minY, (a, b) => { const t = (minY - a[1]) / (b[1] - a[1]); return [a[0] + t * (b[0] - a[0]), minY]; },
+    (p) => p[1] <= maxY, (a, b) => { const t = (maxY - a[1]) / (b[1] - a[1]); return [a[0] + t * (b[0] - a[0]), maxY]; },
+  ];
+  let pts = ring.slice();
+  for (let e = 0; e < edges.length; e += 2) {
+    const inside = edges[e], intersect = edges[e + 1];
+    const input = pts;
+    pts = [];
+    if (input.length === 0) return [];
+    let prev = input[input.length - 1];
+    for (let i = 0; i < input.length; i++) {
+      const cur = input[i];
+      if (inside(cur)) {
+        if (!inside(prev)) pts.push(intersect(prev, cur));
+        pts.push(cur);
+      } else if (inside(prev)) {
+        pts.push(intersect(prev, cur));
+      }
+      prev = cur;
+    }
+  }
+  return pts;
+}
+
+// Full pipeline: geographic clip → antimeridian split → project → SVG clip → degenerate filter
+function clipAndProjectNearbyGeometry(geom, proj) {
+  const MAX_RING_WIDTH = 400; // SVG units — reject wider rings as artifacts
+
+  function processRing(ring) {
+    // Step 1: Split at antimeridian crossings
+    const segments = splitRingAtAntimeridian(ring);
+    const results = [];
+
+    for (const seg of segments) {
+      // Step 2: Clip to longitude range in geographic coordinates
+      const lonClipped = clipRingToLonRange(seg, LON_MIN, LON_MAX);
+      if (lonClipped.length < 3) continue;
+
+      // Step 3: Project to SVG coordinates
+      const projected = lonClipped.map(c => proj(c));
+
+      // Step 4: Check for degenerate width
+      let minPX = Infinity, maxPX = -Infinity;
+      for (const p of projected) {
+        if (p[0] < minPX) minPX = p[0];
+        if (p[0] > maxPX) maxPX = p[0];
+      }
+      if ((maxPX - minPX) > MAX_RING_WIDTH) continue;
+
+      // Step 5: Clip to SVG bounding box
+      const svgClipped = clipRingToBox(projected, NEARBY_CLIP_BOX);
+      if (svgClipped.length < 3) continue;
+
+      results.push(svgClipped);
+    }
+    return results;
+  }
+
+  function ringsToPath(clippedRings) {
+    return clippedRings.map(ring =>
+      ring.map((p, i) =>
+        `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`
+      ).join(' ') + 'Z'
+    ).join(' ');
+  }
 
   if (geom.type === 'Polygon') {
-    const d = geom.coordinates.map(ringToPath).filter(s => s).join(' ');
+    const allRings = [];
+    for (const ring of geom.coordinates) {
+      allRings.push(...processRing(ring));
+    }
+    const d = ringsToPath(allRings);
     return d ? [d] : [];
   }
   if (geom.type === 'MultiPolygon') {
     const paths = [];
-    geom.coordinates.forEach(poly => {
-      const d = poly.map(ringToPath).filter(s => s).join(' ');
+    for (const poly of geom.coordinates) {
+      const allRings = [];
+      for (const ring of poly) {
+        allRings.push(...processRing(ring));
+      }
+      const d = ringsToPath(allRings);
       if (d) paths.push(d);
-    });
+    }
     return paths;
   }
   return [];
@@ -188,7 +299,6 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtVal = null;
     this._lastTtDataType = null;
 
-    // Pan & zoom state (desktop only)
     this._zoom = 1;
     this._panX = 0;
     this._panY = 0;
@@ -200,7 +310,6 @@ class DataComparisonMap extends HTMLElement {
     this._animFrame = null;
     this._isDesktop = false;
 
-    // Zoom limits
     this._minZoom = 1;
     this._maxZoom = 4;
   }
@@ -256,7 +365,6 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile');
     if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    // BLUR FIX: inject SVG filter only on desktop, after init
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
@@ -284,7 +392,6 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  // ===== PROJECTION HELPERS (shared) =====
   _lonToX(lon) { return (lon + 25) * (540 / 75); }
   _latToY(lat) {
     const r = lat * Math.PI / 180;
@@ -301,7 +408,6 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
-    // -- SVG defs: the diagonal "COMING SOON" pattern --
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = `
       <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
@@ -310,20 +416,17 @@ class DataComparisonMap extends HTMLElement {
     `;
     svg.appendChild(defs);
 
-    // -- Draw nearby (non-European) countries first (behind) --
-    // Each country's geometry is CLIPPED to NEARBY_CLIP_BOX before rendering.
+    // -- Nearby countries: full multi-layer clipping pipeline --
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
     this.nearbyFeatures.forEach(f => {
-      const clippedPaths = clipGeometry(f.geometry, proj, NEARBY_CLIP_BOX);
+      const clippedPaths = clipAndProjectNearbyGeometry(f.geometry, proj);
       clippedPaths.forEach(d => {
-        // Base fill (grey)
         const pBase = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pBase.setAttribute('d', d);
         pBase.classList.add('cp-nearby');
         nearbyGroup.appendChild(pBase);
 
-        // Pattern overlay (same clipped shape, filled with the text pattern)
         const pPattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         pPattern.setAttribute('d', d);
         pPattern.classList.add('cp-nearby-pattern');
@@ -332,7 +435,7 @@ class DataComparisonMap extends HTMLElement {
     });
     svg.appendChild(nearbyGroup);
 
-    // -- Draw European countries on top --
+    // -- European countries on top --
     const euroGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     euroGroup.setAttribute('class', 'euro-group');
     this.geoFeatures.forEach(f => {
@@ -345,12 +448,10 @@ class DataComparisonMap extends HTMLElement {
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
 
-        // Desktop: mouse events
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
 
-        // Mobile: touch events
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -366,7 +467,6 @@ class DataComparisonMap extends HTMLElement {
     });
     svg.appendChild(euroGroup);
 
-    // Tap anywhere else on mobile to dismiss tooltip
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -388,29 +488,23 @@ class DataComparisonMap extends HTMLElement {
     this._panY = 0;
     this._applyTransform();
 
-    // Wheel to zoom
     wrap.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
       const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
-
       const rect = svg.getBoundingClientRect();
       const mx = (e.clientX - rect.left) / rect.width;
       const my = (e.clientY - rect.top) / rect.height;
-
       const oldW = this._origVB.w / this._zoom;
       const newW = this._origVB.w / newZoom;
       const oldH = this._origVB.h / this._zoom;
       const newH = this._origVB.h / newZoom;
-
       this._panX += (oldW - newW) * mx;
       this._panY += (oldH - newH) * my;
       this._zoom = newZoom;
-
       this._clampAndApply();
     }, { passive: false });
 
-    // Mouse drag to pan
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       this._isPanning = true;
@@ -440,13 +534,11 @@ class DataComparisonMap extends HTMLElement {
       this._snapBack();
     });
 
-    // Double-click to reset
     wrap.addEventListener('dblclick', (e) => {
       e.preventDefault();
       this._animateTo(1, 0, 0);
     });
 
-    // Zoom controls
     const zoomIn = this.$('#zoomIn');
     const zoomOut = this.$('#zoomOut');
     const zoomReset = this.$('#zoomReset');
@@ -456,9 +548,7 @@ class DataComparisonMap extends HTMLElement {
       const newW = this._origVB.w / newZoom;
       const oldH = this._origVB.h / this._zoom;
       const newH = this._origVB.h / newZoom;
-      const targetPanX = this._panX + (oldW - newW) * 0.5;
-      const targetPanY = this._panY + (oldH - newH) * 0.5;
-      this._animateTo(newZoom, targetPanX, targetPanY);
+      this._animateTo(newZoom, this._panX + (oldW - newW) * 0.5, this._panY + (oldH - newH) * 0.5);
     });
     if (zoomOut) zoomOut.addEventListener('click', () => {
       const newZoom = Math.max(this._minZoom, this._zoom - 0.3);
@@ -466,9 +556,7 @@ class DataComparisonMap extends HTMLElement {
       const newW = this._origVB.w / newZoom;
       const oldH = this._origVB.h / this._zoom;
       const newH = this._origVB.h / newZoom;
-      const targetPanX = this._panX + (oldW - newW) * 0.5;
-      const targetPanY = this._panY + (oldH - newH) * 0.5;
-      this._animateTo(newZoom, targetPanX, targetPanY);
+      this._animateTo(newZoom, this._panX + (oldW - newW) * 0.5, this._panY + (oldH - newH) * 0.5);
     });
     if (zoomReset) zoomReset.addEventListener('click', () => {
       this._animateTo(1, 0, 0);
@@ -478,9 +566,7 @@ class DataComparisonMap extends HTMLElement {
   _getViewBox() {
     const w = this._origVB.w / this._zoom;
     const h = this._origVB.h / this._zoom;
-    const x = this._origVB.x + this._panX;
-    const y = this._origVB.y + this._panY;
-    return { x, y, w, h };
+    return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
   }
 
   _applyTransform() {
@@ -494,17 +580,13 @@ class DataComparisonMap extends HTMLElement {
     const vw = this._origVB.w / this._zoom;
     const vh = this._origVB.h / this._zoom;
     const cb = this._contentBBox;
-
     const minPanX = cb.x - this._origVB.x - vw * 0.5;
     const maxPanX = (cb.x + cb.w) - this._origVB.x - vw * 0.5;
     const minPanY = cb.y - this._origVB.y - vh * 0.5;
     const maxPanY = (cb.y + cb.h) - this._origVB.y - vh * 0.5;
-
     return {
-      minX: Math.min(minPanX, 0),
-      maxX: Math.max(maxPanX, 0),
-      minY: Math.min(minPanY, 0),
-      maxY: Math.max(maxPanY, 0)
+      minX: Math.min(minPanX, 0), maxX: Math.max(maxPanX, 0),
+      minY: Math.min(minPanY, 0), maxY: Math.max(maxPanY, 0)
     };
   }
 
@@ -514,20 +596,14 @@ class DataComparisonMap extends HTMLElement {
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
   }
 
-  _clampAndApply() {
-    this._clampPan();
-    this._applyTransform();
-  }
+  _clampAndApply() { this._clampPan(); this._applyTransform(); }
 
   _snapBack() {
     const b = this._getPanBounds();
     const targetX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     const targetY = Math.max(b.minY, Math.min(b.maxY, this._panY));
     if (Math.abs(targetX - this._panX) < 0.5 && Math.abs(targetY - this._panY) < 0.5) {
-      this._panX = targetX;
-      this._panY = targetY;
-      this._applyTransform();
-      return;
+      this._panX = targetX; this._panY = targetY; this._applyTransform(); return;
     }
     this._animateTo(this._zoom, targetX, targetY, 350);
   }
@@ -535,12 +611,8 @@ class DataComparisonMap extends HTMLElement {
   _animateTo(targetZoom, targetPanX, targetPanY, duration) {
     duration = duration || 400;
     if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    const startZoom = this._zoom;
-    const startPanX = this._panX;
-    const startPanY = this._panY;
-
-    const tvw = this._origVB.w / targetZoom;
-    const tvh = this._origVB.h / targetZoom;
+    const startZoom = this._zoom, startPanX = this._panX, startPanY = this._panY;
+    const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom;
     const cb = this._contentBBox;
     const tMinX = Math.min(cb.x - this._origVB.x - tvw * 0.5, 0);
     const tMaxX = Math.max((cb.x + cb.w) - this._origVB.x - tvw * 0.5, 0);
@@ -548,28 +620,18 @@ class DataComparisonMap extends HTMLElement {
     const tMaxY = Math.max((cb.y + cb.h) - this._origVB.y - tvh * 0.5, 0);
     targetPanX = Math.max(tMinX, Math.min(tMaxX, targetPanX));
     targetPanY = Math.max(tMinY, Math.min(tMaxY, targetPanY));
-
     const startTime = performance.now();
     const tick = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const c1 = 1.70158;
-      const c3 = c1 + 1;
+      const c1 = 1.70158, c3 = c1 + 1;
       const ease = 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
-
       this._zoom = startZoom + (targetZoom - startZoom) * ease;
       this._panX = startPanX + (targetPanX - startPanX) * ease;
       this._panY = startPanY + (targetPanY - startPanY) * ease;
       this._applyTransform();
-      if (progress < 1) {
-        this._animFrame = requestAnimationFrame(tick);
-      } else {
-        this._zoom = targetZoom;
-        this._panX = targetPanX;
-        this._panY = targetPanY;
-        this._applyTransform();
-        this._animFrame = null;
-      }
+      if (progress < 1) { this._animFrame = requestAnimationFrame(tick); }
+      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._animFrame = null; }
     };
     this._animFrame = requestAnimationFrame(tick);
   }
@@ -586,30 +648,19 @@ class DataComparisonMap extends HTMLElement {
 
   moveSlider(container, activeBtn) {
     let slider = container.querySelector('.slider');
-    if (!slider) {
-      slider = document.createElement('div');
-      slider.className = 'slider';
-      container.prepend(slider);
-    }
-    if (!activeBtn) {
-      slider.classList.remove('visible');
-      return;
-    }
-    const top = activeBtn.offsetTop;
-    const height = activeBtn.offsetHeight;
-    slider.style.top = top + 'px';
-    slider.style.height = height + 'px';
+    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
+    if (!activeBtn) { slider.classList.remove('visible'); return; }
+    slider.style.top = activeBtn.offsetTop + 'px';
+    slider.style.height = activeBtn.offsetHeight + 'px';
     slider.classList.add('visible');
   }
 
   buildCategoryButtons() {
-    const c = this.$('#catBtns');
-    c.innerHTML = '';
+    const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
       const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
       const b = document.createElement('button');
-      b.className = 'cat-btn';
-      b.dataset.key = catKey;
+      b.className = 'cat-btn'; b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
       b.onclick = () => this.selectCategory(catKey);
       c.appendChild(b);
@@ -620,26 +671,18 @@ class DataComparisonMap extends HTMLElement {
     this.currentCategory = catKey;
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
     this.buildDataTypeButtons(catKey);
-    this._lastTtVal = null;
-    this._lastTtDataType = null;
+    this._lastTtVal = null; this._lastTtDataType = null;
     const keys = this.categories[catKey];
     if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
   buildDataTypeButtons(catKey) {
-    const c = this.$('#dtBtns');
-    c.innerHTML = '';
-    const slider = document.createElement('div');
-    slider.className = 'slider';
-    c.appendChild(slider);
-
+    const c = this.$('#dtBtns'); c.innerHTML = '';
+    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const keys = this.categories[catKey] || [];
     keys.forEach(key => {
-      const dt = this.DATA[key];
-      if (!dt) return;
-      const b = document.createElement('button');
-      b.className = 'btn';
-      b.dataset.key = key;
+      const dt = this.DATA[key]; if (!dt) return;
+      const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
@@ -649,20 +692,14 @@ class DataComparisonMap extends HTMLElement {
   }
 
   buildSourceButtons(dtKey) {
-    const c = this.$('#srcBtns');
-    c.innerHTML = '';
-    const slider = document.createElement('div');
-    slider.className = 'slider';
-    c.appendChild(slider);
-
-    const dt = this.DATA[dtKey];
-    if (!dt) return;
+    const c = this.$('#srcBtns'); c.innerHTML = '';
+    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
+    const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length;
       const isEmpty = count === 0;
       const b = document.createElement('button');
-      b.className = 'btn' + (isEmpty ? ' disabled' : '');
-      b.dataset.key = key;
+      b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) {
         b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
       } else {
@@ -678,114 +715,79 @@ class DataComparisonMap extends HTMLElement {
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     const dtContainer = this.$('#dtBtns');
     const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn));
-    });
-    this._lastTtVal = null;
-    this._lastTtDataType = k;
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn)); });
+    this._lastTtVal = null; this._lastTtDataType = k;
     this.buildSourceButtons(k);
-    const dt = this.DATA[k];
-    if (!dt) return;
+    const dt = this.DATA[k]; if (!dt) return;
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
-    if (firstOk) {
-      this.selectSource(firstOk[0]);
-    } else {
+    if (firstOk) { this.selectSource(firstOk[0]); }
+    else {
       this.currentSource = null;
       this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
-      this.$('#legMin').textContent = '\u2014';
-      this.$('#legMax').textContent = '\u2014';
+      this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
   }
 
   selectSource(k) {
     this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => {
-      if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k);
-    });
+    this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
     const srcContainer = this.$('#srcBtns');
     const activeBtn = srcContainer.querySelector('.btn.active');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn));
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn)); });
     this.paint();
   }
 
   paint() {
-    const dt = this.DATA[this.currentDataType];
-    if (!dt) return;
-    const src = dt.sources[this.currentSource];
-    if (!src) return;
+    const dt = this.DATA[this.currentDataType]; if (!dt) return;
+    const src = dt.sources[this.currentSource]; if (!src) return;
     this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
-
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) {
-      this.$('#legMin').textContent = '\u2014';
-      this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
-      return;
+      this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
+      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return;
     }
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     this.$('#legMin').textContent = fmt(min, dt.unit);
     this.$('#legMax').textContent = fmt(max, dt.unit);
-
     this.$$('.cp').forEach(p => {
       const v = src.countries[p.dataset.code];
-      if (v != null) {
-        p.classList.remove('no-data');
-        p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5));
-      } else {
-        p.classList.add('no-data');
-        p.setAttribute('fill', '#dfe6e9');
-      }
+      if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
+      else { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }
     });
   }
 
   ttShow(e) {
-    const dt = this.DATA[this.currentDataType];
-    if (!dt || !this.currentSource) return;
-    const src = dt.sources[this.currentSource];
-    if (!src) return;
+    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
+    const src = dt.sources[this.currentSource]; if (!src) return;
     const code = e.target.dataset.code;
     const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
-
     const valEl = this.$('#ttVal');
     const oldVal = this._lastTtVal;
     const sameDataType = this._lastTtDataType === this.currentDataType;
-
     if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
       animateValue(valEl, oldVal, newVal, dt.unit, 300);
-    } else {
-      valEl.textContent = fmt(newVal, dt.unit);
-    }
-
-    this._lastTtVal = newVal;
-    this._lastTtDataType = this.currentDataType;
-
+    } else { valEl.textContent = fmt(newVal, dt.unit); }
+    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
     this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
-      const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-      const pct = max !== min ? ((newVal - min) / (max - min)) * 100 : 50;
-      marker.style.left = pct + '%';
-      marker.classList.add('visible');
-    } else {
-      marker.classList.remove('visible');
-    }
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      const pct = mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50;
+      marker.style.left = pct + '%'; marker.classList.add('visible');
+    } else { marker.classList.remove('visible'); }
     this.$('#tt').classList.add('visible');
   }
 
   ttMove(e) {
     const tt = this.$('#tt');
-    tt.style.left = (e.clientX + 18) + 'px';
-    tt.style.top = (e.clientY - 12) + 'px';
+    tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px';
   }
 
   ttHide() {
@@ -793,11 +795,7 @@ class DataComparisonMap extends HTMLElement {
     this.$('#legMarker').classList.remove('visible');
   }
 
-  checkDiscrepancy(code) {
-    const el = this.$('#ttDisc');
-    el.style.display = 'none';
-    return;
-  }
+  checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
 
   html() {
     return `<div class="app">
@@ -809,7 +807,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" onclick="window.open('https://2003ivanmazurov.wixsite.com/my-site-3/landing', '_self');">About</button>
+      <button class="nav-link">About</button>
       <button class="nav-link primary">Support us</button>
     </div>
   </nav>
