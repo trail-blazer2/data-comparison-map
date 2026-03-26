@@ -29,19 +29,21 @@ const ALPHA2_TO_NAME = {
 const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
 
 // Nearby non-European countries to show greyed out around the map edges.
-// Excludes Russia (643), Kazakhstan (398) and other transcontinental giants
-// whose polygons span far outside the European view and cause rendering artifacts.
+// All geometries are clipped to NEARBY_CLIP_BOX before rendering so
+// transcontinental polygons (Russia, Kazakhstan etc.) only show their
+// European/near-European portion.
 const NEARBY_NUMERIC = new Set([
   '012','788','434','818','504','729','148','562','466',  // North Africa / Sahel
   '792','268','051','031','364','368','400','760','422',  // Turkey, Caucasus, Middle East
   '682','887','512','634',                                 // Arabian Peninsula
-  '795','860','417','762',                                 // Central Asia (no Kazakhstan)
+  '643',                                                   // Russia (clipped to European portion)
+  '398','795','860','417','762',                           // Central Asia (clipped)
 ]);
 
 // SVG coordinate bounding box for clipping nearby countries.
-// Anything outside this box is clipped away so huge polygons (like parts of
-// Russia that leak in via shared borders) don't paint across the ocean.
-const NEARBY_CLIP_BOX = { x: -200, y: -100, w: 1000, h: 700 };
+// Anything outside this box is clipped away so huge polygons
+// don't paint across the ocean or outside the map area.
+const NEARBY_CLIP_BOX = { x: -100, y: -80, w: 850, h: 650 };
 
 const CATEGORY_META = {
   economy: {
@@ -114,9 +116,9 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
 }
 
 // ============================================================
-// Geometry clipping helper — clips polygon rings to a bounding box
-// so that huge countries (Russia etc.) don't paint outside the map area.
-// Uses Sutherland-Hodgman algorithm on each ring.
+// Geometry clipping — Sutherland-Hodgman algorithm.
+// Clips projected polygon rings to a bounding box so that huge
+// countries don't paint outside the map area.
 // ============================================================
 function clipRingToBox(ring, box) {
   const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
@@ -147,7 +149,6 @@ function clipRingToBox(ring, box) {
 }
 
 function clipGeometry(geom, proj, box) {
-  // Project coordinates, then clip to box, return SVG path strings
   const ringToPath = (ring) => {
     const projected = ring.map(c => proj(c));
     const clipped = clipRingToBox(projected, box);
@@ -310,9 +311,7 @@ class DataComparisonMap extends HTMLElement {
     svg.appendChild(defs);
 
     // -- Draw nearby (non-European) countries first (behind) --
-    // Each country's geometry is CLIPPED to NEARBY_CLIP_BOX before rendering,
-    // so huge polygons (parts of Russia that leak in, trans-continental countries)
-    // are trimmed and never paint outside the European map area.
+    // Each country's geometry is CLIPPED to NEARBY_CLIP_BOX before rendering.
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
     this.nearbyFeatures.forEach(f => {
@@ -382,9 +381,7 @@ class DataComparisonMap extends HTMLElement {
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
 
-    // The original/default viewBox
     this._origVB = { x: -30, y: -5, w: 590, h: 490 };
-    // The full content bounding box (Europe + nearby countries)
     this._contentBBox = { x: -80, y: -60, w: 750, h: 620 };
     this._zoom = 1;
     this._panX = 0;
@@ -812,7 +809,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" onclick="window.open('https://2003ivanmazurov.wixsite.com/my-site-3/landing');">About</button>
+      <button class="nav-link" onclick="window.open('https://2003ivanmazurov.wixsite.com/my-site-3/landing', '_self');">About</button>
       <button class="nav-link primary">Support us</button>
     </div>
   </nav>
