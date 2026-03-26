@@ -22,6 +22,39 @@
   position: relative;
   overflow: hidden;
 }
+
+/* Apply PC-Only App Dimensions */
+@media (hover: hover) and (pointer: fine) and (min-width: 961px) {
+  .app {
+    height: 100vh;
+    padding-bottom: 0;
+  }
+  .main {
+    flex: 1;
+    overflow: hidden;
+  }
+  .map-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .map-wrap {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    border-radius: 12px;
+  }
+  #mapSvg {
+    cursor: grab;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+  #mapSvg:active {
+    cursor: grabbing;
+  }
+}
+
 .app::before,
 .app::after {
   content: '';
@@ -168,7 +201,7 @@
 }
 .glass > * { position: relative; z-index: 2; }
 
-/* ===== MAP PANEL ===== */
+/* ===== MAP PANEL — clean, no glass class, no blur ===== */
 .map-panel {
   position: relative;
   padding: 24px 24px 16px;
@@ -206,7 +239,7 @@
   border-radius: 5px;
   background: linear-gradient(90deg, #c8d6e5, #8395a7, #576574, #222f3e, #0a1628);
   border: 1px solid rgba(0,0,0,0.06);
-  position: relative;
+   position: relative;
 }
 .legend-marker {
   position: absolute;
@@ -477,7 +510,6 @@
   .main { grid-template-columns: 1fr; }
   .controls { position: static; max-height: none; }
 
-  /* Kill all blur on mobile — clean solid background instead */
   .glass::before {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -494,45 +526,4 @@
 @media (max-width: 480px) {
   .cat-tabs { grid-template-columns: 1fr; }
   .app { padding: 0 12px 12px; }
-}
-
-/* =============================================================
-   DESKTOP VIEWPORT-FIT
-   When JS sets .app height via inline style, these make it work.
-   Only activates on real desktop (hover+pointer).
-   Does NOT touch map-panel background, blur, or any visuals.
-   ============================================================= */
-@media (hover: hover) and (pointer: fine) {
-  .app {
-    min-height: 0;       /* let JS height win over min-height:100vh */
-    overflow: hidden;     /* no scroll on desktop */
-  }
-  .main {
-    flex: 1;
-    min-height: 0;
-    align-items: stretch;
-  }
-  .map-panel {
-    display: flex;
-    flex-direction: column;
-  }
-  .map-wrap {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .controls {
-    position: static;
-    max-height: none;
-    overflow-y: auto;
-  }
-  .top-nav {
-    flex-shrink: 0;
-  }
-  .footer {
-    flex-shrink: 0;
-  }
-  .map-hint {
-    flex-shrink: 0;
-  }
 }
