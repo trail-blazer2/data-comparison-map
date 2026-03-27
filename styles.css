@@ -46,22 +46,25 @@
   bottom: -120px; right: -150px;
 }
 
-/* ===== DESKTOP: strict viewport height ===== */
+/* ===== DESKTOP: strict viewport-locked layout ===== */
 @media (hover: hover) and (pointer: fine) {
   .app {
+    /* Hard-lock to viewport — no scrolling, ever */
     height: 100vh;
+    height: 100dvh; /* dynamic viewport height for browsers that support it */
     max-height: 100vh;
+    max-height: 100dvh;
     min-height: 0;
-    padding: 0 48px 8px;
-    gap: 8px;
+    padding: 0 48px 0;
+    gap: 0;
     overflow: hidden;
   }
 }
 @media (hover: hover) and (pointer: fine) and (min-width: 1400px) {
-  .app { padding: 0 80px 8px; }
+  .app { padding: 0 80px 0; }
 }
 @media (hover: hover) and (pointer: fine) and (min-width: 1700px) {
-  .app { padding: 0 128px 10px; }
+  .app { padding: 0 128px 0; }
 }
 
 /* ===== TOP NAV BAR ===== */
@@ -85,8 +88,7 @@
 @media (hover: hover) and (pointer: fine) {
   .top-nav {
     padding: 8px 20px 8px 22px;
-    margin-top: 8px;
-    margin-bottom: 0;
+    margin: 8px 0 6px;
     flex-shrink: 0;
   }
 }
@@ -167,11 +169,14 @@
 
 @media (hover: hover) and (pointer: fine) {
   .main {
-    flex: 1;
+    /* flex: 1 with min-height: 0 lets this shrink to fit */
+    flex: 1 1 0;
     min-height: 0;
     gap: 14px;
     align-items: stretch;
     grid-template-columns: 1fr 270px;
+    /* Prevent grid children from overflowing */
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 
@@ -247,6 +252,7 @@
 .map-sub { font-size: 0.75rem; color: #8395a7; margin: 2px 0 0; }
 
 @media (hover: hover) and (pointer: fine) {
+  .title-row { flex-shrink: 0; }
   .map-title { font-size: 0.9rem; }
   .map-sub { font-size: 0.68rem; }
 }
@@ -380,7 +386,8 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .controls {
-    position: relative; top: 0; max-height: none;
+    position: relative; top: 0;
+    min-height: 0;
     overflow-y: auto; padding: 12px; gap: 8px;
   }
 }
@@ -481,7 +488,7 @@
   position: relative; z-index: 1;
 }
 @media (hover: hover) and (pointer: fine) {
-  .footer { flex-shrink: 0; padding: 2px 0 4px; font-size: 0.58rem; }
+  .footer { flex-shrink: 0; padding: 4px 0; font-size: 0.58rem; }
 }
 
 /* ===== LOADING ===== */
@@ -496,10 +503,7 @@
 .init-loader span { font-size: 0.82rem; color: #8395a7; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== RESPONSIVE — MOBILE =====
-   Uses vw-based font sizes so Wix iframe scaling can't inflate them.
-   On a 375px-wide phone, 2.93vw ≈ 11px, 3.2vw ≈ 12px, etc.
-   ================================ */
+/* ===== RESPONSIVE — MOBILE ===== */
 @media (max-width: 960px) {
   :host { font-size: 16px !important; }
 
