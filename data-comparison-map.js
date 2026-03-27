@@ -647,8 +647,16 @@ class DataComparisonMap extends HTMLElement {
   html() {
     return `<div class="app">
   <nav class="top-nav">
-    <div class="nav-logo"><div class="nav-logo-icon"><img id="navLogo" class="logo-desktop" src="" alt="Logo" /><img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" /></div></div>
-    <div class="nav-links"><button class="nav-link">About</button><button class="nav-link primary" id="supportBtn">Support us</button></div>
+    <div class="nav-logo" onclick="location.reload();" style="cursor: pointer;">
+      <div class="nav-logo-icon">
+        <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
+        <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
+      </div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link" onclick="window.location.href='https://2003ivanmazurov.wixsite.com/my-site-3/landing';">About</button>
+      <button class="nav-link primary" id="supportBtn">Support us</button>
+    </div>
   </nav>
   <div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
