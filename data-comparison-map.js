@@ -36,12 +36,11 @@ const NEARBY_NUMERIC = new Set([
   '398','795','860','417','762',
 ]);
 
-// Longitude clip window — only keep geometry within this lon range.
-// This cuts off everything east of ~65°E (Urals+buffer) and west of ~30°W.
-const LON_MIN = -30;
-const LON_MAX = 65;
-// SVG coordinate clip box — final safety net after projection
-const NEARBY_CLIP_BOX = { x: -100, y: -80, w: 850, h: 650 };
+// Longitude clip window — keeps European portion only
+const LON_MIN = -35;
+const LON_MAX = 70;
+// SVG coordinate clip box — expanded so edges fade naturally
+const NEARBY_CLIP_BOX = { x: -150, y: -120, w: 1000, h: 800 };
 
 const CATEGORY_META = {
   economy: {
@@ -114,27 +113,10 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
 }
 
 // ============================================================
-// GEOGRAPHIC CLIPPING — multi-layer approach to handle Russia etc.
-//
-// Layer 1: Longitude clipping on raw coordinates BEFORE projection.
-//          Uses Sutherland-Hodgman to clip each ring to [LON_MIN, LON_MAX].
-//          This eliminates antimeridian-crossing artifacts because we
-//          cut the geometry in geographic space before projection distorts it.
-//
-// Layer 2: Antimeridian split — any ring segment that jumps more than
-//          90° longitude between consecutive points is treated as an
-//          antimeridian crossing and the segment is broken.
-//
-// Layer 3: Post-projection SVG coordinate clip — final safety net.
-//
-// Layer 4: Degenerate polygon filter — reject any ring whose projected
-//          bounding box is unreasonably wide (> 400 SVG units).
+// GEOGRAPHIC CLIPPING — multi-layer approach
 // ============================================================
 
-// Sutherland-Hodgman clip of a coordinate ring to a longitude range
 function clipRingToLonRange(ring, lonMin, lonMax) {
-  // Edge 1: left clip (lon >= lonMin)
-  // Edge 2: right clip (lon <= lonMax)
   const edges = [
     { inside: p => p[0] >= lonMin, intersect: (a, b) => {
         const t = (lonMin - a[0]) / (b[0] - a[0]);
@@ -150,8 +132,7 @@ function clipRingToLonRange(ring, lonMin, lonMax) {
   let pts = ring.slice();
   for (let e = 0; e < edges.length; e++) {
     const { inside, intersect } = edges[e];
-    const input = pts;
-    pts = [];
+    const input = pts; pts = [];
     if (input.length === 0) return [];
     let prev = input[input.length - 1];
     for (let i = 0; i < input.length; i++) {
@@ -168,8 +149,6 @@ function clipRingToLonRange(ring, lonMin, lonMax) {
   return pts;
 }
 
-// Split a ring at antimeridian crossings (jumps > 90° longitude)
-// Returns an array of ring segments (sub-rings)
 function splitRingAtAntimeridian(ring) {
   if (ring.length < 2) return [ring];
   const segments = [];
@@ -178,7 +157,6 @@ function splitRingAtAntimeridian(ring) {
     const prevLon = ring[i - 1][0];
     const curLon = ring[i][0];
     if (Math.abs(curLon - prevLon) > 90) {
-      // Antimeridian crossing — break here
       if (current.length >= 3) segments.push(current);
       current = [ring[i]];
     } else {
@@ -189,7 +167,6 @@ function splitRingAtAntimeridian(ring) {
   return segments;
 }
 
-// Sutherland-Hodgman clip of a projected ring to an SVG bounding box
 function clipRingToBox(ring, box) {
   const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
   const edges = [
@@ -201,8 +178,7 @@ function clipRingToBox(ring, box) {
   let pts = ring.slice();
   for (let e = 0; e < edges.length; e += 2) {
     const inside = edges[e], intersect = edges[e + 1];
-    const input = pts;
-    pts = [];
+    const input = pts; pts = [];
     if (input.length === 0) return [];
     let prev = input[input.length - 1];
     for (let i = 0; i < input.length; i++) {
@@ -219,35 +195,24 @@ function clipRingToBox(ring, box) {
   return pts;
 }
 
-// Full pipeline: geographic clip → antimeridian split → project → SVG clip → degenerate filter
 function clipAndProjectNearbyGeometry(geom, proj) {
-  const MAX_RING_WIDTH = 400; // SVG units — reject wider rings as artifacts
+  const MAX_RING_WIDTH = 400;
 
   function processRing(ring) {
-    // Step 1: Split at antimeridian crossings
     const segments = splitRingAtAntimeridian(ring);
     const results = [];
-
     for (const seg of segments) {
-      // Step 2: Clip to longitude range in geographic coordinates
       const lonClipped = clipRingToLonRange(seg, LON_MIN, LON_MAX);
       if (lonClipped.length < 3) continue;
-
-      // Step 3: Project to SVG coordinates
       const projected = lonClipped.map(c => proj(c));
-
-      // Step 4: Check for degenerate width
       let minPX = Infinity, maxPX = -Infinity;
       for (const p of projected) {
         if (p[0] < minPX) minPX = p[0];
         if (p[0] > maxPX) maxPX = p[0];
       }
       if ((maxPX - minPX) > MAX_RING_WIDTH) continue;
-
-      // Step 5: Clip to SVG bounding box
       const svgClipped = clipRingToBox(projected, NEARBY_CLIP_BOX);
       if (svgClipped.length < 3) continue;
-
       results.push(svgClipped);
     }
     return results;
@@ -263,9 +228,7 @@ function clipAndProjectNearbyGeometry(geom, proj) {
 
   if (geom.type === 'Polygon') {
     const allRings = [];
-    for (const ring of geom.coordinates) {
-      allRings.push(...processRing(ring));
-    }
+    for (const ring of geom.coordinates) allRings.push(...processRing(ring));
     const d = ringsToPath(allRings);
     return d ? [d] : [];
   }
@@ -273,9 +236,7 @@ function clipAndProjectNearbyGeometry(geom, proj) {
     const paths = [];
     for (const poly of geom.coordinates) {
       const allRings = [];
-      for (const ring of poly) {
-        allRings.push(...processRing(ring));
-      }
+      for (const ring of poly) allRings.push(...processRing(ring));
       const d = ringsToPath(allRings);
       if (d) paths.push(d);
     }
@@ -408,17 +369,42 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
+    // -- SVG defs: pattern + edge fade mask --
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = `
       <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
         <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.13)" letter-spacing="3">COMING SOON</text>
       </pattern>
+      <mask id="nearbyFadeMask" maskUnits="userSpaceOnUse" x="-200" y="-200" width="1200" height="1000">
+        <rect x="-200" y="-200" width="1200" height="1000" fill="white"/>
+        <rect x="-200" y="-200" width="1200" height="120" fill="url(#fadeTop)"/>
+        <rect x="-200" y="380" width="1200" height="120" fill="url(#fadeBottom)"/>
+        <rect x="-200" y="-200" width="120" height="1000" fill="url(#fadeLeft)"/>
+        <rect x="480" y="-200" width="120" height="1000" fill="url(#fadeRight)"/>
+      </mask>
+      <linearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="black"/>
+        <stop offset="1" stop-color="white"/>
+      </linearGradient>
+      <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="white"/>
+        <stop offset="1" stop-color="black"/>
+      </linearGradient>
+      <linearGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="black"/>
+        <stop offset="1" stop-color="white"/>
+      </linearGradient>
+      <linearGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="white"/>
+        <stop offset="1" stop-color="black"/>
+      </linearGradient>
     `;
     svg.appendChild(defs);
 
-    // -- Nearby countries: full multi-layer clipping pipeline --
+    // -- Nearby countries with edge-fade mask --
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
+    nearbyGroup.setAttribute('mask', 'url(#nearbyFadeMask)');
     this.nearbyFeatures.forEach(f => {
       const clippedPaths = clipAndProjectNearbyGeometry(f.geometry, proj);
       clippedPaths.forEach(d => {
@@ -679,8 +665,7 @@ class DataComparisonMap extends HTMLElement {
   buildDataTypeButtons(catKey) {
     const c = this.$('#dtBtns'); c.innerHTML = '';
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
-    const keys = this.categories[catKey] || [];
-    keys.forEach(key => {
+    (this.categories[catKey] || []).forEach(key => {
       const dt = this.DATA[key]; if (!dt) return;
       const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
       const srcCount = Object.keys(dt.sources).length;
@@ -769,8 +754,7 @@ class DataComparisonMap extends HTMLElement {
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
     const valEl = this.$('#ttVal');
     const oldVal = this._lastTtVal;
-    const sameDataType = this._lastTtDataType === this.currentDataType;
-    if (sameDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
+    if (this._lastTtDataType === this.currentDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
       animateValue(valEl, oldVal, newVal, dt.unit, 300);
     } else { valEl.textContent = fmt(newVal, dt.unit); }
     this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
@@ -779,22 +763,14 @@ class DataComparisonMap extends HTMLElement {
     if (newVal != null && src) {
       const vals = Object.values(src.countries).filter(v => v != null);
       const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      const pct = mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50;
-      marker.style.left = pct + '%'; marker.classList.add('visible');
+      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%';
+      marker.classList.add('visible');
     } else { marker.classList.remove('visible'); }
     this.$('#tt').classList.add('visible');
   }
 
-  ttMove(e) {
-    const tt = this.$('#tt');
-    tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px';
-  }
-
-  ttHide() {
-    this.$('#tt').classList.remove('visible');
-    this.$('#legMarker').classList.remove('visible');
-  }
-
+  ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
+  ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
 
   html() {
