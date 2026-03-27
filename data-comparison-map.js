@@ -286,12 +286,21 @@ class DataComparisonMap extends HTMLElement {
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    // ← CHANGED: Support Us button → postMessage to Wix parent
     const supportBtn = this.$('#supportBtn');
     if (supportBtn) {
       supportBtn.addEventListener('click', () => {
         window.parent.postMessage(
           { action: 'openLightbox', lightboxName: 'Support Us' },
+          '*'
+        );
+      });
+    }
+
+    const aboutBtn = this.$('#aboutBtn');
+    if (aboutBtn) {
+      aboutBtn.addEventListener('click', () => {
+        window.parent.postMessage(
+          { action: 'redirect', url: '/landing' }, 
           '*'
         );
       });
@@ -654,7 +663,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" onclick="window.parent.postMessage('go-to-landing', '*');">About</button>
+      <button class="nav-link" id="aboutBtn">About</button>
       <button class="nav-link primary" id="supportBtn">Support us</button>
     </div>
   </nav>
