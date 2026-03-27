@@ -654,7 +654,7 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" onclick="window.location.href='https://2003ivanmazurov.wixsite.com/my-site-3/landing';">About</button>
+      <button class="nav-link" onclick="window.parent.location.href='https://2003ivanmazurov.wixsite.com/my-site-3/landing';">About</button>
       <button class="nav-link primary" id="supportBtn">Support us</button>
     </div>
   </nav>
