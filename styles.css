@@ -488,7 +488,7 @@
   position: relative; z-index: 1;
 }
 @media (hover: hover) and (pointer: fine) {
-  .footer { flex-shrink: 0; padding: 4px 0; font-size: 0.58rem; }
+  .footer { flex-shrink: 0; padding: 8px 0 12px 0; font-size: 0.58rem; }
 }
 
 /* ===== LOADING ===== */
