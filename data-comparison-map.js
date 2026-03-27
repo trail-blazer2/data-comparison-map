@@ -36,11 +36,10 @@ const NEARBY_NUMERIC = new Set([
   '398','795','860','417','762',
 ]);
 
-// Longitude clip window — keeps European portion only
 const LON_MIN = -35;
 const LON_MAX = 70;
-// SVG coordinate clip box — expanded so edges fade naturally
-const NEARBY_CLIP_BOX = { x: -150, y: -120, w: 1000, h: 800 };
+// Big clip box — geometry is clipped here, then the SVG mask handles the soft fade
+const NEARBY_CLIP_BOX = { x: -200, y: -150, w: 1100, h: 900 };
 
 const CATEGORY_META = {
   economy: {
@@ -113,21 +112,13 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
 }
 
 // ============================================================
-// GEOGRAPHIC CLIPPING — multi-layer approach
+// GEOGRAPHIC CLIPPING
 // ============================================================
 
 function clipRingToLonRange(ring, lonMin, lonMax) {
   const edges = [
-    { inside: p => p[0] >= lonMin, intersect: (a, b) => {
-        const t = (lonMin - a[0]) / (b[0] - a[0]);
-        return [lonMin, a[1] + t * (b[1] - a[1])];
-      }
-    },
-    { inside: p => p[0] <= lonMax, intersect: (a, b) => {
-        const t = (lonMax - a[0]) / (b[0] - a[0]);
-        return [lonMax, a[1] + t * (b[1] - a[1])];
-      }
-    }
+    { inside: p => p[0] >= lonMin, intersect: (a, b) => { const t = (lonMin - a[0]) / (b[0] - a[0]); return [lonMin, a[1] + t * (b[1] - a[1])]; } },
+    { inside: p => p[0] <= lonMax, intersect: (a, b) => { const t = (lonMax - a[0]) / (b[0] - a[0]); return [lonMax, a[1] + t * (b[1] - a[1])]; } }
   ];
   let pts = ring.slice();
   for (let e = 0; e < edges.length; e++) {
@@ -140,9 +131,7 @@ function clipRingToLonRange(ring, lonMin, lonMax) {
       if (inside(cur)) {
         if (!inside(prev)) pts.push(intersect(prev, cur));
         pts.push(cur);
-      } else if (inside(prev)) {
-        pts.push(intersect(prev, cur));
-      }
+      } else if (inside(prev)) { pts.push(intersect(prev, cur)); }
       prev = cur;
     }
   }
@@ -151,17 +140,12 @@ function clipRingToLonRange(ring, lonMin, lonMax) {
 
 function splitRingAtAntimeridian(ring) {
   if (ring.length < 2) return [ring];
-  const segments = [];
-  let current = [ring[0]];
+  const segments = []; let current = [ring[0]];
   for (let i = 1; i < ring.length; i++) {
-    const prevLon = ring[i - 1][0];
-    const curLon = ring[i][0];
-    if (Math.abs(curLon - prevLon) > 90) {
+    if (Math.abs(ring[i][0] - ring[i - 1][0]) > 90) {
       if (current.length >= 3) segments.push(current);
       current = [ring[i]];
-    } else {
-      current.push(ring[i]);
-    }
+    } else { current.push(ring[i]); }
   }
   if (current.length >= 3) segments.push(current);
   return segments;
@@ -186,9 +170,7 @@ function clipRingToBox(ring, box) {
       if (inside(cur)) {
         if (!inside(prev)) pts.push(intersect(prev, cur));
         pts.push(cur);
-      } else if (inside(prev)) {
-        pts.push(intersect(prev, cur));
-      }
+      } else if (inside(prev)) { pts.push(intersect(prev, cur)); }
       prev = cur;
     }
   }
@@ -197,7 +179,6 @@ function clipRingToBox(ring, box) {
 
 function clipAndProjectNearbyGeometry(geom, proj) {
   const MAX_RING_WIDTH = 400;
-
   function processRing(ring) {
     const segments = splitRingAtAntimeridian(ring);
     const results = [];
@@ -206,10 +187,7 @@ function clipAndProjectNearbyGeometry(geom, proj) {
       if (lonClipped.length < 3) continue;
       const projected = lonClipped.map(c => proj(c));
       let minPX = Infinity, maxPX = -Infinity;
-      for (const p of projected) {
-        if (p[0] < minPX) minPX = p[0];
-        if (p[0] > maxPX) maxPX = p[0];
-      }
+      for (const p of projected) { if (p[0] < minPX) minPX = p[0]; if (p[0] > maxPX) maxPX = p[0]; }
       if ((maxPX - minPX) > MAX_RING_WIDTH) continue;
       const svgClipped = clipRingToBox(projected, NEARBY_CLIP_BOX);
       if (svgClipped.length < 3) continue;
@@ -217,28 +195,22 @@ function clipAndProjectNearbyGeometry(geom, proj) {
     }
     return results;
   }
-
   function ringsToPath(clippedRings) {
     return clippedRings.map(ring =>
-      ring.map((p, i) =>
-        `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`
-      ).join(' ') + 'Z'
+      ring.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + 'Z'
     ).join(' ');
   }
-
   if (geom.type === 'Polygon') {
     const allRings = [];
     for (const ring of geom.coordinates) allRings.push(...processRing(ring));
-    const d = ringsToPath(allRings);
-    return d ? [d] : [];
+    const d = ringsToPath(allRings); return d ? [d] : [];
   }
   if (geom.type === 'MultiPolygon') {
     const paths = [];
     for (const poly of geom.coordinates) {
       const allRings = [];
       for (const ring of poly) allRings.push(...processRing(ring));
-      const d = ringsToPath(allRings);
-      if (d) paths.push(d);
+      const d = ringsToPath(allRings); if (d) paths.push(d);
     }
     return paths;
   }
@@ -259,7 +231,6 @@ class DataComparisonMap extends HTMLElement {
     this.nearbyFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
-
     this._zoom = 1;
     this._panX = 0;
     this._panY = 0;
@@ -270,7 +241,6 @@ class DataComparisonMap extends HTMLElement {
     this._panStartPanY = 0;
     this._animFrame = null;
     this._isDesktop = false;
-
     this._minZoom = 1;
     this._maxZoom = 4;
   }
@@ -287,15 +257,11 @@ class DataComparisonMap extends HTMLElement {
   async init() {
     const scripts = document.querySelectorAll('script[src*="data-comparison-map"]');
     let baseUrl = '';
-    if (scripts.length) {
-      const src = scripts[scripts.length - 1].src;
-      baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
-    }
+    if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
 
     const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = baseUrl + 'styles.css';
+    link.rel = 'stylesheet'; link.href = baseUrl + 'styles.css';
     this.shadowRoot.prepend(link);
     await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
@@ -305,10 +271,7 @@ class DataComparisonMap extends HTMLElement {
       fetch(MAP_TOPO_URL).then(r => r.json())
     ]);
 
-    Object.entries(dataRaw).forEach(([k, v]) => {
-      if (k !== '_meta') this.DATA[k] = v;
-    });
-
+    Object.entries(dataRaw).forEach(([k, v]) => { if (k !== '_meta') this.DATA[k] = v; });
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
       const cat = dt.category || 'other';
@@ -321,10 +284,8 @@ class DataComparisonMap extends HTMLElement {
       this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
     }
 
-    const logoEl = this.$('#navLogo');
-    if (logoEl) logoEl.src = baseUrl + 'logo.png';
-    const logoMob = this.$('#navLogoMobile');
-    if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
+    const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
+    const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
@@ -333,21 +294,14 @@ class DataComparisonMap extends HTMLElement {
     }
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
-    this.geoFeatures = all.features.filter(f =>
-      EUROPE_NUMERIC.has(String(f.id).padStart(3, '0'))
-    );
-    this.nearbyFeatures = all.features.filter(f =>
-      NEARBY_NUMERIC.has(String(f.id).padStart(3, '0'))
-    );
+    this.geoFeatures = all.features.filter(f => EUROPE_NUMERIC.has(String(f.id).padStart(3, '0')));
+    this.nearbyFeatures = all.features.filter(f => NEARBY_NUMERIC.has(String(f.id).padStart(3, '0')));
 
     this.drawMap();
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
-
-    if (this._isDesktop) {
-      this.initZoomPan();
-    }
+    if (this._isDesktop) this.initZoomPan();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -369,59 +323,80 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
-    // -- SVG defs: pattern + edge fade mask --
+    // The viewBox is -30, -5, 590, 490.
+    // Core visible area: roughly x=-30..560, y=-5..485
+    // We want nearby countries to fade starting well inside the clip box
+    // and fully transparent at the viewBox edges.
+    // Use a single radial-style approach: a large opaque center with
+    // linear fade bands on all four edges that are wide enough to cover
+    // the distance between the inner content and the outer clip.
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+    // Fade band dimensions (in SVG units):
+    // Generous 200-unit fade zone on each side
+    const fadeSize = 200;
+    // The "fully opaque" inner rect
+    const innerX = -30, innerY = -5, innerW = 590, innerH = 490;
+    // The outer bounds (must cover the full clip box)
+    const outerX = innerX - fadeSize;
+    const outerY = innerY - fadeSize;
+    const outerW = innerW + fadeSize * 2;
+    const outerH = innerH + fadeSize * 2;
+
     defs.innerHTML = `
       <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
         <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.13)" letter-spacing="3">COMING SOON</text>
       </pattern>
-      <mask id="nearbyFadeMask" maskUnits="userSpaceOnUse" x="-200" y="-200" width="1200" height="1000">
-        <rect x="-200" y="-200" width="1200" height="1000" fill="white"/>
-        <rect x="-200" y="-200" width="1200" height="120" fill="url(#fadeTop)"/>
-        <rect x="-200" y="380" width="1200" height="120" fill="url(#fadeBottom)"/>
-        <rect x="-200" y="-200" width="120" height="1000" fill="url(#fadeLeft)"/>
-        <rect x="480" y="-200" width="120" height="1000" fill="url(#fadeRight)"/>
+      <linearGradient id="fadeL" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="black"/>
+        <stop offset="1" stop-color="white"/>
+      </linearGradient>
+      <linearGradient id="fadeR" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="white"/>
+        <stop offset="1" stop-color="black"/>
+      </linearGradient>
+      <linearGradient id="fadeT" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="black"/>
+        <stop offset="1" stop-color="white"/>
+      </linearGradient>
+      <linearGradient id="fadeB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="white"/>
+        <stop offset="1" stop-color="black"/>
+      </linearGradient>
+      <mask id="nearbyFade" maskUnits="userSpaceOnUse"
+            x="${outerX}" y="${outerY}" width="${outerW}" height="${outerH}">
+        <!-- Start fully opaque in the center -->
+        <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="white"/>
+        <!-- Left fade band -->
+        <rect x="${outerX}" y="${innerY}" width="${fadeSize}" height="${innerH}" fill="url(#fadeL)"/>
+        <!-- Right fade band -->
+        <rect x="${innerX + innerW}" y="${innerY}" width="${fadeSize}" height="${innerH}" fill="url(#fadeR)"/>
+        <!-- Top fade band (full width including corners) -->
+        <rect x="${outerX}" y="${outerY}" width="${outerW}" height="${fadeSize}" fill="url(#fadeT)"/>
+        <!-- Bottom fade band (full width including corners) -->
+        <rect x="${outerX}" y="${innerY + innerH}" width="${outerW}" height="${fadeSize}" fill="url(#fadeB)"/>
       </mask>
-      <linearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="black"/>
-        <stop offset="1" stop-color="white"/>
-      </linearGradient>
-      <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="white"/>
-        <stop offset="1" stop-color="black"/>
-      </linearGradient>
-      <linearGradient id="fadeLeft" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="black"/>
-        <stop offset="1" stop-color="white"/>
-      </linearGradient>
-      <linearGradient id="fadeRight" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="white"/>
-        <stop offset="1" stop-color="black"/>
-      </linearGradient>
     `;
     svg.appendChild(defs);
 
-    // -- Nearby countries with edge-fade mask --
+    // -- Nearby countries with soft fade mask --
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
-    nearbyGroup.setAttribute('mask', 'url(#nearbyFadeMask)');
+    nearbyGroup.setAttribute('mask', 'url(#nearbyFade)');
     this.nearbyFeatures.forEach(f => {
       const clippedPaths = clipAndProjectNearbyGeometry(f.geometry, proj);
       clippedPaths.forEach(d => {
         const pBase = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pBase.setAttribute('d', d);
-        pBase.classList.add('cp-nearby');
+        pBase.setAttribute('d', d); pBase.classList.add('cp-nearby');
         nearbyGroup.appendChild(pBase);
-
         const pPattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pPattern.setAttribute('d', d);
-        pPattern.classList.add('cp-nearby-pattern');
+        pPattern.setAttribute('d', d); pPattern.classList.add('cp-nearby-pattern');
         nearbyGroup.appendChild(pPattern);
       });
     });
     svg.appendChild(nearbyGroup);
 
-    // -- European countries on top --
+    // -- European countries on top (no mask) --
     const euroGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     euroGroup.setAttribute('class', 'euro-group');
     this.geoFeatures.forEach(f => {
@@ -429,25 +404,20 @@ class DataComparisonMap extends HTMLElement {
       if (!a2) return;
       this.geoPaths(f.geometry, proj).forEach(d => {
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.dataset.code = a2;
+        p.setAttribute('d', d); p.dataset.code = a2;
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
-
         p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
         p.addEventListener('mousemove', function(e) { self.ttMove(e); });
         p.addEventListener('mouseleave', function() { self.ttHide(); });
-
         p.addEventListener('touchstart', function(e) {
           e.preventDefault();
           self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
           p.classList.add('touched');
           var touch = e.touches[0];
           var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
-          self.ttShow(fakeEvent);
-          self.ttMove(fakeEvent);
+          self.ttShow(fakeEvent); self.ttMove(fakeEvent);
         }, { passive: false });
-
         euroGroup.appendChild(p);
       });
     });
@@ -461,17 +431,13 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  // ===== ZOOM & PAN (desktop only) =====
   initZoomPan() {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
-
     this._origVB = { x: -30, y: -5, w: 590, h: 490 };
     this._contentBBox = { x: -80, y: -60, w: 750, h: 620 };
-    this._zoom = 1;
-    this._panX = 0;
-    this._panY = 0;
+    this._zoom = 1; this._panX = 0; this._panY = 0;
     this._applyTransform();
 
     wrap.addEventListener('wheel', (e) => {
@@ -481,152 +447,104 @@ class DataComparisonMap extends HTMLElement {
       const rect = svg.getBoundingClientRect();
       const mx = (e.clientX - rect.left) / rect.width;
       const my = (e.clientY - rect.top) / rect.height;
-      const oldW = this._origVB.w / this._zoom;
-      const newW = this._origVB.w / newZoom;
-      const oldH = this._origVB.h / this._zoom;
-      const newH = this._origVB.h / newZoom;
-      this._panX += (oldW - newW) * mx;
-      this._panY += (oldH - newH) * my;
-      this._zoom = newZoom;
-      this._clampAndApply();
+      const oldW = this._origVB.w / this._zoom, newW = this._origVB.w / newZoom;
+      const oldH = this._origVB.h / this._zoom, newH = this._origVB.h / newZoom;
+      this._panX += (oldW - newW) * mx; this._panY += (oldH - newH) * my;
+      this._zoom = newZoom; this._clampAndApply();
     }, { passive: false });
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      this._isPanning = true;
-      this._panStartX = e.clientX;
-      this._panStartY = e.clientY;
-      this._panStartPanX = this._panX;
-      this._panStartPanY = this._panY;
-      wrap.style.cursor = 'grabbing';
-      e.preventDefault();
+      this._isPanning = true; this._panStartX = e.clientX; this._panStartY = e.clientY;
+      this._panStartPanX = this._panX; this._panStartPanY = this._panY;
+      wrap.style.cursor = 'grabbing'; e.preventDefault();
     });
-
     window.addEventListener('mousemove', (e) => {
       if (!this._isPanning) return;
-      const rect = svg.getBoundingClientRect();
-      const vb = this._getViewBox();
-      const dx = (e.clientX - this._panStartX) * (vb.w / rect.width);
-      const dy = (e.clientY - this._panStartY) * (vb.h / rect.height);
-      this._panX = this._panStartPanX - dx;
-      this._panY = this._panStartPanY - dy;
+      const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
+      this._panX = this._panStartPanX - (e.clientX - this._panStartX) * (vb.w / rect.width);
+      this._panY = this._panStartPanY - (e.clientY - this._panStartY) * (vb.h / rect.height);
       this._applyTransform();
     });
-
     window.addEventListener('mouseup', () => {
       if (!this._isPanning) return;
-      this._isPanning = false;
-      wrap.style.cursor = '';
-      this._snapBack();
+      this._isPanning = false; wrap.style.cursor = ''; this._snapBack();
     });
+    wrap.addEventListener('dblclick', (e) => { e.preventDefault(); this._animateTo(1, 0, 0); });
 
-    wrap.addEventListener('dblclick', (e) => {
-      e.preventDefault();
-      this._animateTo(1, 0, 0);
-    });
-
-    const zoomIn = this.$('#zoomIn');
-    const zoomOut = this.$('#zoomOut');
-    const zoomReset = this.$('#zoomReset');
+    const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
-      const newZoom = Math.min(this._maxZoom, this._zoom + 0.3);
-      const oldW = this._origVB.w / this._zoom;
-      const newW = this._origVB.w / newZoom;
-      const oldH = this._origVB.h / this._zoom;
-      const newH = this._origVB.h / newZoom;
-      this._animateTo(newZoom, this._panX + (oldW - newW) * 0.5, this._panY + (oldH - newH) * 0.5);
+      const nz = Math.min(this._maxZoom, this._zoom + 0.3);
+      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
+      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
+      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
     });
     if (zoomOut) zoomOut.addEventListener('click', () => {
-      const newZoom = Math.max(this._minZoom, this._zoom - 0.3);
-      const oldW = this._origVB.w / this._zoom;
-      const newW = this._origVB.w / newZoom;
-      const oldH = this._origVB.h / this._zoom;
-      const newH = this._origVB.h / newZoom;
-      this._animateTo(newZoom, this._panX + (oldW - newW) * 0.5, this._panY + (oldH - newH) * 0.5);
+      const nz = Math.max(this._minZoom, this._zoom - 0.3);
+      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
+      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
+      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
     });
-    if (zoomReset) zoomReset.addEventListener('click', () => {
-      this._animateTo(1, 0, 0);
-    });
+    if (zoomReset) zoomReset.addEventListener('click', () => { this._animateTo(1, 0, 0); });
   }
 
   _getViewBox() {
-    const w = this._origVB.w / this._zoom;
-    const h = this._origVB.h / this._zoom;
+    const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom;
     return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
   }
-
   _applyTransform() {
-    const svg = this.$('#mapSvg');
-    if (!svg) return;
+    const svg = this.$('#mapSvg'); if (!svg) return;
     const vb = this._getViewBox();
     svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
   }
-
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom;
-    const vh = this._origVB.h / this._zoom;
-    const cb = this._contentBBox;
-    const minPanX = cb.x - this._origVB.x - vw * 0.5;
-    const maxPanX = (cb.x + cb.w) - this._origVB.x - vw * 0.5;
-    const minPanY = cb.y - this._origVB.y - vh * 0.5;
-    const maxPanY = (cb.y + cb.h) - this._origVB.y - vh * 0.5;
+    const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
     return {
-      minX: Math.min(minPanX, 0), maxX: Math.max(maxPanX, 0),
-      minY: Math.min(minPanY, 0), maxY: Math.max(maxPanY, 0)
+      minX: Math.min(cb.x - this._origVB.x - vw * 0.5, 0),
+      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw * 0.5, 0),
+      minY: Math.min(cb.y - this._origVB.y - vh * 0.5, 0),
+      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh * 0.5, 0)
     };
   }
-
   _clampPan() {
     const b = this._getPanBounds();
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
   }
-
   _clampAndApply() { this._clampPan(); this._applyTransform(); }
-
   _snapBack() {
     const b = this._getPanBounds();
-    const targetX = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    const targetY = Math.max(b.minY, Math.min(b.maxY, this._panY));
-    if (Math.abs(targetX - this._panX) < 0.5 && Math.abs(targetY - this._panY) < 0.5) {
-      this._panX = targetX; this._panY = targetY; this._applyTransform(); return;
+    const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
+    const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
+    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) {
+      this._panX = tx; this._panY = ty; this._applyTransform(); return;
     }
-    this._animateTo(this._zoom, targetX, targetY, 350);
+    this._animateTo(this._zoom, tx, ty, 350);
   }
-
   _animateTo(targetZoom, targetPanX, targetPanY, duration) {
     duration = duration || 400;
     if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    const startZoom = this._zoom, startPanX = this._panX, startPanY = this._panY;
-    const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom;
-    const cb = this._contentBBox;
-    const tMinX = Math.min(cb.x - this._origVB.x - tvw * 0.5, 0);
-    const tMaxX = Math.max((cb.x + cb.w) - this._origVB.x - tvw * 0.5, 0);
-    const tMinY = Math.min(cb.y - this._origVB.y - tvh * 0.5, 0);
-    const tMaxY = Math.max((cb.y + cb.h) - this._origVB.y - tvh * 0.5, 0);
-    targetPanX = Math.max(tMinX, Math.min(tMaxX, targetPanX));
-    targetPanY = Math.max(tMinY, Math.min(tMaxY, targetPanY));
-    const startTime = performance.now();
+    const sz = this._zoom, sx = this._panX, sy = this._panY;
+    const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
+    targetPanX = Math.max(Math.min(cb.x - this._origVB.x - tvw * 0.5, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw * 0.5, 0), targetPanX));
+    targetPanY = Math.max(Math.min(cb.y - this._origVB.y - tvh * 0.5, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh * 0.5, 0), targetPanY));
+    const st = performance.now();
     const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const p = Math.min((now - st) / duration, 1);
       const c1 = 1.70158, c3 = c1 + 1;
-      const ease = 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
-      this._zoom = startZoom + (targetZoom - startZoom) * ease;
-      this._panX = startPanX + (targetPanX - startPanX) * ease;
-      this._panY = startPanY + (targetPanY - startPanY) * ease;
+      const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
+      this._zoom = sz + (targetZoom - sz) * ease;
+      this._panX = sx + (targetPanX - sx) * ease;
+      this._panY = sy + (targetPanY - sy) * ease;
       this._applyTransform();
-      if (progress < 1) { this._animFrame = requestAnimationFrame(tick); }
+      if (p < 1) this._animFrame = requestAnimationFrame(tick);
       else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._animFrame = null; }
     };
     this._animFrame = requestAnimationFrame(tick);
   }
 
   geoPaths(geom, proj) {
-    const ring = r => r.map((c, i) => {
-      const [x, y] = proj(c);
-      return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ') + 'Z';
+    const ring = r => r.map((c, i) => { const [x, y] = proj(c); return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`; }).join(' ') + 'Z';
     if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
     if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
     return [];
@@ -636,20 +554,16 @@ class DataComparisonMap extends HTMLElement {
     let slider = container.querySelector('.slider');
     if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
     if (!activeBtn) { slider.classList.remove('visible'); return; }
-    slider.style.top = activeBtn.offsetTop + 'px';
-    slider.style.height = activeBtn.offsetHeight + 'px';
-    slider.classList.add('visible');
+    slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible');
   }
 
   buildCategoryButtons() {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
       const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
-      const b = document.createElement('button');
-      b.className = 'cat-btn'; b.dataset.key = catKey;
+      const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
-      b.onclick = () => this.selectCategory(catKey);
-      c.appendChild(b);
+      b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
     });
   }
 
@@ -658,8 +572,7 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
     this.buildDataTypeButtons(catKey);
     this._lastTtVal = null; this._lastTtDataType = null;
-    const keys = this.categories[catKey];
-    if (keys && keys[0]) this.selectDataType(keys[0]);
+    const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
   buildDataTypeButtons(catKey) {
@@ -671,8 +584,7 @@ class DataComparisonMap extends HTMLElement {
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
-      b.onclick = () => this.selectDataType(key);
-      c.appendChild(b);
+      b.onclick = () => this.selectDataType(key); c.appendChild(b);
     });
   }
 
@@ -681,16 +593,10 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
-      const count = Object.keys(src.countries).length;
-      const isEmpty = count === 0;
-      const b = document.createElement('button');
-      b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
-      if (isEmpty) {
-        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
-      } else {
-        b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>';
-        b.onclick = () => this.selectSource(key);
-      }
+      const count = Object.keys(src.countries).length; const isEmpty = count === 0;
+      const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
+      if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
+      else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
       c.appendChild(b);
     });
   }
@@ -698,17 +604,14 @@ class DataComparisonMap extends HTMLElement {
   selectDataType(k) {
     this.currentDataType = k;
     this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-    const dtContainer = this.$('#dtBtns');
-    const activeBtn = dtContainer.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtContainer, activeBtn)); });
-    this._lastTtVal = null; this._lastTtDataType = k;
-    this.buildSourceButtons(k);
+    const dtc = this.$('#dtBtns'), ab = dtc.querySelector('.btn[data-key="' + k + '"]');
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
+    this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
     const dt = this.DATA[k]; if (!dt) return;
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
-    if (firstOk) { this.selectSource(firstOk[0]); }
+    if (firstOk) this.selectSource(firstOk[0]);
     else {
-      this.currentSource = null;
-      this.$('#mapTitle').textContent = dt.label;
+      this.currentSource = null; this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
@@ -718,9 +621,8 @@ class DataComparisonMap extends HTMLElement {
   selectSource(k) {
     this.currentSource = k;
     this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
-    const srcContainer = this.$('#srcBtns');
-    const activeBtn = srcContainer.querySelector('.btn.active');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(srcContainer, activeBtn)); });
+    const sc = this.$('#srcBtns'), ab = sc.querySelector('.btn.active');
+    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(sc, ab)); });
     this.paint();
   }
 
@@ -730,13 +632,9 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mapTitle').textContent = dt.label;
     this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
     const vals = Object.values(src.countries).filter(v => v != null);
-    if (!vals.length) {
-      this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return;
-    }
+    if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return; }
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    this.$('#legMin').textContent = fmt(min, dt.unit);
-    this.$('#legMax').textContent = fmt(max, dt.unit);
+    this.$('#legMin').textContent = fmt(min, dt.unit); this.$('#legMax').textContent = fmt(max, dt.unit);
     this.$$('.cp').forEach(p => {
       const v = src.countries[p.dataset.code];
       if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
@@ -753,22 +651,19 @@ class DataComparisonMap extends HTMLElement {
     this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
     const valEl = this.$('#ttVal');
-    const oldVal = this._lastTtVal;
-    if (this._lastTtDataType === this.currentDataType && newVal != null && oldVal != null && !isNaN(oldVal) && !isNaN(newVal)) {
-      animateValue(valEl, oldVal, newVal, dt.unit, 300);
-    } else { valEl.textContent = fmt(newVal, dt.unit); }
+    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
+      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
+    else valEl.textContent = fmt(newVal, dt.unit);
     this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
     this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
-    if (newVal != null && src) {
-      const vals = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%';
-      marker.classList.add('visible');
-    } else { marker.classList.remove('visible'); }
+    if (newVal != null) {
+      const vs = Object.values(src.countries).filter(v => v != null);
+      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%'; marker.classList.add('visible');
+    } else marker.classList.remove('visible');
     this.$('#tt').classList.add('visible');
   }
-
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
@@ -776,71 +671,31 @@ class DataComparisonMap extends HTMLElement {
   html() {
     return `<div class="app">
   <nav class="top-nav">
-    <div class="nav-logo">
-      <div class="nav-logo-icon">
-        <img id="navLogo" class="logo-desktop" src="" alt="Logo" />
-        <img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" />
-      </div>
-    </div>
-    <div class="nav-links">
-      <button class="nav-link">About</button>
-      <button class="nav-link primary">Support us</button>
-    </div>
+    <div class="nav-logo"><div class="nav-logo-icon"><img id="navLogo" class="logo-desktop" src="" alt="Logo" /><img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" /></div></div>
+    <div class="nav-links"><button class="nav-link">About</button><button class="nav-link primary">Support us</button></div>
   </nav>
-
-  <div id="initLoader" class="init-loader">
-    <div class="orbit"></div>
-    <span>Loading map & data\u2026</span>
-  </div>
-
+  <div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel">
       <div class="title-row">
-        <div>
-          <div class="map-title" id="mapTitle">\u2014</div>
-          <div class="map-sub" id="mapSub">\u2014</div>
-        </div>
+        <div><div class="map-title" id="mapTitle">\u2014</div><div class="map-sub" id="mapSub">\u2014</div></div>
         <div class="zoom-controls" id="zoomControls">
-          <button class="zoom-btn" id="zoomIn" title="Zoom in">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          </button>
-          <button class="zoom-btn" id="zoomReset" title="Reset view">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-          </button>
-          <button class="zoom-btn" id="zoomOut" title="Zoom out">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13H5v-2h14v2z"/></svg>
-          </button>
+          <button class="zoom-btn" id="zoomIn" title="Zoom in"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+          <button class="zoom-btn" id="zoomReset" title="Reset view"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg></button>
+          <button class="zoom-btn" id="zoomOut" title="Zoom out"><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 13H5v-2h14v2z"/></svg></button>
         </div>
       </div>
-      <div class="legend">
-        <span id="legMin">\u2014</span>
-        <div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div>
-        <span id="legMax">\u2014</span>
-      </div>
-      <div class="map-wrap">
-        <svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
+      <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
+      <div class="map-wrap"><svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
-
     <div class="controls glass">
-      <div>
-        <div class="sec-title">Category</div>
-        <div class="cat-tabs" id="catBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Data Type</div>
-        <div class="btn-group" id="dtBtns"></div>
-      </div>
-      <div>
-        <div class="sec-title">Source</div>
-        <div class="btn-group" id="srcBtns"></div>
-      </div>
+      <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+      <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
+      <div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>
     </div>
   </div>
-
   <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
 </div>
-
 <div class="tooltip" id="tt">
   <div class="tt-name" id="ttName">\u2014</div>
   <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
