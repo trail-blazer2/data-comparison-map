@@ -37,8 +37,7 @@ const NEARBY_NUMERIC = new Set([
 ]);
 
 const LON_MIN = -35;
-const LON_MAX = 70;
-// Big clip box — geometry is clipped here, then the SVG mask handles the soft fade
+const LON_MAX = 90;  // ← CHANGED from 70 — geometry extends further east so the mask can fade it smoothly
 const NEARBY_CLIP_BOX = { x: -200, y: -150, w: 1100, h: 900 };
 
 const CATEGORY_META = {
@@ -178,7 +177,7 @@ function clipRingToBox(ring, box) {
 }
 
 function clipAndProjectNearbyGeometry(geom, proj) {
-  const MAX_RING_WIDTH = 400;
+  const MAX_RING_WIDTH = 500; // ← slightly wider to allow more of Russia's European portion
   function processRing(ring) {
     const segments = splitRingAtAntimeridian(ring);
     const results = [];
@@ -287,6 +286,17 @@ class DataComparisonMap extends HTMLElement {
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
+    // ← CHANGED: Support Us button → postMessage to Wix parent
+    const supportBtn = this.$('#supportBtn');
+    if (supportBtn) {
+      supportBtn.addEventListener('click', () => {
+        window.parent.postMessage(
+          { action: 'openLightbox', lightboxName: 'Support Us' },
+          '*'
+        );
+      });
+    }
+
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
@@ -323,63 +333,28 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
-    // The viewBox is -30, -5, 590, 490.
-    // Core visible area: roughly x=-30..560, y=-5..485
-    // We want nearby countries to fade starting well inside the clip box
-    // and fully transparent at the viewBox edges.
-    // Use a single radial-style approach: a large opaque center with
-    // linear fade bands on all four edges that are wide enough to cover
-    // the distance between the inner content and the outer clip.
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
 
-    // Fade band dimensions (in SVG units):
-    // Generous 200-unit fade zone on each side
-    const fadeSize = 200;
-    // The "fully opaque" inner rect
-    const innerX = -30, innerY = -5, innerW = 590, innerH = 490;
-    // The outer bounds (must cover the full clip box)
-    const outerX = innerX - fadeSize;
-    const outerY = innerY - fadeSize;
-    const outerW = innerW + fadeSize * 2;
-    const outerH = innerH + fadeSize * 2;
-
+    // Fade mask: the key insight is that every edge must fade from fully opaque
+    // to fully transparent BEFORE the geometry ends. So we use a radial approach:
+    // a large white ellipse in the center that gradually fades to black at the edges.
+    // This guarantees a single smooth fade with no hard edges anywhere.
     defs.innerHTML = `
       <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
         <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.13)" letter-spacing="3">COMING SOON</text>
       </pattern>
-      <linearGradient id="fadeL" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="black"/>
-        <stop offset="1" stop-color="white"/>
-      </linearGradient>
-      <linearGradient id="fadeR" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="white"/>
-        <stop offset="1" stop-color="black"/>
-      </linearGradient>
-      <linearGradient id="fadeT" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="black"/>
-        <stop offset="1" stop-color="white"/>
-      </linearGradient>
-      <linearGradient id="fadeB" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="white"/>
-        <stop offset="1" stop-color="black"/>
-      </linearGradient>
-      <mask id="nearbyFade" maskUnits="userSpaceOnUse"
-            x="${outerX}" y="${outerY}" width="${outerW}" height="${outerH}">
-        <!-- Start fully opaque in the center -->
-        <rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="white"/>
-        <!-- Left fade band -->
-        <rect x="${outerX}" y="${innerY}" width="${fadeSize}" height="${innerH}" fill="url(#fadeL)"/>
-        <!-- Right fade band -->
-        <rect x="${innerX + innerW}" y="${innerY}" width="${fadeSize}" height="${innerH}" fill="url(#fadeR)"/>
-        <!-- Top fade band (full width including corners) -->
-        <rect x="${outerX}" y="${outerY}" width="${outerW}" height="${fadeSize}" fill="url(#fadeT)"/>
-        <!-- Bottom fade band (full width including corners) -->
-        <rect x="${outerX}" y="${innerY + innerH}" width="${outerW}" height="${fadeSize}" fill="url(#fadeB)"/>
+      <radialGradient id="fadeRadial" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+        <stop offset="0.45" stop-color="white"/>
+        <stop offset="0.85" stop-color="white" stop-opacity="0.5"/>
+        <stop offset="1.0" stop-color="black"/>
+      </radialGradient>
+      <mask id="nearbyFade" maskUnits="userSpaceOnUse" x="-300" y="-250" width="1300" height="1100">
+        <ellipse cx="265" cy="235" rx="500" ry="400" fill="url(#fadeRadial)"/>
       </mask>
     `;
     svg.appendChild(defs);
 
-    // -- Nearby countries with soft fade mask --
+    // -- Nearby countries with soft radial fade mask --
     const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     nearbyGroup.setAttribute('class', 'nearby-group');
     nearbyGroup.setAttribute('mask', 'url(#nearbyFade)');
@@ -668,11 +643,12 @@ class DataComparisonMap extends HTMLElement {
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
 
+  // ← CHANGED: button now has id="supportBtn"
   html() {
     return `<div class="app">
   <nav class="top-nav">
     <div class="nav-logo"><div class="nav-logo-icon"><img id="navLogo" class="logo-desktop" src="" alt="Logo" /><img id="navLogoMobile" class="logo-mobile" src="" alt="Logo" /></div></div>
-    <div class="nav-links"><button class="nav-link">About</button><button class="nav-link primary">Support us</button></div>
+    <div class="nav-links"><button class="nav-link">About</button><button class="nav-link primary" id="supportBtn">Support us</button></div>
   </nav>
   <div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
