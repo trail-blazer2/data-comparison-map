@@ -650,7 +650,7 @@ class DataComparisonMap extends HTMLElement {
   }
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
-  //checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
+  checkDiscrepancy(code) { this.$('#ttDisc').style.display = 'none'; }
 
   // ← CHANGED: button now has id="supportBtn"
   html() {
