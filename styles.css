@@ -374,7 +374,7 @@
 .tt-unit { font-size: 0.7rem; color: #576574; margin-left: 3px; }
 .tt-src { font-size: 0.62rem; color: #8395a7; margin-top: 6px; }
 .tt-disc {
-  margin-top: 6px; padding: 4px 10px;
+  display: none; margin-top: 6px; padding: 4px 10px;
   background: rgba(255,152,0,0.12); border-radius: 10px;
   font-size: 0.66rem; color: #e65100; font-weight: 500;
 }
