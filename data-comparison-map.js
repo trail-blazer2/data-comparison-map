@@ -639,7 +639,7 @@ class DataComparisonMap extends HTMLElement {
       animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
     else valEl.textContent = fmt(newVal, dt.unit);
     this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
-    this.checkDiscrepancy(code);
+    //this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
     if (newVal != null) {
       const vs = Object.values(src.countries).filter(v => v != null);
