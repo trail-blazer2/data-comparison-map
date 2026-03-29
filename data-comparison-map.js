@@ -652,6 +652,7 @@ class DataComparisonMap extends HTMLElement {
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) {
     // Data variance feature
+  const el = this.$('#ttDisc');  // ← this line was missing
   const dt = this.DATA[this.currentDataType];
   if (!dt) return;
   const vals = [];
