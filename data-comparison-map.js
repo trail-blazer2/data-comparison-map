@@ -8,22 +8,25 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
 const WORLD_VIEWBOX_WIDTH = 1000;
-const WORLD_VIEWBOX_HEIGHT = 650; // Increased from 500 to neutralize the "wide" stretching
+const WORLD_VIEWBOX_HEIGHT = 500; // Back to 500 so the UI container is nice and wide!
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
 
 const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
 const DETAIL_LAYER_DECIMAL_PLACES = 2; 
 
+// We use a taller height for the math to fix the "wide" look, centering it to crop empty ocean
+const PROJECTION_HEIGHT = 650; 
+const PROJECTION_Y_OFFSET = (WORLD_VIEWBOX_HEIGHT - PROJECTION_HEIGHT) / 2;
+
 const WORLD_CONTENT_PADDING_X = 20;
 const WORLD_CONTENT_PADDING_Y = 20;
 const WORLD_CONTENT_BBOX = {
   x: WORLD_VIEWBOX.x - WORLD_CONTENT_PADDING_X,
-  y: WORLD_VIEWBOX.y - WORLD_CONTENT_PADDING_Y,
+  y: PROJECTION_Y_OFFSET - WORLD_CONTENT_PADDING_Y,
   w: WORLD_VIEWBOX.w + (WORLD_CONTENT_PADDING_X * 2),
-  h: WORLD_VIEWBOX.h + (WORLD_CONTENT_PADDING_Y * 2)
+  h: PROJECTION_HEIGHT + (WORLD_CONTENT_PADDING_Y * 2)
 };
 
-// Split suspiciously large longitude jumps so antimeridian polygons do not wrap across the whole SVG.
 const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
 const NUMERIC_TO_ALPHA2 = {
@@ -273,13 +276,12 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _lonToX(lon) {
-    // Standard Equirectangular projection (maps -180...180 to 0...1000)
     return (lon + 180) * (WORLD_VIEWBOX.w / 360);
   }
   
   _latToY(lat) {
-    // Standard Equirectangular projection (maps 90...-90 to 0...500)
-    return (90 - lat) * (WORLD_VIEWBOX.h / 180);
+    // Uses the taller PROJECTION_HEIGHT to fix the stretch, and offsets it to center the map
+    return ((90 - lat) * (PROJECTION_HEIGHT / 180)) + PROJECTION_Y_OFFSET;
   }
   
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
