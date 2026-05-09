@@ -3,11 +3,22 @@
 // Styles in styles.css · Data in data.json
 // ============================================================
 
-const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
+const LOW_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json';
+const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
-const WORLD_VIEWBOX = { x: 0, y: 0, w: 1000, h: 500 };
+const WEB_MERCATOR_MAX_LAT = 85.05112878;
+const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
+const webMercatorLatScale = lat => Math.log(Math.tan((Math.PI / 4) + ((lat * Math.PI) / 360)));
+const WEB_MERCATOR_MAX_Y = webMercatorLatScale(WEB_MERCATOR_MAX_LAT);
+const WEB_MERCATOR_MIN_Y = webMercatorLatScale(-WEB_MERCATOR_MAX_LAT);
+const WORLD_VIEWBOX = {
+  x: 0,
+  y: 0,
+  w: 1000,
+  h: 1000 * ((WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y) / (2 * Math.PI))
+};
 const WORLD_CONTENT_PADDING_X = 20;
-const WORLD_CONTENT_PADDING_Y = WORLD_CONTENT_PADDING_X / 2;
+const WORLD_CONTENT_PADDING_Y = 20;
 const WORLD_CONTENT_BBOX = {
   x: WORLD_VIEWBOX.x - WORLD_CONTENT_PADDING_X,
   y: WORLD_VIEWBOX.y - WORLD_CONTENT_PADDING_Y,
@@ -160,7 +171,8 @@ class DataComparisonMap extends HTMLElement {
     this.currentCategory = null;
     this.currentDataType = null;
     this.currentSource = null;
-    this.geoFeatures = [];
+    this.geoFeaturesLowRes = [];
+    this.geoFeaturesHighRes = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
     this._zoom = 1;
@@ -197,10 +209,11 @@ class DataComparisonMap extends HTMLElement {
     this.shadowRoot.prepend(link);
     await new Promise(resolve => { link.onload = resolve; link.onerror = resolve; });
 
-    const [, dataRaw, topoRaw] = await Promise.all([
+    const [, dataRaw, lowResTopoRaw, highResTopoRaw] = await Promise.all([
       loadScript(TOPOJSON_CLIENT_URL),
       fetch(baseUrl + 'data.json').then(r => r.json()),
-      fetch(MAP_TOPO_URL).then(r => r.json())
+      fetch(LOW_RES_MAP_TOPO_URL).then(r => r.json()),
+      fetch(HIGH_RES_MAP_TOPO_URL).then(r => r.json())
     ]);
 
     Object.entries(dataRaw).forEach(([k, v]) => { if (k !== '_meta') this.DATA[k] = v; });
@@ -245,8 +258,10 @@ class DataComparisonMap extends HTMLElement {
       this.shadowRoot.appendChild(filterDiv.firstChild);
     }
 
-    const all = topojson.feature(topoRaw, topoRaw.objects.countries);
-    this.geoFeatures = all.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
+    const lowResAll = topojson.feature(lowResTopoRaw, lowResTopoRaw.objects.countries);
+    const highResAll = topojson.feature(highResTopoRaw, highResTopoRaw.objects.countries);
+    this.geoFeaturesLowRes = lowResAll.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
+    this.geoFeaturesHighRes = highResAll.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
 
     this.drawMap();
     this.buildCategoryButtons();
@@ -258,48 +273,66 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  _lonToX(lon) { return (lon + 180) * (WORLD_VIEWBOX.w / 360); }
-  _latToY(lat) { return (90 - lat) * (WORLD_VIEWBOX.h / 180); }
+  _lonToX(lon) {
+    return ((lon * Math.PI / 180) + Math.PI) * (WORLD_VIEWBOX.w / (2 * Math.PI));
+  }
+  _latToY(lat) {
+    const clampedLat = Math.max(-WEB_MERCATOR_MAX_LAT, Math.min(WEB_MERCATOR_MAX_LAT, lat));
+    const mercatorY = webMercatorLatScale(clampedLat);
+    return ((WEB_MERCATOR_MAX_Y - mercatorY) / (WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y)) * WORLD_VIEWBOX.h;
+  }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
 
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const proj = c => this._proj(c);
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj));
+    this._syncDetailLayerVisibility();
+
     const self = this;
-
-    const worldGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    worldGroup.setAttribute('class', 'world-group');
-    this.geoFeatures.forEach(f => {
-      const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
-      if (!a2) return;
-      this.geoPaths(f.geometry, proj).forEach(d => {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d); p.dataset.code = a2;
-        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
-        p.classList.add('cp', 'no-data');
-        p.addEventListener('mouseenter', function(e) { self.ttShow(e); });
-        p.addEventListener('mousemove', function(e) { self.ttMove(e); });
-        p.addEventListener('mouseleave', function() { self.ttHide(); });
-        p.addEventListener('touchstart', function(e) {
-          e.preventDefault();
-          self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
-          p.classList.add('touched');
-          var touch = e.touches[0];
-          var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
-          self.ttShow(fakeEvent); self.ttMove(fakeEvent);
-        }, { passive: false });
-        worldGroup.appendChild(p);
-      });
-    });
-    svg.appendChild(worldGroup);
-
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
         self.ttHide();
       }
     });
+  }
+
+  _buildResolutionGroup(features, className, proj) {
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    group.setAttribute('class', className);
+    features.forEach(f => {
+      const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
+      if (!a2) return;
+      this.geoPaths(f.geometry, proj).forEach(d => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.dataset.code = a2;
+        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p.classList.add('cp', 'no-data');
+        this._bindCountryInteractions(p);
+        group.appendChild(p);
+      });
+    });
+    return group;
+  }
+
+  _bindCountryInteractions(pathEl) {
+    const self = this;
+    pathEl.addEventListener('mouseenter', function(e) { self.ttShow(e); });
+    pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
+    pathEl.addEventListener('mouseleave', function() { self.ttHide(); });
+    pathEl.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+      pathEl.classList.add('touched');
+      var touch = e.touches[0];
+      var fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
+      self.ttShow(fakeEvent);
+      self.ttMove(fakeEvent);
+    }, { passive: false });
   }
 
   initZoomPan() {
@@ -367,6 +400,15 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg'); if (!svg) return;
     const vb = this._getViewBox();
     svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
+    this._syncDetailLayerVisibility();
+  }
+  _syncDetailLayerVisibility() {
+    const lowResGroup = this.$('.euro-group.low-res');
+    const highResGroup = this.$('.euro-group.high-res');
+    if (!lowResGroup || !highResGroup) return;
+    const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
+    lowResGroup.style.display = showHighRes ? 'none' : '';
+    highResGroup.style.display = showHighRes ? '' : 'none';
   }
   _getPanBounds() {
     const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
@@ -649,7 +691,7 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
-      <div class="map-wrap"><svg id="mapSvg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
