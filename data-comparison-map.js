@@ -6,7 +6,7 @@
 const LOW_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json';
 const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
-const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
+const DETAIL_LAYER_ZOOM_THRESHOLD = 2.5;
 const WORLD_VIEWBOX_WIDTH = 1000;
 const WORLD_VIEWBOX_HEIGHT = 500; // Back to 500 so the UI container is nice and wide!
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
@@ -188,7 +188,7 @@ class DataComparisonMap extends HTMLElement {
     this._isHighResVisible = false;
     this._isDesktop = false;
     this._minZoom = 1;
-    this._maxZoom = 4;
+    this._maxZoom = 6;
   }
 
   connectedCallback() {
