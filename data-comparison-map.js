@@ -6,7 +6,14 @@
 const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const WORLD_VIEWBOX = { x: 0, y: 0, w: 1000, h: 500 };
-const WORLD_CONTENT_BBOX = { x: -20, y: -10, w: 1040, h: 520 };
+const WORLD_CONTENT_PADDING_X = 20;
+const WORLD_CONTENT_PADDING_Y = WORLD_CONTENT_PADDING_X / 2;
+const WORLD_CONTENT_BBOX = {
+  x: WORLD_VIEWBOX.x - WORLD_CONTENT_PADDING_X,
+  y: WORLD_VIEWBOX.y - WORLD_CONTENT_PADDING_Y,
+  w: WORLD_VIEWBOX.w + (WORLD_CONTENT_PADDING_X * 2),
+  h: WORLD_VIEWBOX.h + (WORLD_CONTENT_PADDING_Y * 2)
+};
 // Split suspiciously large longitude jumps so antimeridian polygons do not wrap across the whole SVG.
 const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
@@ -412,18 +419,22 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _segmentCrossesAntimeridian(from, to) {
-    return Math.abs(to[0] - from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD;
+    const lonDelta = Math.abs(to[0] - from[0]);
+    const wrapDelta = 360 - lonDelta;
+    return lonDelta > ANTIMERIDIAN_SPLIT_THRESHOLD &&
+      wrapDelta < lonDelta &&
+      Math.abs(from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD &&
+      Math.abs(to[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD;
   }
 
   _splitAntimeridianSegment(from, to) {
-    const goingLeft = to[0] < from[0];
-    const targetLon = goingLeft ? 180 : -180;
+    const wrapsEastward = to[0] < from[0];
+    const exitLon = wrapsEastward ? 180 : -180;
+    const entryLon = wrapsEastward ? -180 : 180;
     // Normalize the wrapped endpoint into the same continuous longitude space for interpolation.
-    const adjustedToLon = goingLeft ? to[0] + 360 : to[0] - 360;
-    const t = (targetLon - from[0]) / (adjustedToLon - from[0]);
+    const adjustedToLon = wrapsEastward ? to[0] + 360 : to[0] - 360;
+    const t = (exitLon - from[0]) / (adjustedToLon - from[0]);
     const interpolatedLat = from[1] + (to[1] - from[1]) * t;
-    const exitLon = goingLeft ? 180 : -180;
-    const entryLon = goingLeft ? -180 : 180;
     const exitPoint = this._proj([exitLon, interpolatedLat]);
     const entryPoint = this._proj([entryLon, interpolatedLat]);
     return { exitPoint, entryPoint };
