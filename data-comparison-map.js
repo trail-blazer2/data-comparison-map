@@ -6,6 +6,7 @@
 const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const WORLD_VIEWBOX = { x: 0, y: 0, w: 1000, h: 500 };
+const WORLD_CONTENT_BBOX = { x: -20, y: -10, w: 1040, h: 520 };
 const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
 const NUMERIC_TO_ALPHA2 = {
@@ -298,7 +299,7 @@ class DataComparisonMap extends HTMLElement {
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
     this._origVB = { ...WORLD_VIEWBOX };
-    this._contentBBox = { ...WORLD_VIEWBOX };
+    this._contentBBox = { ...WORLD_CONTENT_BBOX };
     this._zoom = 1; this._panX = 0; this._panY = 0;
     this._applyTransform();
 
@@ -418,8 +419,9 @@ class DataComparisonMap extends HTMLElement {
     const targetLon = goingLeft ? 180 : -180;
     const adjustedToLon = goingLeft ? to[0] + 360 : to[0] - 360;
     const t = (targetLon - from[0]) / (adjustedToLon - from[0]);
-    const lat = from[1] + (to[1] - from[1]) * t;
-    const exitPoint = [goingLeft ? WORLD_VIEWBOX.w : WORLD_VIEWBOX.x, this._latToY(lat)];
+    const interpolatedLat = from[1] + (to[1] - from[1]) * t;
+    const projectedY = this._proj([0, interpolatedLat])[1];
+    const exitPoint = [goingLeft ? WORLD_VIEWBOX.w : WORLD_VIEWBOX.x, projectedY];
     const entryPoint = [goingLeft ? WORLD_VIEWBOX.x : WORLD_VIEWBOX.w, exitPoint[1]];
     return { exitPoint, entryPoint };
   }
