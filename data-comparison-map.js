@@ -11,8 +11,8 @@ const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
 const WORLD_VIEWBOX_WIDTH = 1000;
 const WORLD_VIEWBOX_ASPECT_RATIO = 5 / 3;
 const WORLD_VIEWBOX_HEIGHT = WORLD_VIEWBOX_WIDTH / WORLD_VIEWBOX_ASPECT_RATIO;
-const LOW_RES_PATH_PRECISION = 1;
-const HIGH_RES_PATH_PRECISION = 0;
+const LOW_RES_PATH_DECIMAL_PLACES = 1;
+const HIGH_RES_PATH_DECIMAL_PLACES = 0;
 const webMercatorLatScale = lat => Math.log(Math.tan((Math.PI / 4) + ((lat * Math.PI) / 360)));
 const WEB_MERCATOR_MAX_Y = webMercatorLatScale(WEB_MERCATOR_MAX_LAT);
 const WEB_MERCATOR_MIN_Y = webMercatorLatScale(-WEB_MERCATOR_MAX_LAT);
@@ -297,8 +297,8 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const proj = c => this._proj(c);
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, LOW_RES_PATH_PRECISION));
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, HIGH_RES_PATH_PRECISION));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, LOW_RES_PATH_DECIMAL_PLACES));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, HIGH_RES_PATH_DECIMAL_PLACES));
     this._syncDetailLayerVisibility();
 
     const self = this;
