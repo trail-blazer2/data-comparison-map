@@ -188,6 +188,7 @@ class DataComparisonMap extends HTMLElement {
     this._panStartPanX = 0;
     this._panStartPanY = 0;
     this._animFrame = null;
+    this._isHighResVisible = null;
     this._isDesktop = false;
     this._minZoom = 1;
     this._maxZoom = 4;
@@ -411,6 +412,8 @@ class DataComparisonMap extends HTMLElement {
     const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
+    if (this._isHighResVisible === showHighRes) return;
+    this._isHighResVisible = showHighRes;
     lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
     lowResGroup.style.opacity = showHighRes ? '0' : '1';
     lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
