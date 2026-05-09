@@ -8,15 +8,24 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const WEB_MERCATOR_MAX_LAT = 85.05112878;
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
+const WORLD_VIEWBOX_WIDTH = 1000;
+const WORLD_VIEWBOX_ASPECT_RATIO = 5 / 3;
+const WORLD_VIEWBOX_HEIGHT = WORLD_VIEWBOX_WIDTH / WORLD_VIEWBOX_ASPECT_RATIO;
+const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
+const DETAIL_LAYER_DECIMAL_PLACES = 0;
 const webMercatorLatScale = lat => Math.log(Math.tan((Math.PI / 4) + ((lat * Math.PI) / 360)));
 const WEB_MERCATOR_MAX_Y = webMercatorLatScale(WEB_MERCATOR_MAX_LAT);
 const WEB_MERCATOR_MIN_Y = webMercatorLatScale(-WEB_MERCATOR_MAX_LAT);
 const WORLD_VIEWBOX = {
   x: 0,
   y: 0,
-  w: 1000,
-  h: 1000 * ((WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y) / (2 * Math.PI))
+  w: WORLD_VIEWBOX_WIDTH,
+  h: WORLD_VIEWBOX_HEIGHT
 };
+const WEB_MERCATOR_Y_RANGE = WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y;
+const WORLD_MERCATOR_SCALE = WORLD_VIEWBOX.w / (2 * Math.PI);
+const WORLD_MERCATOR_FULL_HEIGHT = WEB_MERCATOR_Y_RANGE * WORLD_MERCATOR_SCALE;
+const WORLD_MERCATOR_OFFSET_Y = WORLD_VIEWBOX.y + ((WORLD_VIEWBOX.h - WORLD_MERCATOR_FULL_HEIGHT) / 2);
 const WORLD_CONTENT_PADDING_X = 20;
 const WORLD_CONTENT_PADDING_Y = 20;
 const WORLD_CONTENT_BBOX = {
@@ -184,6 +193,7 @@ class DataComparisonMap extends HTMLElement {
     this._panStartPanX = 0;
     this._panStartPanY = 0;
     this._animFrame = null;
+    this._isHighResVisible = false;
     this._isDesktop = false;
     this._minZoom = 1;
     this._maxZoom = 4;
@@ -274,12 +284,12 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _lonToX(lon) {
-    return ((lon * Math.PI / 180) + Math.PI) * (WORLD_VIEWBOX.w / (2 * Math.PI));
+    return WORLD_VIEWBOX.x + (((lon * Math.PI / 180) + Math.PI) * WORLD_MERCATOR_SCALE);
   }
   _latToY(lat) {
     const clampedLat = Math.max(-WEB_MERCATOR_MAX_LAT, Math.min(WEB_MERCATOR_MAX_LAT, lat));
     const mercatorY = webMercatorLatScale(clampedLat);
-    return ((WEB_MERCATOR_MAX_Y - mercatorY) / (WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y)) * WORLD_VIEWBOX.h;
+    return WORLD_MERCATOR_OFFSET_Y + ((WEB_MERCATOR_MAX_Y - mercatorY) * WORLD_MERCATOR_SCALE);
   }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
 
@@ -287,8 +297,9 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const proj = c => this._proj(c);
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj));
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
+    this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
     const self = this;
@@ -300,13 +311,13 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
-  _buildResolutionGroup(features, className, proj) {
+  _buildResolutionGroup(features, className, proj, precision) {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     group.setAttribute('class', className);
     features.forEach(f => {
       const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
       if (!a2) return;
-      this.geoPaths(f.geometry, proj).forEach(d => {
+      this.geoPaths(f.geometry, proj, precision).forEach(d => {
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         p.setAttribute('d', d);
         p.dataset.code = a2;
@@ -400,15 +411,20 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg'); if (!svg) return;
     const vb = this._getViewBox();
     svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
-    this._syncDetailLayerVisibility();
   }
   _syncDetailLayerVisibility() {
     const lowResGroup = this.$('.euro-group.low-res');
     const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
-    lowResGroup.style.display = showHighRes ? 'none' : '';
-    highResGroup.style.display = showHighRes ? '' : 'none';
+    if (this._isHighResVisible === showHighRes) return;
+    this._isHighResVisible = showHighRes;
+    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
+    lowResGroup.style.opacity = showHighRes ? '0' : '1';
+    lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
+    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden';
+    highResGroup.style.opacity = showHighRes ? '1' : '0';
+    highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
     const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
@@ -424,7 +440,7 @@ class DataComparisonMap extends HTMLElement {
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
   }
-  _clampAndApply() { this._clampPan(); this._applyTransform(); }
+  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); }
   _snapBack() {
     const b = this._getPanBounds();
     const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
@@ -451,13 +467,13 @@ class DataComparisonMap extends HTMLElement {
       this._panY = sy + (targetPanY - sy) * ease;
       this._applyTransform();
       if (p < 1) this._animFrame = requestAnimationFrame(tick);
-      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._animFrame = null; }
+      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
     };
     this._animFrame = requestAnimationFrame(tick);
   }
 
-  _appendPathPoint(path, command, point) {
-    path.push(`${command}${point[0].toFixed(1)},${point[1].toFixed(1)}`);
+  _appendPathPoint(path, command, point, precision) {
+    path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`);
   }
 
   _segmentCrossesAntimeridian(from, to) {
@@ -482,35 +498,35 @@ class DataComparisonMap extends HTMLElement {
     return { exitPoint, entryPoint };
   }
 
-  _ringToPath(ring, proj) {
+  _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
     const path = [];
     const firstPoint = proj(ring[0]);
-    this._appendPathPoint(path, 'M', firstPoint);
+    this._appendPathPoint(path, 'M', firstPoint, precision);
 
     for (let i = 1; i < ring.length; i += 1) {
       const previous = ring[i - 1];
       const current = ring[i];
       if (!this._segmentCrossesAntimeridian(previous, current)) {
-        this._appendPathPoint(path, 'L', proj(current));
+        this._appendPathPoint(path, 'L', proj(current), precision);
         continue;
       }
 
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
-      this._appendPathPoint(path, 'L', exitPoint);
+      this._appendPathPoint(path, 'L', exitPoint, precision);
       path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint);
-      this._appendPathPoint(path, 'L', proj(current));
+      this._appendPathPoint(path, 'M', entryPoint, precision);
+      this._appendPathPoint(path, 'L', proj(current), precision);
     }
 
     const lastPoint = ring[ring.length - 1];
     const firstCoord = ring[0];
     if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
-      this._appendPathPoint(path, 'L', exitPoint);
+      this._appendPathPoint(path, 'L', exitPoint, precision);
       path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint);
-      this._appendPathPoint(path, 'L', firstPoint);
+      this._appendPathPoint(path, 'M', entryPoint, precision);
+      this._appendPathPoint(path, 'L', firstPoint, precision);
       path.push('Z');
       return path.join(' ');
     }
@@ -519,8 +535,8 @@ class DataComparisonMap extends HTMLElement {
     return path.join(' ');
   }
 
-  geoPaths(geom, proj) {
-    const ring = r => this._ringToPath(r, proj);
+  geoPaths(geom, proj, precision) {
+    const ring = r => this._ringToPath(r, proj, precision);
     if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
     if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
     return [];
