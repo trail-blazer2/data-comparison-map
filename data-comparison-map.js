@@ -3,8 +3,19 @@
 // Styles in styles.css · Data in data.json
 // ============================================================
 
-const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json';
+const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
+const WORLD_VIEWBOX = { x: 0, y: 0, w: 1000, h: 500 };
+const WORLD_CONTENT_PADDING_X = 20;
+const WORLD_CONTENT_PADDING_Y = WORLD_CONTENT_PADDING_X / 2;
+const WORLD_CONTENT_BBOX = {
+  x: WORLD_VIEWBOX.x - WORLD_CONTENT_PADDING_X,
+  y: WORLD_VIEWBOX.y - WORLD_CONTENT_PADDING_Y,
+  w: WORLD_VIEWBOX.w + (WORLD_CONTENT_PADDING_X * 2),
+  h: WORLD_VIEWBOX.h + (WORLD_CONTENT_PADDING_Y * 2)
+};
+// Split suspiciously large longitude jumps so antimeridian polygons do not wrap across the whole SVG.
+const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
 const NUMERIC_TO_ALPHA2 = {
   '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR',
@@ -247,8 +258,8 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  _lonToX(lon) { return (lon + 180) * (1000 / 360); }
-  _latToY(lat) { return (90 - lat) * (500 / 180); }
+  _lonToX(lon) { return (lon + 180) * (WORLD_VIEWBOX.w / 360); }
+  _latToY(lat) { return (90 - lat) * (WORLD_VIEWBOX.h / 180); }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
 
   drawMap() {
@@ -295,8 +306,8 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
-    this._origVB = { x: 0, y: -10, w: 1000, h: 510 };
-    this._contentBBox = { x: -20, y: -30, w: 1040, h: 560 };
+    this._origVB = { ...WORLD_VIEWBOX };
+    this._contentBBox = { ...WORLD_CONTENT_BBOX };
     this._zoom = 1; this._panX = 0; this._panY = 0;
     this._applyTransform();
 
@@ -403,8 +414,71 @@ class DataComparisonMap extends HTMLElement {
     this._animFrame = requestAnimationFrame(tick);
   }
 
+  _appendPathPoint(path, command, point) {
+    path.push(`${command}${point[0].toFixed(1)},${point[1].toFixed(1)}`);
+  }
+
+  _segmentCrossesAntimeridian(from, to) {
+    const lonDelta = Math.abs(to[0] - from[0]);
+    const wrapDelta = 360 - lonDelta;
+    return lonDelta > ANTIMERIDIAN_SPLIT_THRESHOLD &&
+      wrapDelta < lonDelta &&
+      Math.abs(from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD &&
+      Math.abs(to[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD;
+  }
+
+  _splitAntimeridianSegment(from, to) {
+    const wrapsEastward = to[0] < from[0];
+    const exitLon = wrapsEastward ? 180 : -180;
+    const entryLon = wrapsEastward ? -180 : 180;
+    // Normalize the wrapped endpoint into the same continuous longitude space for interpolation.
+    const adjustedToLon = wrapsEastward ? to[0] + 360 : to[0] - 360;
+    const t = (exitLon - from[0]) / (adjustedToLon - from[0]);
+    const interpolatedLat = from[1] + (to[1] - from[1]) * t;
+    const exitPoint = this._proj([exitLon, interpolatedLat]);
+    const entryPoint = this._proj([entryLon, interpolatedLat]);
+    return { exitPoint, entryPoint };
+  }
+
+  _ringToPath(ring, proj) {
+    if (!ring.length) return '';
+    const path = [];
+    const firstPoint = proj(ring[0]);
+    this._appendPathPoint(path, 'M', firstPoint);
+
+    for (let i = 1; i < ring.length; i += 1) {
+      const previous = ring[i - 1];
+      const current = ring[i];
+      if (!this._segmentCrossesAntimeridian(previous, current)) {
+        this._appendPathPoint(path, 'L', proj(current));
+        continue;
+      }
+
+      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
+      this._appendPathPoint(path, 'L', exitPoint);
+      path.push('Z');
+      this._appendPathPoint(path, 'M', entryPoint);
+      this._appendPathPoint(path, 'L', proj(current));
+    }
+
+    const lastPoint = ring[ring.length - 1];
+    const firstCoord = ring[0];
+    if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
+      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
+      this._appendPathPoint(path, 'L', exitPoint);
+      path.push('Z');
+      this._appendPathPoint(path, 'M', entryPoint);
+      this._appendPathPoint(path, 'L', firstPoint);
+      path.push('Z');
+      return path.join(' ');
+    }
+
+    path.push('Z');
+    return path.join(' ');
+  }
+
   geoPaths(geom, proj) {
-    const ring = r => r.map((c, i) => { const [x, y] = proj(c); return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`; }).join(' ') + 'Z';
+    const ring = r => this._ringToPath(r, proj);
     if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
     if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
     return [];
@@ -575,7 +649,7 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
-      <div class="map-wrap"><svg id="mapSvg" viewBox="0 -10 1000 510" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="map-wrap"><svg id="mapSvg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
