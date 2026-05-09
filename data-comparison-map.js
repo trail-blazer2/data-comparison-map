@@ -7,38 +7,67 @@ const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-5
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 
 const NUMERIC_TO_ALPHA2 = {
-  '040':'AT','056':'BE','100':'BG','191':'HR','196':'CY','203':'CZ',
-  '208':'DK','233':'EE','246':'FI','250':'FR','276':'DE','300':'GR',
-  '348':'HU','352':'IS','372':'IE','380':'IT','428':'LV','440':'LT',
-  '442':'LU','470':'MT','528':'NL','578':'NO','616':'PL','620':'PT',
-  '642':'RO','703':'SK','705':'SI','724':'ES','752':'SE','756':'CH',
-  '826':'GB','008':'AL','070':'BA','499':'ME','807':'MK','688':'RS',
-  '112':'BY','804':'UA','498':'MD'
+  '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR',
+  '036':'AU','040':'AT','050':'BD','051':'AM','056':'BE','064':'BT',
+  '068':'BO','070':'BA','072':'BW','076':'BR','096':'BN','100':'BG',
+  '104':'MM','108':'BI','112':'BY','116':'KH','120':'CM','124':'CA',
+  '140':'CF','144':'LK','148':'TD','152':'CL','156':'CN','170':'CO',
+  '174':'KM','178':'CG','180':'CD','188':'CR','191':'HR','192':'CU',
+  '196':'CY','203':'CZ','204':'BJ','208':'DK','214':'DO','218':'EC',
+  '222':'SV','226':'GQ','231':'ET','232':'ER','233':'EE','242':'FJ',
+  '246':'FI','250':'FR','262':'DJ','266':'GA','268':'GE','270':'GM',
+  '276':'DE','288':'GH','300':'GR','320':'GT','324':'GN','328':'GY',
+  '332':'HT','340':'HN','348':'HU','352':'IS','356':'IN','360':'ID',
+  '364':'IR','368':'IQ','372':'IE','376':'IL','380':'IT','384':'CI',
+  '388':'JM','392':'JP','398':'KZ','400':'JO','404':'KE','408':'KP',
+  '410':'KR','414':'KW','417':'KG','418':'LA','422':'LB','426':'LS',
+  '428':'LV','430':'LR','434':'LY','440':'LT','442':'LU','450':'MG',
+  '454':'MW','458':'MY','466':'ML','470':'MT','478':'MR','480':'MU',
+  '484':'MX','496':'MN','498':'MD','499':'ME','504':'MA','508':'MZ',
+  '516':'NA','524':'NP','528':'NL','540':'NC','554':'NZ','558':'NI',
+  '562':'NE','566':'NG','578':'NO','586':'PK','591':'PA','598':'PG',
+  '600':'PY','604':'PE','608':'PH','616':'PL','620':'PT','634':'QA',
+  '642':'RO','643':'RU','646':'RW','678':'ST','682':'SA','686':'SN',
+  '688':'RS','694':'SL','703':'SK','704':'VN','705':'SI','706':'SO',
+  '710':'ZA','716':'ZW','724':'ES','728':'SS','729':'SD','740':'SR',
+  '748':'SZ','752':'SE','756':'CH','760':'SY','762':'TJ','764':'TH',
+  '768':'TG','784':'AE','788':'TN','792':'TR','795':'TM','800':'UG',
+  '804':'UA','807':'MK','818':'EG','826':'GB','834':'TZ','840':'US',
+  '858':'UY','860':'UZ','862':'VE','887':'YE','894':'ZM'
 };
 const ALPHA2_TO_NAME = {
-  AT:'Austria',BE:'Belgium',BG:'Bulgaria',HR:'Croatia',CY:'Cyprus',
-  CZ:'Czechia',DK:'Denmark',EE:'Estonia',FI:'Finland',FR:'France',
-  DE:'Germany',GR:'Greece',HU:'Hungary',IS:'Iceland',IE:'Ireland',
-  IT:'Italy',LV:'Latvia',LT:'Lithuania',LU:'Luxembourg',MT:'Malta',
-  NL:'Netherlands',NO:'Norway',PL:'Poland',PT:'Portugal',RO:'Romania',
-  SK:'Slovakia',SI:'Slovenia',ES:'Spain',SE:'Sweden',CH:'Switzerland',
-  GB:'United Kingdom',AL:'Albania',BA:'Bosnia & Herzegovina',
-  ME:'Montenegro',MK:'North Macedonia',RS:'Serbia',BY:'Belarus',
-  UA:'Ukraine',MD:'Moldova'
+  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',
+  AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',
+  BE:'Belgium',BJ:'Benin',BT:'Bhutan',BO:'Bolivia',BA:'Bosnia & Herzegovina',
+  BW:'Botswana',BR:'Brazil',BN:'Brunei',BG:'Bulgaria',BI:'Burundi',
+  BY:'Belarus',KH:'Cambodia',CM:'Cameroon',CA:'Canada',CF:'Central African Republic',
+  TD:'Chad',CL:'Chile',CN:'China',CO:'Colombia',CG:'Congo',CD:'DR Congo',
+  KM:'Comoros',CR:'Costa Rica',CI:"Côte d'Ivoire",HR:'Croatia',CU:'Cuba',
+  CY:'Cyprus',CZ:'Czechia',DK:'Denmark',DJ:'Djibouti',DO:'Dominican Republic',
+  EC:'Ecuador',EG:'Egypt',SV:'El Salvador',GQ:'Equatorial Guinea',ER:'Eritrea',
+  EE:'Estonia',ET:'Ethiopia',FJ:'Fiji',FI:'Finland',FR:'France',GA:'Gabon',
+  GM:'Gambia',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',
+  GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Hungary',IS:'Iceland',
+  IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',
+  IT:'Italy',JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',
+  KP:'North Korea',KR:'South Korea',KW:'Kuwait',KG:'Kyrgyzstan',LA:'Laos',
+  LB:'Lebanon',LS:'Lesotho',LR:'Liberia',LY:'Libya',LT:'Lithuania',LU:'Luxembourg',
+  LV:'Latvia',MG:'Madagascar',MW:'Malawi',MY:'Malaysia',ML:'Mali',MT:'Malta',
+  MR:'Mauritania',MU:'Mauritius',MX:'Mexico',MD:'Moldova',ME:'Montenegro',
+  MN:'Mongolia',MA:'Morocco',MZ:'Mozambique',MM:'Myanmar',NA:'Namibia',
+  NP:'Nepal',NL:'Netherlands',NC:'New Caledonia',NZ:'New Zealand',NI:'Nicaragua',
+  NE:'Niger',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',PK:'Pakistan',
+  PA:'Panama',PG:'Papua New Guinea',PY:'Paraguay',PE:'Peru',PH:'Philippines',
+  PL:'Poland',PT:'Portugal',QA:'Qatar',RO:'Romania',RU:'Russia',RW:'Rwanda',
+  ST:'São Tomé & Príncipe',SA:'Saudi Arabia',SN:'Senegal',RS:'Serbia',
+  SL:'Sierra Leone',SK:'Slovakia',SI:'Slovenia',SO:'Somalia',ZA:'South Africa',
+  SS:'South Sudan',ES:'Spain',LK:'Sri Lanka',SD:'Sudan',SR:'Suriname',
+  SZ:'Eswatini',SE:'Sweden',CH:'Switzerland',SY:'Syria',TJ:'Tajikistan',
+  TZ:'Tanzania',TH:'Thailand',TG:'Togo',TN:'Tunisia',TR:'Türkiye',
+  TM:'Turkmenistan',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',
+  GB:'United Kingdom',US:'United States',UY:'Uruguay',UZ:'Uzbekistan',
+  VE:'Venezuela',VN:'Vietnam',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'
 };
-const EUROPE_NUMERIC = new Set(Object.keys(NUMERIC_TO_ALPHA2));
-
-const NEARBY_NUMERIC = new Set([
-  '012','788','434','818','504','729','148','562','466',
-  '792','268','051','031','364','368','400','760','422',
-  '682','887','512','634',
-  '643',
-  '398','795','860','417','762',
-]);
-
-const LON_MIN = -35;
-const LON_MAX = 90;  // ← CHANGED from 70 — geometry extends further east so the mask can fade it smoothly
-const NEARBY_CLIP_BOX = { x: -200, y: -150, w: 1100, h: 900 };
 
 const CATEGORY_META = {
   economy: {
@@ -111,112 +140,6 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
 }
 
 // ============================================================
-// GEOGRAPHIC CLIPPING
-// ============================================================
-
-function clipRingToLonRange(ring, lonMin, lonMax) {
-  const edges = [
-    { inside: p => p[0] >= lonMin, intersect: (a, b) => { const t = (lonMin - a[0]) / (b[0] - a[0]); return [lonMin, a[1] + t * (b[1] - a[1])]; } },
-    { inside: p => p[0] <= lonMax, intersect: (a, b) => { const t = (lonMax - a[0]) / (b[0] - a[0]); return [lonMax, a[1] + t * (b[1] - a[1])]; } }
-  ];
-  let pts = ring.slice();
-  for (let e = 0; e < edges.length; e++) {
-    const { inside, intersect } = edges[e];
-    const input = pts; pts = [];
-    if (input.length === 0) return [];
-    let prev = input[input.length - 1];
-    for (let i = 0; i < input.length; i++) {
-      const cur = input[i];
-      if (inside(cur)) {
-        if (!inside(prev)) pts.push(intersect(prev, cur));
-        pts.push(cur);
-      } else if (inside(prev)) { pts.push(intersect(prev, cur)); }
-      prev = cur;
-    }
-  }
-  return pts;
-}
-
-function splitRingAtAntimeridian(ring) {
-  if (ring.length < 2) return [ring];
-  const segments = []; let current = [ring[0]];
-  for (let i = 1; i < ring.length; i++) {
-    if (Math.abs(ring[i][0] - ring[i - 1][0]) > 90) {
-      if (current.length >= 3) segments.push(current);
-      current = [ring[i]];
-    } else { current.push(ring[i]); }
-  }
-  if (current.length >= 3) segments.push(current);
-  return segments;
-}
-
-function clipRingToBox(ring, box) {
-  const minX = box.x, minY = box.y, maxX = box.x + box.w, maxY = box.y + box.h;
-  const edges = [
-    (p) => p[0] >= minX, (a, b) => { const t = (minX - a[0]) / (b[0] - a[0]); return [minX, a[1] + t * (b[1] - a[1])]; },
-    (p) => p[0] <= maxX, (a, b) => { const t = (maxX - a[0]) / (b[0] - a[0]); return [maxX, a[1] + t * (b[1] - a[1])]; },
-    (p) => p[1] >= minY, (a, b) => { const t = (minY - a[1]) / (b[1] - a[1]); return [a[0] + t * (b[0] - a[0]), minY]; },
-    (p) => p[1] <= maxY, (a, b) => { const t = (maxY - a[1]) / (b[1] - a[1]); return [a[0] + t * (b[0] - a[0]), maxY]; },
-  ];
-  let pts = ring.slice();
-  for (let e = 0; e < edges.length; e += 2) {
-    const inside = edges[e], intersect = edges[e + 1];
-    const input = pts; pts = [];
-    if (input.length === 0) return [];
-    let prev = input[input.length - 1];
-    for (let i = 0; i < input.length; i++) {
-      const cur = input[i];
-      if (inside(cur)) {
-        if (!inside(prev)) pts.push(intersect(prev, cur));
-        pts.push(cur);
-      } else if (inside(prev)) { pts.push(intersect(prev, cur)); }
-      prev = cur;
-    }
-  }
-  return pts;
-}
-
-function clipAndProjectNearbyGeometry(geom, proj) {
-  const MAX_RING_WIDTH = 500; // ← slightly wider to allow more of Russia's European portion
-  function processRing(ring) {
-    const segments = splitRingAtAntimeridian(ring);
-    const results = [];
-    for (const seg of segments) {
-      const lonClipped = clipRingToLonRange(seg, LON_MIN, LON_MAX);
-      if (lonClipped.length < 3) continue;
-      const projected = lonClipped.map(c => proj(c));
-      let minPX = Infinity, maxPX = -Infinity;
-      for (const p of projected) { if (p[0] < minPX) minPX = p[0]; if (p[0] > maxPX) maxPX = p[0]; }
-      if ((maxPX - minPX) > MAX_RING_WIDTH) continue;
-      const svgClipped = clipRingToBox(projected, NEARBY_CLIP_BOX);
-      if (svgClipped.length < 3) continue;
-      results.push(svgClipped);
-    }
-    return results;
-  }
-  function ringsToPath(clippedRings) {
-    return clippedRings.map(ring =>
-      ring.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + 'Z'
-    ).join(' ');
-  }
-  if (geom.type === 'Polygon') {
-    const allRings = [];
-    for (const ring of geom.coordinates) allRings.push(...processRing(ring));
-    const d = ringsToPath(allRings); return d ? [d] : [];
-  }
-  if (geom.type === 'MultiPolygon') {
-    const paths = [];
-    for (const poly of geom.coordinates) {
-      const allRings = [];
-      for (const ring of poly) allRings.push(...processRing(ring));
-      const d = ringsToPath(allRings); if (d) paths.push(d);
-    }
-    return paths;
-  }
-  return [];
-}
-
-// ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
@@ -227,7 +150,6 @@ class DataComparisonMap extends HTMLElement {
     this.currentDataType = null;
     this.currentSource = null;
     this.geoFeatures = [];
-    this.nearbyFeatures = [];
     this._lastTtVal = null;
     this._lastTtDataType = null;
     this._zoom = 1;
@@ -313,8 +235,7 @@ class DataComparisonMap extends HTMLElement {
     }
 
     const all = topojson.feature(topoRaw, topoRaw.objects.countries);
-    this.geoFeatures = all.features.filter(f => EUROPE_NUMERIC.has(String(f.id).padStart(3, '0')));
-    this.nearbyFeatures = all.features.filter(f => NEARBY_NUMERIC.has(String(f.id).padStart(3, '0')));
+    this.geoFeatures = all.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
 
     this.drawMap();
     this.buildCategoryButtons();
@@ -326,14 +247,8 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  _lonToX(lon) { return (lon + 25) * (540 / 75); }
-  _latToY(lat) {
-    const r = lat * Math.PI / 180;
-    const y = Math.log(Math.tan(Math.PI / 4 + r / 2));
-    const mn = Math.log(Math.tan(Math.PI / 4 + (34 * Math.PI / 180) / 2));
-    const mx = Math.log(Math.tan(Math.PI / 4 + (72 * Math.PI / 180) / 2));
-    return 470 - ((y - mn) / (mx - mn)) * 470;
-  }
+  _lonToX(lon) { return (lon + 180) * (1000 / 360); }
+  _latToY(lat) { return (90 - lat) * (500 / 180); }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
 
   drawMap() {
@@ -342,47 +257,8 @@ class DataComparisonMap extends HTMLElement {
     const proj = c => this._proj(c);
     const self = this;
 
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-
-    // Fade mask: the key insight is that every edge must fade from fully opaque
-    // to fully transparent BEFORE the geometry ends. So we use a radial approach:
-    // a large white ellipse in the center that gradually fades to black at the edges.
-    // This guarantees a single smooth fade with no hard edges anywhere.
-    defs.innerHTML = `
-      <pattern id="comingSoonPattern" patternUnits="userSpaceOnUse" width="180" height="100" patternTransform="rotate(-30)">
-        <text x="10" y="55" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(30,58,95,0.13)" letter-spacing="3">COMING SOON</text>
-      </pattern>
-      <radialGradient id="fadeRadial" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-        <stop offset="0.45" stop-color="white"/>
-        <stop offset="0.85" stop-color="white" stop-opacity="0.5"/>
-        <stop offset="1.0" stop-color="black"/>
-      </radialGradient>
-      <mask id="nearbyFade" maskUnits="userSpaceOnUse" x="-300" y="-250" width="1300" height="1100">
-        <ellipse cx="265" cy="235" rx="500" ry="400" fill="url(#fadeRadial)"/>
-      </mask>
-    `;
-    svg.appendChild(defs);
-
-    // -- Nearby countries with soft radial fade mask --
-    const nearbyGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    nearbyGroup.setAttribute('class', 'nearby-group');
-    nearbyGroup.setAttribute('mask', 'url(#nearbyFade)');
-    this.nearbyFeatures.forEach(f => {
-      const clippedPaths = clipAndProjectNearbyGeometry(f.geometry, proj);
-      clippedPaths.forEach(d => {
-        const pBase = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pBase.setAttribute('d', d); pBase.classList.add('cp-nearby');
-        nearbyGroup.appendChild(pBase);
-        const pPattern = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pPattern.setAttribute('d', d); pPattern.classList.add('cp-nearby-pattern');
-        nearbyGroup.appendChild(pPattern);
-      });
-    });
-    svg.appendChild(nearbyGroup);
-
-    // -- European countries on top (no mask) --
-    const euroGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    euroGroup.setAttribute('class', 'euro-group');
+    const worldGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    worldGroup.setAttribute('class', 'world-group');
     this.geoFeatures.forEach(f => {
       const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
       if (!a2) return;
@@ -402,10 +278,10 @@ class DataComparisonMap extends HTMLElement {
           var fakeEvent = { target: p, clientX: touch.clientX, clientY: touch.clientY };
           self.ttShow(fakeEvent); self.ttMove(fakeEvent);
         }, { passive: false });
-        euroGroup.appendChild(p);
+        worldGroup.appendChild(p);
       });
     });
-    svg.appendChild(euroGroup);
+    svg.appendChild(worldGroup);
 
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
@@ -419,8 +295,8 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
-    this._origVB = { x: -30, y: -5, w: 590, h: 490 };
-    this._contentBBox = { x: -80, y: -60, w: 750, h: 620 };
+    this._origVB = { x: 0, y: 0, w: 1000, h: 500 };
+    this._contentBBox = { x: -20, y: -20, w: 1040, h: 540 };
     this._zoom = 1; this._panX = 0; this._panY = 0;
     this._applyTransform();
 
@@ -699,7 +575,7 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
-      <div class="map-wrap"><svg id="mapSvg" viewBox="-30 -5 590 490" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="map-wrap"><svg id="mapSvg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>

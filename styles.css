@@ -338,19 +338,6 @@
   filter: none; stroke: rgba(255,255,255,0.35); stroke-width: 0.5;
 }
 
-/* ===== NEARBY COUNTRIES ===== */
-.cp-nearby {
-  fill: #e0e5ea;
-  stroke: rgba(255, 255, 255, 0.15); stroke-width: 0.3;
-  opacity: 0.5;
-  cursor: default; pointer-events: none;
-}
-.cp-nearby-pattern {
-  fill: url(#comingSoonPattern);
-  stroke: none; opacity: 0.5;
-  pointer-events: none;
-}
-
 /* ===== TOOLTIP ===== */
 .tooltip {
   position: fixed; pointer-events: none; z-index: 9999;
