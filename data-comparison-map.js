@@ -418,11 +418,14 @@ class DataComparisonMap extends HTMLElement {
   _splitAntimeridianSegment(from, to) {
     const goingLeft = to[0] < from[0];
     const targetLon = goingLeft ? 180 : -180;
+    // Normalize the wrapped endpoint into the same continuous longitude space for interpolation.
     const adjustedToLon = goingLeft ? to[0] + 360 : to[0] - 360;
     const t = (targetLon - from[0]) / (adjustedToLon - from[0]);
     const interpolatedLat = from[1] + (to[1] - from[1]) * t;
-    const exitPoint = this._proj([goingLeft ? 180 : -180, interpolatedLat]);
-    const entryPoint = this._proj([goingLeft ? -180 : 180, interpolatedLat]);
+    const exitLon = goingLeft ? 180 : -180;
+    const entryLon = goingLeft ? -180 : 180;
+    const exitPoint = this._proj([exitLon, interpolatedLat]);
+    const entryPoint = this._proj([entryLon, interpolatedLat]);
     return { exitPoint, entryPoint };
   }
 
