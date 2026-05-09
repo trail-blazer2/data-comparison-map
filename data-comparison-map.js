@@ -8,11 +8,11 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
 const WORLD_VIEWBOX_WIDTH = 1000;
-const WORLD_VIEWBOX_HEIGHT = 500; // Perfect 2:1 wide rectangle aspect ratio
+const WORLD_VIEWBOX_HEIGHT = 650; // Increased from 500 to neutralize the "wide" stretching
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
 
 const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
-const DETAIL_LAYER_DECIMAL_PLACES = 2; // Increased from 0 to 2 for smooth, high-res curves
+const DETAIL_LAYER_DECIMAL_PLACES = 2; 
 
 const WORLD_CONTENT_PADDING_X = 20;
 const WORLD_CONTENT_PADDING_Y = 20;
