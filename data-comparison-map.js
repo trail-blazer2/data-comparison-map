@@ -11,8 +11,8 @@ const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
 const WORLD_VIEWBOX_WIDTH = 1000;
 const WORLD_VIEWBOX_ASPECT_RATIO = 5 / 3;
 const WORLD_VIEWBOX_HEIGHT = WORLD_VIEWBOX_WIDTH / WORLD_VIEWBOX_ASPECT_RATIO;
-const LOW_RES_PATH_DECIMAL_PLACES = 1;
-const HIGH_RES_PATH_DECIMAL_PLACES = 0;
+const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
+const DETAIL_LAYER_DECIMAL_PLACES = 0;
 const webMercatorLatScale = lat => Math.log(Math.tan((Math.PI / 4) + ((lat * Math.PI) / 360)));
 const WEB_MERCATOR_MAX_Y = webMercatorLatScale(WEB_MERCATOR_MAX_LAT);
 const WEB_MERCATOR_MIN_Y = webMercatorLatScale(-WEB_MERCATOR_MAX_LAT);
@@ -193,7 +193,7 @@ class DataComparisonMap extends HTMLElement {
     this._panStartPanX = 0;
     this._panStartPanY = 0;
     this._animFrame = null;
-    this._isHighResVisible = null;
+    this._isHighResVisible = false;
     this._isDesktop = false;
     this._minZoom = 1;
     this._maxZoom = 4;
@@ -297,8 +297,9 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     const proj = c => this._proj(c);
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, LOW_RES_PATH_DECIMAL_PLACES));
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, HIGH_RES_PATH_DECIMAL_PLACES));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
+    this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
     const self = this;
@@ -416,7 +417,7 @@ class DataComparisonMap extends HTMLElement {
     const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
-    if (this._isHighResVisible !== null && this._isHighResVisible === showHighRes) return;
+    if (this._isHighResVisible === showHighRes) return;
     this._isHighResVisible = showHighRes;
     lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
     lowResGroup.style.opacity = showHighRes ? '0' : '1';
