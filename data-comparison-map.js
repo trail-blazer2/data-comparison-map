@@ -3,7 +3,7 @@
 // Styles in styles.css · Data in data.json
 // ============================================================
 
-const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json';
+const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json';
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 
 const NUMERIC_TO_ALPHA2 = {
@@ -295,8 +295,8 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     const wrap = this.$('.map-wrap');
     if (!svg || !wrap) return;
-    this._origVB = { x: 0, y: 0, w: 1000, h: 500 };
-    this._contentBBox = { x: -20, y: -20, w: 1040, h: 540 };
+    this._origVB = { x: 0, y: -10, w: 1000, h: 510 };
+    this._contentBBox = { x: -20, y: -30, w: 1040, h: 560 };
     this._zoom = 1; this._panX = 0; this._panY = 0;
     this._applyTransform();
 
@@ -575,7 +575,7 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
-      <div class="map-wrap"><svg id="mapSvg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="map-wrap"><svg id="mapSvg" viewBox="0 -10 1000 510" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
