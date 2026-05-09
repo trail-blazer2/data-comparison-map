@@ -59,39 +59,80 @@ function httpGet(url, accept, maxRedirects) {
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
 // ============================================================
-// COUNTRY CODE MAPPINGS
+// COUNTRY CODE MAPPINGS (GLOBAL)
 // ============================================================
 var COUNTRIES = {
-  AT:'Austria',BE:'Belgium',BG:'Bulgaria',HR:'Croatia',CY:'Cyprus',
-  CZ:'Czechia',DK:'Denmark',EE:'Estonia',FI:'Finland',FR:'France',
-  DE:'Germany',GR:'Greece',HU:'Hungary',IS:'Iceland',IE:'Ireland',
-  IT:'Italy',LV:'Latvia',LT:'Lithuania',LU:'Luxembourg',MT:'Malta',
-  NL:'Netherlands',NO:'Norway',PL:'Poland',PT:'Portugal',RO:'Romania',
-  SK:'Slovakia',SI:'Slovenia',ES:'Spain',SE:'Sweden',CH:'Switzerland',
-  GB:'United Kingdom',AL:'Albania',BA:'Bosnia & Herzegovina',
-  ME:'Montenegro',MK:'North Macedonia',RS:'Serbia',BY:'Belarus',
-  UA:'Ukraine',MD:'Moldova'
+  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',
+  AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',
+  BE:'Belgium',BJ:'Benin',BT:'Bhutan',BO:'Bolivia',BA:'Bosnia & Herzegovina',
+  BW:'Botswana',BR:'Brazil',BN:'Brunei',BG:'Bulgaria',BI:'Burundi',
+  BY:'Belarus',KH:'Cambodia',CM:'Cameroon',CA:'Canada',CF:'Central African Republic',
+  TD:'Chad',CL:'Chile',CN:'China',CO:'Colombia',CG:'Congo',CD:'DR Congo',
+  KM:'Comoros',CR:'Costa Rica',CI:"Côte d'Ivoire",HR:'Croatia',CU:'Cuba',
+  CY:'Cyprus',CZ:'Czechia',DK:'Denmark',DJ:'Djibouti',DO:'Dominican Republic',
+  EC:'Ecuador',EG:'Egypt',SV:'El Salvador',GQ:'Equatorial Guinea',ER:'Eritrea',
+  EE:'Estonia',ET:'Ethiopia',FJ:'Fiji',FI:'Finland',FR:'France',GA:'Gabon',
+  GM:'Gambia',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',
+  GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Hungary',IS:'Iceland',
+  IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',
+  IT:'Italy',JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',
+  KP:'North Korea',KR:'South Korea',KW:'Kuwait',KG:'Kyrgyzstan',LA:'Laos',
+  LB:'Lebanon',LS:'Lesotho',LR:'Liberia',LY:'Libya',LT:'Lithuania',LU:'Luxembourg',
+  LV:'Latvia',MG:'Madagascar',MW:'Malawi',MY:'Malaysia',ML:'Mali',MT:'Malta',
+  MR:'Mauritania',MU:'Mauritius',MX:'Mexico',MD:'Moldova',ME:'Montenegro',
+  MN:'Mongolia',MA:'Morocco',MZ:'Mozambique',MM:'Myanmar',NA:'Namibia',
+  NP:'Nepal',NL:'Netherlands',NC:'New Caledonia',NZ:'New Zealand',NI:'Nicaragua',
+  NE:'Niger',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',PK:'Pakistan',
+  PA:'Panama',PG:'Papua New Guinea',PY:'Paraguay',PE:'Peru',PH:'Philippines',
+  PL:'Poland',PT:'Portugal',QA:'Qatar',RO:'Romania',RU:'Russia',RW:'Rwanda',
+  ST:'São Tomé & Príncipe',SA:'Saudi Arabia',SN:'Senegal',RS:'Serbia',
+  SL:'Sierra Leone',SK:'Slovakia',SI:'Slovenia',SO:'Somalia',ZA:'South Africa',
+  SS:'South Sudan',ES:'Spain',LK:'Sri Lanka',SD:'Sudan',SR:'Suriname',
+  SZ:'Eswatini',SE:'Sweden',CH:'Switzerland',SY:'Syria',TJ:'Tajikistan',
+  TZ:'Tanzania',TH:'Thailand',TG:'Togo',TN:'Tunisia',TR:'Türkiye',
+  TM:'Turkmenistan',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',
+  GB:'United Kingdom',US:'United States',UY:'Uruguay',UZ:'Uzbekistan',
+  VE:'Venezuela',VN:'Vietnam',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'
 };
 
-var EURO_A2 = Object.keys(COUNTRIES);
+var EURO_A2 = Object.keys(COUNTRIES); // Now represents ALL countries
 var EURO_SET = new Set(EURO_A2);
 
+// Standard Alpha-2 to Alpha-3 mappings for WB / OECD parsing
 var A2_TO_A3 = {
-  AT:'AUT',BE:'BEL',BG:'BGR',HR:'HRV',CY:'CYP',CZ:'CZE',DK:'DNK',
-  EE:'EST',FI:'FIN',FR:'FRA',DE:'DEU',GR:'GRC',HU:'HUN',IS:'ISL',
-  IE:'IRL',IT:'ITA',LV:'LVA',LT:'LTU',LU:'LUX',MT:'MLT',NL:'NLD',
-  NO:'NOR',PL:'POL',PT:'PRT',RO:'ROU',SK:'SVK',SI:'SVN',ES:'ESP',
-  SE:'SWE',CH:'CHE',GB:'GBR',AL:'ALB',BA:'BIH',ME:'MNE',MK:'MKD',
-  RS:'SRB',BY:'BLR',UA:'UKR',MD:'MDA'
+  AF:'AFG',AL:'ALB',DZ:'DZA',AO:'AGO',AM:'ARM',AR:'ARG',AU:'AUS',AT:'AUT',
+  AZ:'AZE',BD:'BGD',BE:'BEL',BJ:'BEN',BT:'BTN',BO:'BOL',BA:'BIH',BW:'BWA',
+  BR:'BRA',BN:'BRN',BG:'BGR',BI:'BDI',BY:'BLR',KH:'KHM',CM:'CMR',CA:'CAN',
+  CF:'CAF',TD:'TCD',CL:'CHL',CN:'CHN',CO:'COL',CG:'COG',CD:'COD',KM:'COM',
+  CR:'CRI',CI:'CIV',HR:'HRV',CU:'CUB',CY:'CYP',CZ:'CZE',DK:'DNK',DJ:'DJI',
+  DO:'DOM',EC:'ECU',EG:'EGY',SV:'SLV',GQ:'GNQ',ER:'ERI',EE:'EST',ET:'ETH',
+  FJ:'FJI',FI:'FIN',FR:'FRA',GA:'GAB',GM:'GMB',GE:'GEO',DE:'DEU',GH:'GHA',
+  GR:'GRC',GT:'GTM',GN:'GIN',GY:'GUY',HT:'HTI',HN:'HND',HU:'HUN',IS:'ISL',
+  IN:'IND',ID:'IDN',IR:'IRN',IQ:'IRQ',IE:'IRL',IL:'ISR',IT:'ITA',JM:'JAM',
+  JP:'JPN',JO:'JOR',KZ:'KAZ',KE:'KEN',KP:'PRK',KR:'KOR',KW:'KWT',KG:'KGZ',
+  LA:'LAO',LB:'LBN',LS:'LSO',LR:'LBR',LY:'LBY',LT:'LTU',LU:'LUX',LV:'LVA',
+  MG:'MDG',MW:'MWI',MY:'MYS',ML:'MLI',MT:'MLT',MR:'MRT',MU:'MUS',MX:'MEX',
+  MD:'MDA',ME:'MNE',MN:'MNG',MA:'MAR',MZ:'MOZ',MM:'MMR',NA:'NAM',NP:'NPL',
+  NL:'NLD',NC:'NCL',NZ:'NZL',NI:'NIC',NE:'NER',NG:'NGA',MK:'MKD',NO:'NOR',
+  PK:'PAK',PA:'PAN',PG:'PNG',PY:'PRY',PE:'PER',PH:'PHL',PL:'POL',PT:'PRT',
+  QA:'QAT',RO:'ROU',RU:'RUS',RW:'RWA',ST:'STP',SA:'SAU',SN:'SEN',RS:'SRB',
+  SL:'SLE',SK:'SVK',SI:'SVN',SO:'SOM',ZA:'ZAF',SS:'SSD',ES:'ESP',LK:'LKA',
+  SD:'SDN',SR:'SUR',SZ:'SWZ',SE:'SWE',CH:'CHE',SY:'SYR',TJ:'TJK',TZ:'TZA',
+  TH:'THA',TG:'TGO',TN:'TUN',TR:'TUR',TM:'TKM',UG:'UGA',UA:'UKR',AE:'ARE',
+  GB:'GBR',US:'USA',UY:'URY',UZ:'UZB',VE:'VEN',VN:'VNM',YE:'YEM',ZM:'ZMB',
+  ZW:'ZWE'
 };
+
 var A3_TO_A2 = {};
 Object.entries(A2_TO_A3).forEach(function([a2, a3]) { A3_TO_A2[a3] = a2; });
 
 var ESTAT_REMAP = { 'EL': 'GR', 'UK': 'GB' };
-var WB_CODES = Object.values(A2_TO_A3).join(';');
 
-// OECD member/partner European countries only
-var OECD_EUR = 'AUT+BEL+BGR+HRV+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ITA+LVA+LTU+LUX+NLD+NOR+POL+PRT+ROU+SVK+SVN+ESP+SWE+CHE+GBR';
+// World Bank: 'all' fetches the entire world
+var WB_CODES = 'all';
+
+// OECD: Empty string in SDMX dimension fetches all countries
+var OECD_EUR = ''; 
 
 // ============================================================
 // WORLD BANK FETCHER
