@@ -8,14 +8,16 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const WEB_MERCATOR_MAX_LAT = 85.05112878;
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2;
+const WORLD_VIEWBOX_WIDTH = 1000;
+const WORLD_VIEWBOX_HEIGHT = 600;
 const webMercatorLatScale = lat => Math.log(Math.tan((Math.PI / 4) + ((lat * Math.PI) / 360)));
 const WEB_MERCATOR_MAX_Y = webMercatorLatScale(WEB_MERCATOR_MAX_LAT);
 const WEB_MERCATOR_MIN_Y = webMercatorLatScale(-WEB_MERCATOR_MAX_LAT);
 const WORLD_VIEWBOX = {
   x: 0,
   y: 0,
-  w: 1000,
-  h: 600
+  w: WORLD_VIEWBOX_WIDTH,
+  h: WORLD_VIEWBOX_HEIGHT
 };
 const WEB_MERCATOR_Y_RANGE = WEB_MERCATOR_MAX_Y - WEB_MERCATOR_MIN_Y;
 const WORLD_MERCATOR_SCALE = WORLD_VIEWBOX.w / (2 * Math.PI);
@@ -360,7 +362,6 @@ class DataComparisonMap extends HTMLElement {
       const oldH = this._origVB.h / this._zoom, newH = this._origVB.h / newZoom;
       this._panX += (oldW - newW) * mx; this._panY += (oldH - newH) * my;
       this._zoom = newZoom; this._clampAndApply();
-      this._syncDetailLayerVisibility();
     }, { passive: false });
 
     wrap.addEventListener('mousedown', (e) => {
@@ -412,7 +413,7 @@ class DataComparisonMap extends HTMLElement {
     const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
-    if (this._isHighResVisible === showHighRes) return;
+    if (this._isHighResVisible !== null && this._isHighResVisible === showHighRes) return;
     this._isHighResVisible = showHighRes;
     lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
     lowResGroup.style.opacity = showHighRes ? '0' : '1';
@@ -435,7 +436,7 @@ class DataComparisonMap extends HTMLElement {
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
   }
-  _clampAndApply() { this._clampPan(); this._applyTransform(); }
+  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); }
   _snapBack() {
     const b = this._getPanBounds();
     const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
