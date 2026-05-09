@@ -7,6 +7,7 @@ const MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-5
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const WORLD_VIEWBOX = { x: 0, y: 0, w: 1000, h: 500 };
 const WORLD_CONTENT_BBOX = { x: -20, y: -10, w: 1040, h: 520 };
+// Split suspiciously large longitude jumps so antimeridian polygons do not wrap across the whole SVG.
 const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
 const NUMERIC_TO_ALPHA2 = {
@@ -446,10 +447,10 @@ class DataComparisonMap extends HTMLElement {
       this._appendPathPoint(path, 'L', proj(current));
     }
 
-    const last = ring[ring.length - 1];
-    const first = ring[0];
-    if (this._segmentCrossesAntimeridian(last, first)) {
-      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(last, first);
+    const lastPoint = ring[ring.length - 1];
+    const firstCoord = ring[0];
+    if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
+      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
       this._appendPathPoint(path, 'L', exitPoint);
       path.push('Z');
       this._appendPathPoint(path, 'M', entryPoint);
