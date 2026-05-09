@@ -420,9 +420,8 @@ class DataComparisonMap extends HTMLElement {
     const adjustedToLon = goingLeft ? to[0] + 360 : to[0] - 360;
     const t = (targetLon - from[0]) / (adjustedToLon - from[0]);
     const interpolatedLat = from[1] + (to[1] - from[1]) * t;
-    const projectedY = this._proj([0, interpolatedLat])[1];
-    const exitPoint = [goingLeft ? WORLD_VIEWBOX.w : WORLD_VIEWBOX.x, projectedY];
-    const entryPoint = [goingLeft ? WORLD_VIEWBOX.x : WORLD_VIEWBOX.w, exitPoint[1]];
+    const exitPoint = this._proj([goingLeft ? 180 : -180, interpolatedLat]);
+    const entryPoint = this._proj([goingLeft ? -180 : 180, interpolatedLat]);
     return { exitPoint, entryPoint };
   }
 
