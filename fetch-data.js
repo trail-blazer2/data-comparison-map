@@ -605,14 +605,15 @@ async function fetchAll() {
   var OC = OECD_EUR;
   var data = {};
 
-    // 1. UNEMPLOYMENT TOTAL
+  // 1. UNEMPLOYMENT TOTAL
   console.log('\n📊 Unemployment rate - Total');
   var unemp_eu = await fetchEurostat('une_rt_a', { age: 'Y15-74', sex: 'T', unit: 'PC_ACT' });
   var unemp_wb = await fetchWorldBank('SL.UEM.TOTL.ZS');
   var unemp_ilo = await fetchILO('UNE_2EAP_SEX_AGE_RT_A', {}, function(row) {
-    // Filter for Total Sex and Total Age
-    return row.sex === 'SEX_T' && row.classif1 === 'AGE_AGGREGATE_TOTAL';
+    // Filter for Total Sex (SEX_T) and Total Age (usually AGE_YTHADULT_YGE15 or TOTAL)
+    return row.sex === 'SEX_T' && (!row.classif1 || /TOTAL|YGE15/i.test(row.classif1));
   });
+  
   data.unemployment_total = {
     label: 'Unemployment rate - Total', unit: '%',
     category: 'economy',
