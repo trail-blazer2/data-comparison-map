@@ -162,6 +162,39 @@ function animateValue(el, startVal, endVal, unit, duration = 300) {
   requestAnimationFrame(tick);
 }
 
+// Hardcoded Historical Data (2020-2024)
+const HISTORY_DATA = {
+  gdp_per_capita: {
+    US: { 2020: 63527, 2021: 70667, 2022: 76329, 2023: 81632, 2024: 85300, txt: { 2020: "COVID-19 pandemic caused a dip in GDP.", 2024: "Strong economic recovery and tech sector growth." } },
+    CN: { 2020: 10408, 2021: 12556, 2022: 12720, 2023: 12614, 2024: 13100, txt: { 2020: "Only major economy to grow in 2020.", 2024: "Post-lockdown adjustments and real estate cooling." } },
+    DE: { 2020: 46772, 2021: 51203, 2022: 48717, 2023: 52729, 2024: 54200, txt: { 2022: "Energy crisis impacted industrial output." } },
+    CZ: { 2020: 22933, 2021: 26821, 2022: 27691, 2023: 30426, 2024: 31200, txt: { 2023: "High inflation impacted real wage growth." } },
+    SK: { 2020: 19442, 2021: 21383, 2022: 21258, 2023: 24470, 2024: 25100, txt: { 2020: "Automotive sector slowdown during pandemic." } }
+  },
+  population: {
+    US: { 2020: 331.4, 2021: 332.0, 2022: 333.2, 2023: 334.9, 2024: 335.8, txt: {} },
+    CN: { 2020: 1411.1, 2021: 1412.3, 2022: 1412.1, 2023: 1409.6, 2024: 1407.0, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
+    DE: { 2020: 83.1, 2021: 83.2, 2022: 84.3, 2023: 84.4, 2024: 84.5, txt: { 2022: "Population bump due to Ukrainian refugees." } },
+    CZ: { 2020: 10.7, 2021: 10.5, 2022: 10.8, 2023: 10.9, 2024: 10.9, txt: { 2022: "Significant influx of refugees increased total pop." } },
+    SK: { 2020: 5.46, 2021: 5.43, 2022: 5.43, 2023: 5.42, 2024: 5.42, txt: {} }
+  },
+  rd_spending: {
+    US: { 2020: 3.45, 2021: 3.46, 2022: 3.46, 2023: 3.50, 2024: 3.52, txt: {} },
+    CN: { 2020: 2.40, 2021: 2.43, 2022: 2.54, 2023: 2.64, 2024: 2.70, txt: { 2024: "Heavy investments in AI and semiconductors." } },
+    DE: { 2020: 3.13, 2021: 3.13, 2022: 3.13, 2023: 3.14, 2024: 3.15, txt: {} },
+    CZ: { 2020: 1.99, 2021: 1.99, 2022: 1.96, 2023: 1.98, 2024: 2.00, txt: {} },
+    SK: { 2020: 0.91, 2021: 0.92, 2022: 0.98, 2023: 1.00, 2024: 1.05, txt: {} }
+  },
+  life_expectancy: {
+    US: { 2020: 77.0, 2021: 76.4, 2022: 77.5, 2023: 77.6, 2024: 77.8, txt: { 2021: "Significant drop due to pandemic." } },
+    CN: { 2020: 77.9, 2021: 78.2, 2022: 78.5, 2023: 78.6, 2024: 78.8, txt: {} },
+    DE: { 2020: 81.1, 2021: 80.8, 2022: 80.7, 2023: 81.2, 2024: 81.5, txt: {} },
+    CZ: { 2020: 78.2, 2021: 77.3, 2022: 79.0, 2023: 79.5, 2024: 79.8, txt: {} },
+    SK: { 2020: 76.8, 2021: 74.5, 2022: 77.0, 2023: 77.8, 2024: 78.1, txt: { 2021: "Severe COVID impact on mortality rates." } }
+  }
+};
+
+
 // ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
@@ -328,6 +361,7 @@ class DataComparisonMap extends HTMLElement {
     pathEl.addEventListener('mouseenter', function(e) { self.ttShow(e); });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
     pathEl.addEventListener('mouseleave', function() { self.ttHide(); });
+    pathEl.addEventListener('click', function(e) { self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
@@ -337,6 +371,61 @@ class DataComparisonMap extends HTMLElement {
       self.ttShow(fakeEvent);
       self.ttMove(fakeEvent);
     }, { passive: false });
+  }
+
+  openHistoryPanel(code, name) {
+    this.$$('.cp').forEach(el => el.classList.remove('selected'));
+    this.$$(`.cp[data-code="${code}"]`).forEach(el => el.classList.add('selected'));
+    
+    // Check if we have history for this metric and country
+    if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
+      this.$('#leftPanel').classList.remove('open');
+      return;
+    }
+
+    this._activeHistoryCode = code;
+    this.$('#histCountry').textContent = name;
+    this.$('#histMetric').textContent = this.DATA[this.currentDataType].label;
+    
+    const slider = this.$('#histSlider');
+    slider.oninput = (e) => this.updateHistoryView(e.target.value);
+    
+    this.$('#leftPanel').classList.add('open');
+    this.$('#closeLeftBtn').onclick = () => {
+      this.$('#leftPanel').classList.remove('open');
+      this.$$('.cp').forEach(el => el.classList.remove('selected'));
+    };
+
+    this.updateHistoryView(slider.value);
+  }
+
+  updateHistoryView(year) {
+    this.$('#histYearLabel').textContent = year;
+    const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
+    
+    // Update text
+    const txt = metricData.txt[year] || "Normal yearly progression. Placeholder text for " + year + ".";
+    this.$('#histText').innerHTML = `<strong>${year}:</strong> ${txt} <br><br>Value: ${metricData[year]} ${this.DATA[this.currentDataType].unit}`;
+
+    // Draw SVG Chart
+    const svg = this.$('#histChart');
+    const w = svg.parentElement.clientWidth, h = 140, pad = 10;
+    const years = [2020, 2021, 2022, 2023, 2024];
+    const vals = years.map(y => metricData[y]);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max === min ? 1 : max - min;
+
+    let pathD = "";
+    let pointsHtml = "";
+
+    years.forEach((y, i) => {
+      const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
+      const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
+      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${y == year ? 'active' : ''}" />`;
+    });
+
+    svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
   }
 
   initZoomPan() {
@@ -702,6 +791,28 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
+    <div class="side-panel left glass" id="leftPanel">
+      <button class="close-btn" id="closeLeftBtn">✕</button>
+      <div>
+        <div class="history-header" id="histCountry">Country</div>
+        <div class="history-sub" id="histMetric">Metric</div>
+      </div>
+      
+      <div class="chart-container" id="chartContainer">
+        <svg class="chart-svg" id="histChart"></svg>
+      </div>
+
+      <div class="year-slider-wrap">
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#8395a7; font-weight:600;">
+          <span>2020</span><span id="histYearLabel" style="color:#1e3a5f; font-size:0.8rem;">2024</span><span>2024</span>
+        </div>
+        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider">
+      </div>
+
+      <div class="history-text" id="histText">
+        Select a year to see historical insights.
+      </div>
+    </div>    
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
       <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
