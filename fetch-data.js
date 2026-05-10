@@ -550,6 +550,50 @@ async function fetchILO(indicatorId, params, rowFilter) {
 }
 
 // ============================================================
+// WHO (World Health Organization) FETCHER
+// ============================================================
+async function fetchWHO(indicatorCode) {
+  console.log('  [WHO] ' + indicatorCode + '...');
+  var url = 'https://ghoapi.azureedge.net/api/' + indicatorCode;
+  var countries = {};
+  var dataYear = 0;
+
+  try {
+    var raw = await httpGet(url, 'application/json');
+    var json = JSON.parse(raw);
+    if (json && json.value) {
+      json.value.forEach(function(item) {
+        // WHO uses ISO-3 codes in SpatialDim
+        if (item.SpatialDimType !== 'COUNTRY') return;
+        var a3 = item.SpatialDim;
+        var a2 = A3_TO_A2[a3];
+        if (!a2) return;
+
+        var year = parseInt(item.TimeDim);
+        var val = parseFloat(item.NumericValue);
+
+        if (!isNaN(year) && !isNaN(val)) {
+          if (!countries[a2] || year > countries[a2].year) {
+            countries[a2] = { value: val, year: year };
+            if (year > dataYear) dataYear = year;
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('  [WHO] FAILED ' + indicatorCode + ': ' + e.message.substring(0, 200));
+  }
+
+  var result = {};
+  Object.entries(countries).forEach(function([a2, d]) { result[a2] = Math.round(d.value * 100) / 100; });
+  console.log('  [WHO] ' + indicatorCode + ': ' + Object.keys(result).length + ' countries, year ' + dataYear);
+  await sleep(1000);
+  return { countries: result, year: dataYear };
+}
+
+
+
+// ============================================================
 // FETCH ALL INDICATORS
 // ============================================================
 async function fetchAll() {
@@ -561,15 +605,20 @@ async function fetchAll() {
   var OC = OECD_EUR;
   var data = {};
 
-  // 1. UNEMPLOYMENT TOTAL
+    // 1. UNEMPLOYMENT TOTAL
   console.log('\n📊 Unemployment rate - Total');
   var unemp_eu = await fetchEurostat('une_rt_a', { age: 'Y15-74', sex: 'T', unit: 'PC_ACT' });
   var unemp_wb = await fetchWorldBank('SL.UEM.TOTL.ZS');
+  var unemp_ilo = await fetchILO('UNE_2EAP_SEX_AGE_RT_A', {}, function(row) {
+    // Filter for Total Sex and Total Age
+    return row.sex === 'SEX_T' && row.classif1 === 'AGE_AGGREGATE_TOTAL';
+  });
   data.unemployment_total = {
     label: 'Unemployment rate - Total', unit: '%',
     category: 'economy',
     sources: {
       eurostat: { label: 'Eurostat', ...unemp_eu },
+      ilo: { label: 'ILOSTAT', ...unemp_ilo },
       world_bank_wdi: { label: 'World Bank (WDI)', ...unemp_wb }
     }
   };
@@ -693,8 +742,6 @@ async function fetchAll() {
   await sleep(1000);
 
   // 8. LIFE EXPECTANCY
-  // From friend's OECD URL: agency=OECD.ELS.HD, df=DSD_HEALTH_STAT@DF_LE, v=1.1
-  // dq= AUT+BEL+...A.LFEXP..Y0._T.......
   console.log('\n📊 Life Expectancy');
   var le_eu = await fetchEurostat('demo_mlexpec', { age: 'Y_LT1', sex: 'T' });
   var le_wb = await fetchWorldBank('SP.DYN.LE00.IN');
@@ -702,12 +749,15 @@ async function fetchAll() {
     'OECD.ELS.HD', 'DSD_HEALTH_STAT@DF_LE', '1.1',
     OC + '.A.LFEXP..Y0._T.......', 'LE'
   );
+  var le_who = await fetchWHO('WHOSIS_000001'); // Life expectancy at birth (years)
+  
   data.life_expectancy = {
     label: 'Life expectancy', unit: 'years',
     category: 'demographics',
     sources: {
       eurostat: { label: 'Eurostat', ...le_eu },
       oecd: { label: 'OECD', ...le_oecd },
+      who: { label: 'WHO', ...le_who },
       world_bank_wdi: { label: 'World Bank (WDI)', ...le_wb }
     }
   };
@@ -820,11 +870,14 @@ async function fetchAll() {
   console.log('\n📊 Infant mortality');
   var infm_eu = await fetchEurostat('demo_minfind', { indic_de: 'INFMORRT' });
   var infm_wb = await fetchWorldBank('SP.DYN.IMRT.IN');
+  var infm_who = await fetchWHO('MDG_0000000001'); // Infant mortality rate (probability of dying between birth and age 1 per 1000 live births)
+  
   data.infant_mortality = {
     label: 'Infant mortality', unit: 'per 1,000 births',
     category: 'demographics',
     sources: {
       eurostat: { label: 'Eurostat', ...infm_eu },
+      who: { label: 'WHO', ...infm_who },
       world_bank_wdi: { label: 'World Bank (WDI)', ...infm_wb }
     }
   };
