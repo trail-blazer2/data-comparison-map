@@ -356,27 +356,16 @@ class DataComparisonMap extends HTMLElement {
     return group;
   }
 
-  bringToFront(el) {
-    if (el.parentNode) el.parentNode.appendChild(el);
-  }
-
   _bindCountryInteractions(pathEl) {
     const self = this;
-    pathEl.addEventListener('mouseenter', function(e) { 
-      self.bringToFront(pathEl); 
-      self.ttShow(e); 
-    });
+    pathEl.addEventListener('mouseenter', function(e) { self.ttShow(e); });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
     pathEl.addEventListener('mouseleave', function() { self.ttHide(); });
-    pathEl.addEventListener('click', function(e) { 
-      self.bringToFront(pathEl);
-      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); 
-    });
+    pathEl.addEventListener('click', function(e) { self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
       pathEl.classList.add('touched');
-      self.bringToFront(pathEl);
       var touch = e.touches[0];
       var fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
       self.ttShow(fakeEvent);
