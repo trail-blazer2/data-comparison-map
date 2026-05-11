@@ -552,7 +552,7 @@ class DataComparisonMap extends HTMLElement {
       div.className = 'factor-row';
       div.innerHTML = `
         <label class="factor-label">
-          <input type="checkbox" class="factor-cb" data-impact="${f.impact}">
+          <input type="checkbox" class="factor-cb" data-id="${f.id}">
           <span class="cb-custom"></span>
           <span class="factor-title">${f.title}</span>
         </label>
@@ -568,14 +568,12 @@ class DataComparisonMap extends HTMLElement {
       container.appendChild(div);
     });
 
-    // Initial setup with empty chart framework to establish fixed bounds
     let svg = this.$('#futChart');
     if(!svg || svg.tagName !== 'svg') {
       this.$('#viewFuture .chart-container').innerHTML = '<svg class="chart-svg" id="futChart"></svg>';
       svg = this.$('#futChart');
     }
     
-    // Set up standard gradient defs and static bottom axis labels once
     svg.innerHTML = `<defs><linearGradient id="futGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8395a7"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>
                      <path class="chart-line" id="futLine" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />
                      <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
@@ -586,30 +584,34 @@ class DataComparisonMap extends HTMLElement {
 
   updateFutureChart(code, futData, isInitial = false) {
     const baseVal = window.HISTORY_DATA[this.currentDataType][code][2024];
-    let currentGrowthRate = futData.base_growth;
-    let minGrowthRate = futData.base_growth;
-    let maxGrowthRate = futData.base_growth;
     
-    // Calculate current checked values AND absolute extremes
+    // Arrays representing year-over-year rates for [2025, 2026, 2027, 2028, 2029]
+    let currentRates = [...futData.base_growth];
+    let minRates = [...futData.base_growth];
+    let maxRates = [...futData.base_growth];
+    
     this.$$('.factor-cb').forEach(cb => {
-      const imp = parseFloat(cb.dataset.impact);
-      if (cb.checked) currentGrowthRate += imp;
-      if (imp > 0) maxGrowthRate += imp;
-      else if (imp < 0) minGrowthRate += imp;
+      const factor = futData.factors.find(f => f.id === cb.dataset.id);
+      if(!factor) return;
+      
+      for(let i=0; i<5; i++) {
+        if (cb.checked) currentRates[i] += factor.impact[i];
+        if (factor.impact[i] > 0) maxRates[i] += factor.impact[i];
+        else minRates[i] += factor.impact[i];
+      }
     });
 
     const years = [2024, 2025, 2026, 2027, 2028, 2029];
     
-    // Determine absolute bounding values over the 5 years to lock Y-axis scale
-    const calcValues = (rate) => {
+    const calcValues = (rates) => {
       const v = [baseVal];
-      for(let i=1; i<=5; i++) v.push(v[i-1] * (1 + rate));
+      for(let i=0; i<5; i++) v.push(v[i] * (1 + rates[i]));
       return v;
     };
     
-    const minValues = calcValues(minGrowthRate);
-    const maxValues = calcValues(maxGrowthRate);
-    const currentValues = calcValues(currentGrowthRate);
+    const minValues = calcValues(minRates);
+    const maxValues = calcValues(maxRates);
+    const currentValues = calcValues(currentRates);
     
     const minBound = Math.min(...minValues, ...maxValues, baseVal);
     const maxBound = Math.max(...minValues, ...maxValues, baseVal);
@@ -626,7 +628,6 @@ class DataComparisonMap extends HTMLElement {
       const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
       pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
       
-      // Update or create point and label
       let pt = svg.querySelector(`#fp${i}`);
       let lbl = svg.querySelector(`#fl${i}`);
       if (!pt) {
@@ -646,7 +647,6 @@ class DataComparisonMap extends HTMLElement {
       lbl.setAttribute('x', cx);
       lbl.setAttribute('y', cy - 10);
 
-      // Only show values on the very first and last point
       if (i === 0 || i === 5) {
         lbl.textContent = fmt(currentValues[i], this.DATA[this.currentDataType].unit);
         lbl.setAttribute('text-anchor', i === 0 ? 'start' : 'end');
