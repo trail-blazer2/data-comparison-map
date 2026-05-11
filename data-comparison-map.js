@@ -8,7 +8,7 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2.5;
 const WORLD_VIEWBOX_WIDTH = 1000;
-const WORLD_VIEWBOX_HEIGHT = 500;
+const WORLD_VIEWBOX_HEIGHT = 500; 
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
 
 const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
@@ -92,10 +92,22 @@ const ALPHA2_TO_NAME = {
 };
 
 const CATEGORY_META = {
-  economy: { label: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
-  demographics: { label: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
-  society: { label: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
-  public_services: { label: 'Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
+  economy: {
+    label: 'Economy',
+    icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>'
+  },
+  demographics: {
+    label: 'Demographics',
+    icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>'
+  },
+  society: {
+    label: 'Society',
+    icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>'
+  },
+  public_services: {
+    label: 'Services',
+    icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>'
+  }
 };
 
 function getColor(t) {
@@ -159,79 +171,61 @@ const HISTORY_DATA = {
     SK: { 2020: 19442, 2021: 21383, 2022: 21258, 2023: 24470, 2024: 25100, txt: { 2020: "Automotive sector slowdown during pandemic." } }
   },
   population: {
-    US: { 2020: 331.4, 2021: 332.0, 2022: 333.2, 2023: 334.9, 2024: 335.8, txt: {} },
-    CN: { 2020: 1411.1, 2021: 1412.3, 2022: 1412.1, 2023: 1409.6, 2024: 1407.0, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
-    DE: { 2020: 83.1, 2021: 83.2, 2022: 84.3, 2023: 84.4, 2024: 84.5, txt: { 2022: "Population bump due to Ukrainian refugees." } },
-    CZ: { 2020: 10.7, 2021: 10.5, 2022: 10.8, 2023: 10.9, 2024: 10.9, txt: { 2022: "Significant influx of refugees increased total pop." } },
-    SK: { 2020: 5.46, 2021: 5.43, 2022: 5.43, 2023: 5.42, 2024: 5.42, txt: {} }
-  },
-  rd_spending: {
-    US: { 2020: 3.45, 2021: 3.46, 2022: 3.46, 2023: 3.50, 2024: 3.52, txt: {} },
-    CN: { 2020: 2.40, 2021: 2.43, 2022: 2.54, 2023: 2.64, 2024: 2.70, txt: { 2024: "Heavy investments in AI and semiconductors." } },
-    DE: { 2020: 3.13, 2021: 3.13, 2022: 3.13, 2023: 3.14, 2024: 3.15, txt: {} },
-    CZ: { 2020: 1.99, 2021: 1.99, 2022: 1.96, 2023: 1.98, 2024: 2.00, txt: {} },
-    SK: { 2020: 0.91, 2021: 0.92, 2022: 0.98, 2023: 1.00, 2024: 1.05, txt: {} }
-  },
-  life_expectancy: {
-    US: { 2020: 77.0, 2021: 76.4, 2022: 77.5, 2023: 77.6, 2024: 77.8, txt: { 2021: "Significant drop due to pandemic." } },
-    CN: { 2020: 77.9, 2021: 78.2, 2022: 78.5, 2023: 78.6, 2024: 78.8, txt: {} },
-    DE: { 2020: 81.1, 2021: 80.8, 2022: 80.7, 2023: 81.2, 2024: 81.5, txt: {} },
-    CZ: { 2020: 78.2, 2021: 77.3, 2022: 79.0, 2023: 79.5, 2024: 79.8, txt: {} },
-    SK: { 2020: 76.8, 2021: 74.5, 2022: 77.0, 2023: 77.8, 2024: 78.1, txt: { 2021: "Severe COVID impact on mortality rates." } }
+    US: { 2020: 331400000, 2021: 332000000, 2022: 333200000, 2023: 334900000, 2024: 335800000, txt: {} },
+    CN: { 2020: 1411100000, 2021: 1412300000, 2022: 1412100000, 2023: 1409600000, 2024: 1407000000, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
+    DE: { 2020: 83100000, 2021: 83200000, 2022: 84300000, 2023: 84400000, 2024: 84500000, txt: { 2022: "Population bump due to Ukrainian refugees." } },
+    CZ: { 2020: 10700000, 2021: 10500000, 2022: 10800000, 2023: 10900000, 2024: 10900000, txt: { 2022: "Significant influx of refugees increased total pop." } },
+    SK: { 2020: 5460000, 2021: 5430000, 2022: 5430000, 2023: 5420000, 2024: 5420000, txt: {} }
   }
 };
 
-// Future Projection Engine Data
+// Hardcoded Future Projection Data (2024 baseline + factors)
 const FUTURE_DATA = {
   gdp_per_capita: {
-    CZ: {
-      desc: "The Czech Republic's growth isn't really decided in Prague; it’s decided by consumer demand in Germany, trade policy in Washington, and the global price of gas/electricity.",
-      base_growth: 0.005, // 0.5% default baseline growth
-      factors: [
-        { id: "cz_auto", title: "Does the German Auto Industry Recover?", info: "Since the Czech Republic is essentially an industrial sub-supplier for Germany, our GDP is tied to their success.", yes: "If German car brands successfully pivot to EVs, Czech factories will boom.", no: "If Germany stays in a recession, the Czech Republic's industrial core will shrink.", impact: 0.02 },
-        { id: "cz_trade", title: "Do Global Trade Tariffs Stay Low?", info: "The Czech Republic is one of the most export-dependent countries in the world.", yes: "If global trade remains open, Czech products will continue to drive growth.", no: "If the US imposes heavy tariffs, it will devastate Czech exports.", impact: 0.015 },
-        { id: "cz_energy", title: "Will Energy Prices Stabilize?", info: "Czech industry is 'energy-heavy' (steel, glass, chemicals, automotive).", yes: "If the Czech Republic builds out new nuclear blocks, factories will stay.", no: "If electricity stays expensive, manufacturers will move.", impact: 0.01 }
-      ]
-    },
-    DE: {
-      desc: "Germany is transitioning from an export-led industrial powerhouse to a more service-oriented economy amidst severe demographic and energy challenges.",
-      base_growth: 0.002,
-      factors: [
-        { id: "de_energy", title: "Successful Green Energy Transition?", info: "Germany's 'Energiewende' must provide cheap, reliable power for heavy industry.", yes: "Abundant renewables lower industrial costs, keeping manufacturing domestic.", no: "High energy costs cause deindustrialization and capital flight.", impact: 0.015 },
-        { id: "de_tech", title: "Can Germany Catch Up in AI & Software?", info: "Germany dominates hardware but lags in global software and AI sectors.", yes: "Massive EU/state investment creates a booming European tech hub.", no: "Continued reliance on legacy mechanics limits productivity growth.", impact: 0.012 },
-        { id: "de_labor", title: "Integration of Skilled Migrants?", info: "With a rapidly aging workforce, Germany needs millions of skilled workers.", yes: "Successful integration fills labor shortages and boosts consumption.", no: "Labor shortages cripple mid-sized 'Mittelstand' companies.", impact: 0.01 }
-      ]
-    },
-    US: {
-      desc: "The US economy relies on massive consumer spending, global dollar dominance, and undisputed leadership in the technology and financial sectors.",
-      base_growth: 0.015,
-      factors: [
-        { id: "us_ai", title: "Does AI Drive the Next Productivity Boom?", info: "The US leads the global AI race, which promises massive efficiency gains.", yes: "AI adoption creates a 'Roaring 2020s' productivity miracle.", no: "AI proves to be a bubble with minimal real-world economic translation.", impact: 0.02 },
-        { id: "us_debt", title: "Can the US Manage its National Debt?", info: "Rising interest rates make the massive US deficit more expensive to maintain.", yes: "Fiscal discipline and high growth naturally shrink the debt burden.", no: "Debt servicing crowds out infrastructure and research investments.", impact: 0.01 },
-        { id: "us_reshoring", title: "Does 'Made in America' Reshoring Succeed?", info: "Trillions are being spent to bring chip and battery manufacturing back to the US.", yes: "New domestic factories create high-paying jobs and secure supply chains.", no: "High domestic labor costs make reshored products uncompetitive globally.", impact: 0.015 }
-      ]
-    },
-    CN: {
-      desc: "China is shifting from real-estate and infrastructure-led growth to high-tech manufacturing, while battling deflation and a shrinking population.",
-      base_growth: 0.03,
-      factors: [
-        { id: "cn_export", title: "Do Chinese EVs Dominate Global Markets?", info: "China has massively subsidized its EV and solar panel industries.", yes: "Chinese brands become the global standard, driving massive export wealth.", no: "Western tariffs block Chinese cars, stalling the manufacturing engine.", impact: 0.02 },
-        { id: "cn_property", title: "Does the Real Estate Market Stabilize?", info: "Property once drove 25% of China's GDP, but is now in a managed decline.", yes: "The government safely absorbs bad debts, restoring consumer confidence.", no: "A prolonged property slump causes a 'Japanese-style' lost decade.", impact: 0.015 },
-        { id: "cn_consumer", title: "Will the Chinese Consumer Spend?", info: "China needs its middle class to spend more to offset falling exports.", yes: "Social safety nets improve, unleashing trillions in domestic spending.", no: "Deflationary mindset takes hold; citizens save instead of spend.", impact: 0.015 }
-      ]
-    },
-    SK: {
-      desc: "Slovakia is the world's largest car producer per capita, making it highly vulnerable to automotive trends and automation.",
-      base_growth: 0.01,
-      factors: [
-        { id: "sk_ev", title: "Successful Pivot to EV Manufacturing?", info: "Slovak plants assemble traditional cars; they must retool for electric vehicles.", yes: "Major battery plants are built, and factories successfully retool.", no: "Automakers shift EV production to cheaper or more subsidized countries.", impact: 0.02 },
-        { id: "sk_brain", title: "Reversing the 'Brain Drain'?", info: "Hundreds of thousands of young Slovaks leave for Czechia and Austria.", yes: "Economic reforms and tech investments lure young professionals back.", no: "The loss of educated youth stifles innovation and tax revenues.", impact: 0.015 },
-        { id: "sk_infra", title: "Completion of Key Infrastructure?", info: "Slovakia's east-west highway and rail networks have been delayed for decades.", yes: "EU funds are fully utilized to connect the poorer East to European markets.", no: "Corruption and bureaucracy leave EU funds unspent and infrastructure broken.", impact: 0.01 }
-      ]
-    }
+    US: { baseline: 85300, growthRate: 0.02, factors: [
+      { id: 'us_ai', label: 'AI Super-cycle', impact: 0.015, desc: 'Widespread commercialization of AI accelerates productivity.' },
+      { id: 'us_trade', label: 'Global Trade War', impact: -0.01, desc: 'Increased tariffs and fragmentation slow growth.' }
+    ]},
+    CN: { baseline: 13100, growthRate: 0.04, factors: [
+      { id: 'cn_tech', label: 'Domestic Tech Boom', impact: 0.02, desc: 'Successful transition to high-tech manufacturing.' },
+      { id: 'cn_demo', label: 'Demographic Drag', impact: -0.015, desc: 'Aging workforce limits economic expansion.' }
+    ]},
+    DE: { baseline: 54200, growthRate: 0.015, factors: [
+      { id: 'de_green', label: 'Green Energy Shift', impact: 0.01, desc: 'Successful energy transition boosts industrial competitiveness.' },
+      { id: 'de_auto', label: 'Auto Industry Slump', impact: -0.01, desc: 'Loss of market share to foreign EV manufacturers.' }
+    ]},
+    CZ: { baseline: 31200, growthRate: 0.025, factors: [
+      { id: 'cz_nearshore', label: 'Nearshoring Hub', impact: 0.015, desc: 'EU supply chains relocate closer to home.' },
+      { id: 'cz_inflation', label: 'Persistent Inflation', impact: -0.01, desc: 'High energy and labor costs drag down real GDP.' }
+    ]},
+    SK: { baseline: 25100, growthRate: 0.025, factors: [
+      { id: 'sk_ev', label: 'EV Manufacturing Hub', impact: 0.02, desc: 'Major new auto plants begin full EV production.' },
+      { id: 'sk_brain', label: 'Brain Drain', impact: -0.01, desc: 'Emigration of skilled workers to Western EU.' }
+    ]}
+  },
+  population: {
+    US: { baseline: 335800000, growthRate: 0.004, factors: [
+      { id: 'us_imm_high', label: 'High Immigration', impact: 0.003, desc: 'Policy changes allow higher influx of global talent.' },
+      { id: 'us_birth_drop', label: 'Birth Rate Drop', impact: -0.002, desc: 'Fertility rates continue dropping below replacement levels.' }
+    ]},
+    CN: { baseline: 1407000000, growthRate: -0.002, factors: [
+      { id: 'cn_fert_boost', label: 'Pro-Natalist Success', impact: 0.0015, desc: 'Government incentives slightly stabilize birth rates.' },
+      { id: 'cn_aging_accel', label: 'Accelerated Aging', impact: -0.003, desc: 'Mortality rises due to a highly concentrated elderly population.' }
+    ]},
+    DE: { baseline: 84500000, growthRate: 0.001, factors: [
+      { id: 'de_imm_boom', label: 'Skilled Migration', impact: 0.004, desc: 'Aggressive foreign talent acquisition programs.' },
+      { id: 'de_emig', label: 'Retiree Exodus', impact: -0.002, desc: 'Higher rate of retirees moving to Southern Europe.' }
+    ]},
+    CZ: { baseline: 10900000, growthRate: -0.001, factors: [
+      { id: 'cz_ref_stay', label: 'Refugee Integration', impact: 0.003, desc: 'Temporary residents become permanent citizens.' },
+      { id: 'cz_low_birth', label: 'Low Fertility', impact: -0.002, desc: 'Economic uncertainty keeps birth rates extremely low.' }
+    ]},
+    SK: { baseline: 5420000, growthRate: -0.002, factors: [
+      { id: 'sk_return', label: 'Diaspora Return', impact: 0.003, desc: 'Economic growth incentivizes expatriates to return.' },
+      { id: 'sk_brain_drain', label: 'Youth Emigration', impact: -0.004, desc: 'Young professionals leave for better opportunities abroad.' }
+    ]}
   }
 };
-
 
 // ============================================================
 class DataComparisonMap extends HTMLElement {
@@ -255,12 +249,16 @@ class DataComparisonMap extends HTMLElement {
     this._panStartY = 0;
     this._panStartPanX = 0;
     this._panStartPanY = 0;
-    this._dragged = false;
     this._animFrame = null;
     this._isHighResVisible = false;
     this._isDesktop = false;
     this._minZoom = 1;
     this._maxZoom = 6;
+    
+    this._selectedCountryCode = null;
+    this._selectedCountryName = null;
+    this._activePanelMode = null; // 'history' or 'future'
+    this._activeFactors = new Set();
   }
 
   connectedCallback() {
@@ -307,18 +305,9 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     const supportBtn = this.$('#supportBtn');
-    if (supportBtn) {
-      supportBtn.addEventListener('click', () => {
-        window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*');
-      });
-    }
-
+    if (supportBtn) supportBtn.addEventListener('click', () => window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*'));
     const aboutBtn = this.$('#aboutBtn');
-    if (aboutBtn) {
-      aboutBtn.addEventListener('click', () => {
-        window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*');
-      });
-    }
+    if (aboutBtn) aboutBtn.addEventListener('click', () => window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'));
 
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
@@ -336,6 +325,7 @@ class DataComparisonMap extends HTMLElement {
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
     if (this._isDesktop) this.initZoomPan();
+    this.initActionMenu();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -374,7 +364,6 @@ class DataComparisonMap extends HTMLElement {
     this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
-    // Persistent overlays for animation
     const overlayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     overlayG.setAttribute('id', 'mapOverlayGroup');
     overlayG.style.pointerEvents = 'none';
@@ -389,22 +378,22 @@ class DataComparisonMap extends HTMLElement {
     hPath.setAttribute('class', 'overlay-hovered');
     hPath.style.clipPath = 'circle(0% at 50% 50%)';
 
-    // Hover FIRST, then select SECOND, so select is always on top!
     overlayG.appendChild(hPath);
     overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
     const self = this;
-    // Click ocean to deselect
     svg.addEventListener('click', function(e) {
-      if (self._dragged) return; // ignore if we just dragged
-      if (!e.target.classList.contains('cp')) self.closeSidePanel();
+      if (self._dragged) return; 
+      if (!e.target.classList.contains('cp')) {
+        self.deselectCountry();
+      }
     });
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
         self.ttHide();
-        self.closeSidePanel();
+        self.deselectCountry();
       }
     });
   }
@@ -432,40 +421,34 @@ class DataComparisonMap extends HTMLElement {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
       const hOverlay = self.$('#hoverOverlay');
-      if(hOverlay) {
-        hOverlay.style.transition = 'none';
-        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
-        const origin = self._getEventCenter(e, pathEl);
-        hOverlay.style.clipPath = `circle(0% at ${origin})`;
-        hOverlay.offsetHeight; // reflow
-        hOverlay.style.transition = 'clip-path 0.25s ease-out';
-        hOverlay.style.clipPath = `circle(150% at ${origin})`;
-      }
+      hOverlay.style.transition = 'none';
+      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      const origin = self._getEventCenter(e, pathEl);
+      hOverlay.style.clipPath = `circle(0% at ${origin})`;
+      hOverlay.offsetHeight; 
+      hOverlay.style.transition = 'clip-path 0.25s ease-out';
+      hOverlay.style.clipPath = `circle(150% at ${origin})`;
       self.ttShow(e); 
     });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
     pathEl.addEventListener('mouseleave', function(e) { 
       const hOverlay = self.$('#hoverOverlay');
-      if(hOverlay) {
-        const origin = self._getEventCenter(e, pathEl);
-        hOverlay.style.clipPath = `circle(0% at ${origin})`; // Shrink back to exit point
-      }
+      const origin = self._getEventCenter(e, pathEl);
+      hOverlay.style.clipPath = `circle(0% at ${origin})`; 
       self.ttHide(); 
     });
     pathEl.addEventListener('click', function(e) { 
       if (self._dragged) return; 
-      self.openSidePanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
+      self.selectCountry(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       pathEl.classList.add('touched');
       const hOverlay = self.$('#hoverOverlay');
-      if(hOverlay) {
-        hOverlay.style.transition = 'none';
-        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
-        hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
-      }
+      hOverlay.style.transition = 'none';
+      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
       const touch = e.touches[0];
       const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
       self.ttShow(fakeEvent);
@@ -473,7 +456,14 @@ class DataComparisonMap extends HTMLElement {
     }, { passive: false });
   }
 
-  openSidePanel(code, name, pathEl, e) {
+  // --- Actions Menu & Selection Logic ---
+  initActionMenu() {
+    this.$('#btnHistory').addEventListener('click', () => this.openPanel('history'));
+    this.$('#btnFuture').addEventListener('click', () => this.openPanel('future'));
+    this.$('#closeLeftBtn').addEventListener('click', () => this.closePanel());
+  }
+
+  selectCountry(code, name, pathEl, e) {
     this._selectedCountryCode = code;
     this._selectedCountryName = name;
 
@@ -483,60 +473,98 @@ class DataComparisonMap extends HTMLElement {
 
     if (pathEl && e) {
       const sOverlay = this.$('#selectOverlay');
-      if (sOverlay) {
-        sOverlay.style.transition = 'none';
-        sOverlay.setAttribute('d', pathEl.getAttribute('d'));
-        const origin = this._getEventCenter(e, pathEl);
-        sOverlay.style.clipPath = `circle(0% at ${origin})`;
-        sOverlay.offsetHeight; 
-        sOverlay.style.transition = 'clip-path 0.3s ease-out';
-        sOverlay.style.clipPath = `circle(150% at ${origin})`;
-      }
+      sOverlay.style.transition = 'none';
+      sOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      const origin = this._getEventCenter(e, pathEl);
+      sOverlay.style.clipPath = `circle(0% at ${origin})`;
+      sOverlay.offsetHeight; 
+      sOverlay.style.transition = 'clip-path 0.3s ease-out';
+      sOverlay.style.clipPath = `circle(150% at ${origin})`;
     }
 
-    if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
-      this.$('#panelContainer').classList.remove('open');
-      return;
+    this.updateActionMenu();
+    
+    if (this._activePanelMode) {
+      this.openPanel(this._activePanelMode);
     }
-
-    this._activeHistoryCode = code;
-    this.$('#panelCountry').textContent = name;
-    this.$('#panelMetric').textContent = this.DATA[this.currentDataType].label;
-    
-    // Bind Mode Buttons
-    this.$$('.mode-btn').forEach(btn => {
-      btn.onclick = () => {
-        this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-        this.$(`#view${btn.dataset.mode === 'history' ? 'History' : 'Future'}`).classList.add('active');
-      };
-    });
-
-    const slider = this.$('#histSlider');
-    slider.oninput = (e) => this.updateHistoryView(e.target.value);
-    
-    this.$('#panelContainer').classList.add('open');
-    this.$('#closeLeftBtn').onclick = () => this.closeSidePanel();
-
-    requestAnimationFrame(() => {
-      this.updateHistoryView(slider.value);
-      this.buildFutureView(code);
-    });
   }
 
-  closeSidePanel() {
+  deselectCountry() {
     this._selectedCountryCode = null;
     this._selectedCountryName = null;
-    this._activeHistoryCode = null;
-    this.$('#panelContainer').classList.remove('open');
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     const sOverlay = this.$('#selectOverlay');
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
+    this.updateActionMenu();
+    this.closePanel();
   }
 
-  updateHistoryView(year) {
-    const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
+  updateActionMenu() {
+    const actLbl = this.$('#actionCountryLabel');
+    const btnH = this.$('#btnHistory');
+    const btnF = this.$('#btnFuture');
+
+    if (!this._selectedCountryCode) {
+      actLbl.textContent = 'Select a country';
+      btnH.disabled = true;
+      btnF.disabled = true;
+      return;
+    }
+
+    actLbl.textContent = this._selectedCountryName;
+    
+    const hasHistory = HISTORY_DATA[this.currentDataType] && HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
+    btnH.disabled = !hasHistory;
+
+    const hasFuture = FUTURE_DATA[this.currentDataType] && FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
+    btnF.disabled = !hasFuture;
+  }
+
+  openPanel(mode) {
+    if (mode === 'history' && this.$('#btnHistory').disabled) return;
+    if (mode === 'future' && this.$('#btnFuture').disabled) return;
+
+    this._activePanelMode = mode;
+    this.$('#leftPanel').classList.add('open');
+    this.$('#histCountry').textContent = this._selectedCountryName;
+    
+    if (mode === 'history') {
+      this.$('#histMetric').textContent = 'Historical ' + this.DATA[this.currentDataType].label;
+      this.renderHistoryPanel();
+    } else {
+      this.$('#histMetric').textContent = 'Future Projection: ' + this.DATA[this.currentDataType].label;
+      this._activeFactors.clear(); // reset factors on open
+      this.renderFuturePanel();
+    }
+  }
+
+  closePanel() {
+    this._activePanelMode = null;
+    this.$('#leftPanel').classList.remove('open');
+  }
+
+  // --- History Panel Rendering ---
+  renderHistoryPanel() {
+    const metricData = HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
+    if (!metricData) return;
+
+    this.$('#panelControls').innerHTML = `
+      <div class="year-slider-wrap">
+        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+        <div class="year-labels" id="yearLabels">
+          <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+        </div>
+      </div>
+    `;
+
+    const slider = this.$('#histSlider');
+    slider.oninput = (e) => this.updateHistoryChart(e.target.value);
+    
+    requestAnimationFrame(() => this.updateHistoryChart(slider.value));
+  }
+
+  updateHistoryChart(year) {
+    const metricData = HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
     if (!metricData) return;
 
     this.$('#yearLabels').querySelectorAll('span').forEach(span => {
@@ -545,26 +573,17 @@ class DataComparisonMap extends HTMLElement {
     });
     
     const svg = this.$('#histChart');
-    const w = 280, h = 140, pad = 12;
+    const w = 280, h = 140, pad = 12, padBottom = 25;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     const years = [2020, 2021, 2022, 2023, 2024];
     const vals = years.map(y => metricData[y]);
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const range = max === min ? 1 : max - min;
-
-    let pathD = "", pointsHtml = "";
-    years.forEach((y, i) => {
-      const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
-      const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
-      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
-      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${y == year ? 'active' : ''}" />`;
-    });
-    svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
+    
+    this.drawChartWithLabels(svg, years, vals, year, w, h, pad, padBottom);
 
     const txt = metricData.txt[year] || "Normal yearly progression. No major outliers recorded.";
     const valString = fmt(metricData[year], this.DATA[this.currentDataType].unit);
     
-    this.$('#histText').innerHTML = `
+    this.$('#panelContent').innerHTML = `
       <div class="hist-value-box">
         <div class="hist-value-number">${valString}</div>
       </div>
@@ -574,84 +593,108 @@ class DataComparisonMap extends HTMLElement {
     `;
   }
 
-  buildFutureView(code) {
-    const futData = FUTURE_DATA[this.currentDataType] && FUTURE_DATA[this.currentDataType][code];
-    const container = this.$('#futFactors');
-    container.innerHTML = '';
-    
-    if (!futData) {
-      this.$('#futDesc').textContent = "Future projections not yet available for this metric/country.";
-      this.$('#futChart').innerHTML = '';
-      this.$('#futResult').innerHTML = '';
-      return;
-    }
+  // --- Future Panel Rendering ---
+  renderFuturePanel() {
+    const futureData = FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
+    if (!futureData) return;
 
-    this.$('#futDesc').textContent = futData.desc;
-    
-    futData.factors.forEach((f, i) => {
-      const div = document.createElement('div');
-      div.className = 'factor-row';
-      div.innerHTML = `
-        <label class="factor-label">
-          <input type="checkbox" class="factor-cb" data-impact="${f.impact}">
-          <span class="cb-custom"></span>
-          <span class="factor-title">${f.title}</span>
-        </label>
-        <div class="factor-info-btn">i
-          <div class="factor-tooltip">
-            <strong>Context:</strong> ${f.info}<br/><br/>
-            <span style="color:#27ae60">✔ ${f.yes}</span><br/>
-            <span style="color:#c0392b">✘ ${f.no}</span>
-          </div>
-        </div>
-      `;
-      div.querySelector('.factor-cb').onchange = () => this.updateFutureChart(code, futData);
-      container.appendChild(div);
-    });
+    let checkboxesHTML = futureData.factors.map(f => `
+      <label class="factor-checkbox">
+        <input type="checkbox" value="${f.id}">
+        <span class="factor-label-text">${f.label}</span>
+        <div class="factor-tooltip">${f.desc} <br><strong>Impact: ${(f.impact > 0 ? '+' : '')}${(f.impact*100).toFixed(1)}%</strong></div>
+      </label>
+    `).join('');
 
-    this.updateFutureChart(code, futData);
-  }
-
-  updateFutureChart(code, futData) {
-    const baseVal = HISTORY_DATA[this.currentDataType][code][2024];
-    let totalGrowthRate = futData.base_growth;
-    
-    this.$$('.factor-cb').forEach(cb => {
-      if (cb.checked) totalGrowthRate += parseFloat(cb.dataset.impact);
-    });
-
-    // Project 5 years
-    const years = [2024, 2025, 2026, 2027, 2028, 2029];
-    const vals = [baseVal];
-    for(let i=1; i<=5; i++) {
-      vals.push(vals[i-1] * (1 + totalGrowthRate));
-    }
-
-    const svg = this.$('#futChart');
-    const w = 280, h = 120, pad = 12;
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    
-    const min = Math.min(baseVal, ...vals), max = Math.max(baseVal, ...vals);
-    const range = max === min ? 1 : max - min;
-
-    let pathD = "", pointsHtml = "";
-    years.forEach((y, i) => {
-      const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
-      const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
-      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
-      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point fut-point" />
-                     <text x="${cx}" y="${cy-10}" class="fut-label" text-anchor="middle">${y==2024||y==2029?y:''}</text>`;
-    });
-    
-    // Draw chart with a different color scheme for the future
-    svg.innerHTML = `
-      <defs><linearGradient id="futGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8395a7"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>
-      <path class="chart-line" d="${pathD}" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />
-      ${pointsHtml}
+    this.$('#panelControls').innerHTML = `
+      <div class="future-algorithm-header">Future projection algorithm</div>
+      <div class="future-algorithm-sub">Tick what you think will happen:</div>
+      <div class="factors-list">
+        ${checkboxesHTML}
+      </div>
     `;
 
-    const finalVal = fmt(vals[5], this.DATA[this.currentDataType].unit);
-    this.$('#futResult').innerHTML = `Projected 2029: <strong>${finalVal}</strong>`;
+    this.$('#panelControls').querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      chk.onchange = (e) => {
+        if (e.target.checked) this._activeFactors.add(e.target.value);
+        else this._activeFactors.delete(e.target.value);
+        this.updateFutureChart();
+      };
+    });
+
+    requestAnimationFrame(() => this.updateFutureChart());
+  }
+
+  updateFutureChart() {
+    const futureData = FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
+    if (!futureData) return;
+
+    let combinedGrowth = futureData.growthRate;
+    futureData.factors.forEach(f => {
+      if (this._activeFactors.has(f.id)) combinedGrowth += f.impact;
+    });
+
+    const years = [2024, 2026, 2028, 2030];
+    const vals = [];
+    let currentVal = futureData.baseline;
+    for(let i=0; i<years.length; i++) {
+      if (i === 0) {
+        vals.push(currentVal);
+      } else {
+        const yearDiff = years[i] - years[i-1];
+        currentVal = currentVal * Math.pow((1 + combinedGrowth), yearDiff);
+        vals.push(currentVal);
+      }
+    }
+
+    const svg = this.$('#histChart');
+    const w = 280, h = 140, pad = 12, padBottom = 25;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    
+    this.drawChartWithLabels(svg, years, vals, 2030, w, h, pad, padBottom, true);
+
+    const valString = fmt(vals[vals.length-1], this.DATA[this.currentDataType].unit);
+    
+    this.$('#panelContent').innerHTML = `
+      <div class="hist-value-box future-box">
+        <div class="hist-value-number">${valString}</div>
+        <div style="font-size:0.75rem; color:#576574; margin-top:4px;">Projected in 2030</div>
+      </div>
+      <div class="hist-info-text">
+        <strong>Algorithm Active:</strong><br/>
+        Baseline annual growth: ${(futureData.growthRate * 100).toFixed(1)}%. <br/>
+        Net projected growth: ${(combinedGrowth * 100).toFixed(1)}% annually.
+      </div>
+    `;
+  }
+
+  // Generalized chart drawing with Y-Axis min/max texts
+  drawChartWithLabels(svg, xLabels, vals, activeLabel, w, h, pad, padBottom, dashed = false) {
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max === min ? 1 : max - min;
+    
+    // Expand range slightly for aesthetics
+    const plotMin = min - (range * 0.1);
+    const plotMax = max + (range * 0.1);
+    const plotRange = plotMax - plotMin;
+
+    let pathD = "", pointsHtml = "";
+    xLabels.forEach((lbl, i) => {
+      const cx = pad + (i / (xLabels.length - 1)) * (w - pad * 2);
+      const cy = (h - padBottom) - ((vals[i] - plotMin) / plotRange) * ((h - padBottom) - pad);
+      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${lbl == activeLabel ? 'active' : ''}" />`;
+      // X-axis label (for future chart mainly, or clean up)
+      pointsHtml += `<text x="${cx}" y="${h - 5}" class="axis-label" text-anchor="middle">${lbl}</text>`;
+    });
+
+    // Y Axis min/max labels (on left side)
+    const unit = this.DATA[this.currentDataType].unit;
+    pointsHtml += `<text x="${pad}" y="${pad}" class="axis-label y-label" text-anchor="start">${fmt(max, unit)}</text>`;
+    pointsHtml += `<text x="${pad}" y="${h - padBottom - 5}" class="axis-label y-label" text-anchor="start">${fmt(min, unit)}</text>`;
+
+    const strokeClass = dashed ? "chart-line-dashed" : "chart-line";
+    svg.innerHTML = `<path class="${strokeClass}" d="${pathD}" />${pointsHtml}`;
   }
 
 
@@ -680,7 +723,7 @@ class DataComparisonMap extends HTMLElement {
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       this._isPanning = true; 
-      this._dragged = false; 
+      this._dragged = false;
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       wrap.style.cursor = 'grabbing'; e.preventDefault();
@@ -742,12 +785,8 @@ class DataComparisonMap extends HTMLElement {
     highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom;
-    const vh = this._origVB.h / this._zoom;
-    const cb = this._contentBBox;
-    const overX = vw * 0.15; 
-    const overY = vh * 0.15;
-    
+    const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
+    const overX = vw * 0.15, overY = vh * 0.15;
     return {
       minX: Math.min(cb.x - this._origVB.x - overX, 0),
       maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
@@ -774,12 +813,10 @@ class DataComparisonMap extends HTMLElement {
     duration = duration || 400;
     if (this._animFrame) cancelAnimationFrame(this._animFrame);
     const sz = this._zoom, sx = this._panX, sy = this._panY;
-    
     const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
     const overX = tvw * 0.15, overY = tvh * 0.15;
     targetPanX = Math.max(Math.min(cb.x - this._origVB.x - overX, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw + overX, 0), targetPanX));
     targetPanY = Math.max(Math.min(cb.y - this._origVB.y - overY, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh + overY, 0), targetPanY));
-    
     const st = performance.now();
     const tick = (now) => {
       const p = Math.min((now - st) / duration, 1);
@@ -908,9 +945,9 @@ class DataComparisonMap extends HTMLElement {
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
     
-    // Reactively update the left panel if a country is currently selected
-    if (this._selectedCountryCode) {
-      this.openSidePanel(this._selectedCountryCode, this._selectedCountryName);
+    this.updateActionMenu();
+    if (this._activePanelMode) {
+      this.openPanel(this._activePanelMode);
     }
   }
 
@@ -1009,46 +1046,42 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
-      <!-- MODE BAR & LEFT PANEL -->
-      <div class="panel-container" id="panelContainer">
+      <!-- LEFT PANEL FLOATING OVER MAP -->
+      <div class="side-panel left glass" id="leftPanel">
+        <button class="close-btn" id="closeLeftBtn">✕</button>
+        <div>
+          <div class="history-header" id="histCountry">Country</div>
+          <div class="history-sub" id="histMetric">Metric</div>
+        </div>
         
-        <div class="mode-bar" id="modeBar">
-          <button class="mode-btn active" data-mode="history">HISTORY</button>
-          <button class="mode-btn" data-mode="future">FUTURE</button>
+        <div class="chart-container" id="chartContainer">
+          <svg class="chart-svg" id="histChart"></svg>
         </div>
 
-        <div class="side-panel left glass" id="leftPanel">
-          <button class="close-btn" id="closeLeftBtn">✕</button>
-          <div>
-            <div class="history-header" id="panelCountry">Country</div>
-            <div class="history-sub" id="panelMetric">Metric</div>
-          </div>
-          
-          <!-- HISTORY VIEW -->
-          <div id="viewHistory" class="panel-view active">
-            <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
-            <div class="year-slider-wrap">
-              <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
-              <div class="year-labels" id="yearLabels">
-                <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
-              </div>
-            </div>
-            <div class="history-content" id="histText"></div>
-          </div>
+        <!-- Inject either slider OR future controls here -->
+        <div id="panelControls"></div>
 
-          <!-- FUTURE VIEW -->
-          <div id="viewFuture" class="panel-view">
-            <div class="future-desc" id="futDesc">Description</div>
-            <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
-            <div class="future-factors" id="futFactors">
-              <!-- Checkboxes injected here -->
-            </div>
-            <div class="future-result" id="futResult"></div>
-          </div>
-
+        <div class="history-content" id="panelContent">
+          <!-- Data info injected here -->
         </div>
       </div>
 
+      <!-- BOTTOM ACTION MENU -->
+      <div class="action-bar glass">
+        <div class="action-status">
+          <span class="action-label" id="actionCountryLabel">Select a country</span>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn" id="btnHistory" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M13 3a9 9 0 00-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0013 21a9 9 0 000-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+            History
+          </button>
+          <button class="action-btn" id="btnFuture" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V9h14v10zm0-12H5V5h14v2zm-7 4H7v5h5v-5z"/></svg>
+            Future Projection
+          </button>
+        </div>
+      </div>
     </div>
     
     <div class="controls glass">
