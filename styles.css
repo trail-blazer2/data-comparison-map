@@ -405,7 +405,11 @@
   line-height: 1.4;
   pointer-events: none;
 }
-.factor-row:hover .factor-tooltip { display: block; }
+
+/* ONLY display the tooltip when hovering the 'i' button */
+.factor-info-btn:hover .factor-tooltip { 
+  display: block; 
+}
 
 .fut-axis-label { font-size: 10px; fill: #8395a7; font-weight: bold; }
 
