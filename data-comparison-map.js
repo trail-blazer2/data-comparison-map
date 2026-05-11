@@ -803,41 +803,36 @@ class DataComparisonMap extends HTMLElement {
   }
 
   _appendPathPoint(path, command, point, precision) { path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`); }
-  _segmentCrossesAntimeridian(from, to) { const lonDelta = Math.abs(to[0] - from[0]); const wrapDelta = 360 - lonDelta; return lonDelta > ANTIMERIDIAN_SPLIT_THRESHOLD && wrapDelta < lonDelta && Math.abs(from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD && Math.abs(to[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD; }
-  _splitAntimeridianSegment(from, to) { const wrapsEastward = to[0] < from[0]; const exitLon = wrapsEastward ? 180 : -180; const entryLon = wrapsEastward ? -180 : 180; const adjustedToLon = wrapsEastward ? to[0] + 360 : to[0] - 360; const t = (exitLon - from[0]) / (adjustedToLon - from[0]); const interpolatedLat = from[1] + (to[1] - from[1]) * t; const exitPoint = this._proj([exitLon, interpolatedLat]); const entryPoint = this._proj([entryLon, interpolatedLat]); return { exitPoint, entryPoint }; }
 
   _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
     const path = [];
-    const firstPoint = proj(ring[0]);
+    
+    // Unwrap the longitude so polygons that cross the 180th meridian
+    // draw seamlessly off the edge of the map instead of tearing across it.
+    let currentLon = ring[0][0];
+    const firstPoint = proj([currentLon, ring[0][1]]);
     this._appendPathPoint(path, 'M', firstPoint, precision);
 
     for (let i = 1; i < ring.length; i += 1) {
-      const previous = ring[i - 1];
-      const current = ring[i];
-      if (!this._segmentCrossesAntimeridian(previous, current)) {
-        this._appendPathPoint(path, 'L', proj(current), precision);
-        continue;
-      }
-      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
-      this._appendPathPoint(path, 'L', exitPoint, precision);
-      path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint, precision);
-      this._appendPathPoint(path, 'L', proj(current), precision);
-    }
-    const lastPoint = ring[ring.length - 1];
-    const firstCoord = ring[0];
-    if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
-      const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
-      this._appendPathPoint(path, 'L', exitPoint, precision);
-      path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint, precision);
-      this._appendPathPoint(path, 'L', firstPoint, precision);
-      path.push('Z');
-      return path.join(' ');
+      let lon = ring[i][0];
+      let lat = ring[i][1];
+      
+      if (lon - currentLon > 180) lon -= 360;
+      else if (currentLon - lon > 180) lon += 360;
+      
+      currentLon = lon;
+      this._appendPathPoint(path, 'L', proj([lon, lat]), precision);
     }
     path.push('Z');
     return path.join(' ');
+  }
+
+  geoPaths(geom, proj, precision) {
+    const ring = r => this._ringToPath(r, proj, precision);
+    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
+    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
+    return [];
   }
 
   geoPaths(geom, proj, precision) {
