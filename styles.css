@@ -107,6 +107,10 @@
     width: 100%!important;
     height: 100%!important;
   }
+  .side-panel.left {
+    width: calc(100vw - 80px); /* 100% of viewport minus the mode buttons and margins */
+    max-width: 320px;
+  }
 }
 
 .nav-links { display: flex; align-items: center; gap: 8px; }
