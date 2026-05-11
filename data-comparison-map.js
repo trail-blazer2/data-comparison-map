@@ -375,8 +375,14 @@ class DataComparisonMap extends HTMLElement {
     pathEl.addEventListener('mouseenter', function(e) { 
       const hOverlay = self.$('#hoverOverlay');
       if(hOverlay) {
+        // Combine all paths for the country so islands highlight together
+        const code = pathEl.dataset.code;
+        const allPaths = self.$$(`.cp[data-code="${code}"]`);
+        let combinedD = '';
+        allPaths.forEach(p => combinedD += p.getAttribute('d') + ' ');
+
         hOverlay.style.transition = 'none';
-        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+        hOverlay.setAttribute('d', combinedD.trim());
         const origin = self._getEventCenter(e, pathEl);
         hOverlay.style.clipPath = `circle(0% at ${origin})`;
         hOverlay.offsetHeight; // reflow
@@ -401,11 +407,19 @@ class DataComparisonMap extends HTMLElement {
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
-      pathEl.classList.add('touched');
+      
+      const code = pathEl.dataset.code;
+      const allPaths = self.$$(`.cp[data-code="${code}"]`);
+      let combinedD = '';
+      allPaths.forEach(p => {
+        p.classList.add('touched');
+        combinedD += p.getAttribute('d') + ' ';
+      });
+
       const hOverlay = self.$('#hoverOverlay');
       if(hOverlay) {
         hOverlay.style.transition = 'none';
-        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+        hOverlay.setAttribute('d', combinedD.trim());
         hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
       }
       const touch = e.touches[0];
@@ -421,15 +435,20 @@ class DataComparisonMap extends HTMLElement {
     this._activeHistoryCode = code;
 
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
-    if (!pathEl) pathEl = this.$$(`.cp[data-code="${code}"]`)[0];
-    if (pathEl) pathEl.classList.add('selected');
+    
+    // Select all pieces of the country
+    const allPaths = this.$$(`.cp[data-code="${code}"]`);
+    allPaths.forEach(p => p.classList.add('selected'));
 
-    if (pathEl && e) {
+    if (allPaths.length > 0 && e) {
       const sOverlay = this.$('#selectOverlay');
       if (sOverlay) {
+        let combinedD = '';
+        allPaths.forEach(p => combinedD += p.getAttribute('d') + ' ');
+
         sOverlay.style.transition = 'none';
-        sOverlay.setAttribute('d', pathEl.getAttribute('d'));
-        const origin = this._getEventCenter(e, pathEl);
+        sOverlay.setAttribute('d', combinedD.trim());
+        const origin = this._getEventCenter(e, pathEl || allPaths[0]);
         sOverlay.style.clipPath = `circle(0% at ${origin})`;
         sOverlay.offsetHeight; 
         sOverlay.style.transition = 'clip-path 0.3s ease-out';
@@ -452,7 +471,7 @@ class DataComparisonMap extends HTMLElement {
       return;
     }
 
-    // Has data, enable buttons (but don't open the panel automatically)
+    // Has data, enable buttons
     this.$$('.mode-btn').forEach(b => b.disabled = false);
     
     // If the panel is ALREADY open, we seamlessly update it
@@ -468,7 +487,7 @@ class DataComparisonMap extends HTMLElement {
         }
     }
   }
-
+  
   closeLeftPanelOnly() {
     this.$('#leftPanel').classList.remove('open');
     this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
