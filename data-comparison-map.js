@@ -251,7 +251,7 @@ class DataComparisonMap extends HTMLElement {
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
-    if (this._isDesktop) this.initZoomPan();
+    this.initZoomPan();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -405,7 +405,6 @@ class DataComparisonMap extends HTMLElement {
       self.openSidePanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
-      e.preventDefault();
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       
       const code = pathEl.dataset.code;
@@ -422,11 +421,7 @@ class DataComparisonMap extends HTMLElement {
         hOverlay.setAttribute('d', combinedD.trim());
         hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
       }
-      const touch = e.touches[0];
-      const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
-      self.ttShow(fakeEvent);
-      self.ttMove(fakeEvent);
-    }, { passive: false });
+    }, { passive: true });
   }
 
   openSidePanel(code, name, pathEl, e) {
@@ -687,9 +682,20 @@ class DataComparisonMap extends HTMLElement {
     if (!svg || !wrap) return;
     this._origVB = { ...WORLD_VIEWBOX };
     this._contentBBox = { ...WORLD_CONTENT_BBOX };
-    this._zoom = 1; this._panX = 0; this._panY = 0;
+    
+    // Make mobile start more zoomed in and centered
+    if (!this._isDesktop) {
+      this._zoom = 1.8; 
+      const vw = this._origVB.w / this._zoom;
+      const vh = this._origVB.h / this._zoom;
+      this._panX = (this._origVB.w - vw) / 2 + 50; // Shifted slightly for better center
+      this._panY = (this._origVB.h - vh) / 2;
+    } else {
+      this._zoom = 1; this._panX = 0; this._panY = 0;
+    }
     this._applyTransform();
 
+    // -- DESKTOP MOUSE / WHEEL EVENTS --
     wrap.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
@@ -728,6 +734,71 @@ class DataComparisonMap extends HTMLElement {
     });
     wrap.addEventListener('dblclick', (e) => { e.preventDefault(); this._animateTo(1, 0, 0); });
 
+    // -- MOBILE TOUCH EVENTS --
+    let initialDist = 0;
+    let initialMidX = 0;
+    let initialMidY = 0;
+    let startZoom = 1;
+
+    wrap.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        this._isPanning = true; 
+        this._dragged = false; 
+        this._panStartX = e.touches[0].clientX; 
+        this._panStartY = e.touches[0].clientY;
+        this._panStartPanX = this._panX; 
+        this._panStartPanY = this._panY;
+      } else if (e.touches.length === 2) {
+        this._isPanning = false; // Switch to pinch mode
+        const t1 = e.touches[0], t2 = e.touches[1];
+        initialDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        initialMidX = (t1.clientX + t2.clientX) / 2;
+        initialMidY = (t1.clientY + t2.clientY) / 2;
+        startZoom = this._zoom;
+        this._panStartPanX = this._panX; 
+        this._panStartPanY = this._panY;
+      }
+    }, { passive: true });
+
+    wrap.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && this._isPanning) {
+        const dx = e.touches[0].clientX - this._panStartX;
+        const dy = e.touches[0].clientY - this._panStartY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
+        
+        const rect = svg.getBoundingClientRect(); 
+        const vb = this._getViewBox();
+        this._panX = this._panStartPanX - dx * (vb.w / rect.width);
+        this._panY = this._panStartPanY - dy * (vb.h / rect.height);
+        this._applyTransform();
+      } else if (e.touches.length === 2) {
+        this._dragged = true;
+        e.preventDefault(); // Stop page scrolling during pinch
+        const t1 = e.touches[0], t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const scale = dist / initialDist;
+        const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * scale));
+        
+        const rect = svg.getBoundingClientRect();
+        const mx = (initialMidX - rect.left) / rect.width;
+        const my = (initialMidY - rect.top) / rect.height;
+        
+        const oldW = this._origVB.w / startZoom, newW = this._origVB.w / newZoom;
+        const oldH = this._origVB.h / startZoom, newH = this._origVB.h / newZoom;
+        
+        this._panX = this._panStartPanX + (oldW - newW) * mx; 
+        this._panY = this._panStartPanY + (oldH - newH) * my;
+        this._zoom = newZoom; 
+        this._clampAndApply();
+      }
+    }, { passive: false });
+
+    wrap.addEventListener('touchend', () => {
+      this._isPanning = false;
+      this._snapBack();
+    });
+
+    // Zoom Buttons
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
       const nz = Math.min(this._maxZoom, this._zoom + 0.3);
