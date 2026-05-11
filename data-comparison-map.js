@@ -329,6 +329,15 @@ class DataComparisonMap extends HTMLElement {
     }
   }
 
+  closeHistoryPanel() {
+    this._selectedCountryCode = null;
+    this._selectedCountryName = null;
+    this._activeHistoryCode = null;
+    this.$('#leftPanel').classList.remove('open');
+    this.$$('.cp').forEach(el => el.classList.remove('selected'));
+    this._renderOverlays();
+  }
+
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
@@ -339,10 +348,19 @@ class DataComparisonMap extends HTMLElement {
     this._syncDetailLayerVisibility();
 
     const self = this;
+    // Click ocean to deselect
+    svg.addEventListener('click', function(e) {
+      if (self._dragged) return; // ignore if we just dragged
+      if (!e.target.classList.contains('cp')) {
+        self.closeHistoryPanel();
+      }
+    });
+
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
         self.ttHide();
+        self.closeHistoryPanel();
       }
     });
   }
@@ -380,6 +398,7 @@ class DataComparisonMap extends HTMLElement {
       self.ttHide(); 
     });
     pathEl.addEventListener('click', function(e) { 
+      if (self._dragged) return; // Prevent clicking when panning map
       self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); 
     });
     pathEl.addEventListener('touchstart', function(e) {
@@ -396,11 +415,15 @@ class DataComparisonMap extends HTMLElement {
   }
 
   openHistoryPanel(code, name) {
+    this._selectedCountryCode = code;
+    this._selectedCountryName = name;
+
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     this.$$(`.cp[data-code="${code}"]`).forEach(el => el.classList.add('selected'));
     
     this._renderOverlays();
 
+    // If no history data exists, close panel, but KEEP the country selected in memory
     if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
       this.$('#leftPanel').classList.remove('open');
       return;
@@ -414,11 +437,7 @@ class DataComparisonMap extends HTMLElement {
     slider.oninput = (e) => this.updateHistoryView(e.target.value);
     
     this.$('#leftPanel').classList.add('open');
-    this.$('#closeLeftBtn').onclick = () => {
-      this.$('#leftPanel').classList.remove('open');
-      this.$$('.cp').forEach(el => el.classList.remove('selected'));
-      this._renderOverlays();
-    };
+    this.$('#closeLeftBtn').onclick = () => this.closeHistoryPanel();
 
     requestAnimationFrame(() => this.updateHistoryView(slider.value));
   }
@@ -486,12 +505,19 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      this._isPanning = true; this._panStartX = e.clientX; this._panStartY = e.clientY;
+      this._isPanning = true; 
+      this._dragged = false; // Reset drag tracker
+      this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       wrap.style.cursor = 'grabbing'; e.preventDefault();
     });
+    
     window.addEventListener('mousemove', (e) => {
       if (!this._isPanning) return;
+      // Mark as dragged only if mouse moves more than 3px
+      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
+        this._dragged = true;
+      }
       const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
       this._panX = this._panStartPanX - (e.clientX - this._panStartX) * (vb.w / rect.width);
       this._panY = this._panStartPanY - (e.clientY - this._panStartY) * (vb.h / rect.height);
@@ -701,9 +727,9 @@ class DataComparisonMap extends HTMLElement {
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
     
-    // Reactively update the left panel if it's open!
-    if (this.$('#leftPanel').classList.contains('open') && this._activeHistoryCode) {
-      this.openHistoryPanel(this._activeHistoryCode, this.$('#histCountry').textContent);
+    // Reactively update the left panel if a country is currently selected!
+    if (this._selectedCountryCode) {
+      this.openHistoryPanel(this._selectedCountryCode, this._selectedCountryName);
     }
   }
 
