@@ -575,9 +575,11 @@ class DataComparisonMap extends HTMLElement {
       svg = this.$('#futChart');
     }
     
-    // Set up standard gradient defs once
+    // Set up standard gradient defs and static bottom axis labels once
     svg.innerHTML = `<defs><linearGradient id="futGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8395a7"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>
-                     <path class="chart-line" id="futLine" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />`;
+                     <path class="chart-line" id="futLine" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />
+                     <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
+                     <text x="268" y="118" class="fut-axis-label" text-anchor="end">2029</text>`;
     
     this.updateFutureChart(code, futData, true);
   }
@@ -637,14 +639,20 @@ class DataComparisonMap extends HTMLElement {
         lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         lbl.setAttribute('id', `fl${i}`);
         lbl.setAttribute('class', 'fut-label');
-        lbl.setAttribute('text-anchor', 'middle');
-        lbl.textContent = (y==2024||y==2029)?y:'';
         svg.appendChild(lbl);
       }
       pt.setAttribute('cx', cx);
       pt.setAttribute('cy', cy);
       lbl.setAttribute('x', cx);
       lbl.setAttribute('y', cy - 10);
+
+      // Only show values on the very first and last point
+      if (i === 0 || i === 5) {
+        lbl.textContent = fmt(currentValues[i], this.DATA[this.currentDataType].unit);
+        lbl.setAttribute('text-anchor', i === 0 ? 'start' : 'end');
+      } else {
+        lbl.textContent = '';
+      }
     });
     
     const line = svg.querySelector('#futLine');
