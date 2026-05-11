@@ -313,6 +313,7 @@
   opacity: 0;
   pointer-events: auto; /* Let clicks work on the panel */
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  overflow-y: auto;
 }
 .side-panel.left.open { transform: translateX(0); opacity: 1; }
 
@@ -353,7 +354,15 @@
 .future-desc { font-size: 0.75rem; color: #576574; line-height: 1.5; font-style: italic; margin-bottom: 5px; }
 .future-factors { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; flex: 1; overflow-y: auto; padding-right: 5px; }
 .future-factors::-webkit-scrollbar { width: 3px; }
-.future-factors::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+/* Move scrolling to the main panel so tooltips aren't clipped by inner containers */
+.side-panel.left {
+  overflow-y: auto;
+}
+.future-factors { 
+  display: flex; flex-direction: column; gap: 10px; margin-top: 10px; 
+  flex: 1; padding-right: 5px; 
+  overflow: visible; /* Removed auto to prevent clipping */
+}
 
 .factor-row { 
   display: flex; align-items: flex-start; gap: 8px; 
@@ -362,7 +371,7 @@
   position: relative; z-index: 1; 
 }
 .factor-row:hover { 
-  z-index: 10; /* Ensures the active row and its tooltip overlap the rows below */
+  z-index: 100; /* Super high z-index on hover */
 }
 .factor-label { display: flex; gap: 10px; cursor: pointer; flex: 1; align-items: center; }
 .factor-cb { display: none; }
@@ -375,28 +384,28 @@
   width: 18px; height: 18px; border-radius: 50%; background: rgba(30,58,95,0.1); 
   color: #1e3a5f; font-size: 11px; font-weight: bold; display: flex; align-items: center; 
   justify-content: center; cursor: help; flex-shrink: 0;
-  /* Removed position: relative so the tooltip anchors to the full factor-row instead */
 }
+
 .factor-tooltip {
   display: none; 
   position: absolute; 
-  top: calc(100% + 4px); /* Drops directly below the active row */
-  left: 0; 
-  right: 0; 
-  width: auto; /* Stretches perfectly to the row width */
+  bottom: 100%; /* Pops UP strictly above the row */
+  right: 0;     /* Anchors to the right side of the row */
+  width: 240px;
+  margin-bottom: 8px; /* Gap between row and tooltip */
   background: #fff; 
   padding: 12px 14px; 
   border-radius: 8px; 
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.15); 
   font-size: 0.75rem; 
   font-weight: normal; 
   color: #4b5563; 
-  z-index: 100; 
   border: 1px solid #ddd; 
   text-align: left; 
   line-height: 1.4;
+  pointer-events: none;
 }
-.factor-info-btn:hover .factor-tooltip { display: block; }
+.factor-row:hover .factor-tooltip { display: block; }
 
 .fut-axis-label { font-size: 10px; fill: #8395a7; font-weight: bold; }
 
