@@ -92,22 +92,10 @@ const ALPHA2_TO_NAME = {
 };
 
 const CATEGORY_META = {
-  economy: {
-    label: 'Economy',
-    icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>'
-  },
-  demographics: {
-    label: 'Demographics',
-    icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>'
-  },
-  society: {
-    label: 'Society',
-    icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>'
-  },
-  public_services: {
-    label: 'Services',
-    icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>'
-  }
+  economy: { label: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
+  demographics: { label: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
+  society: { label: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
+  public_services: { label: 'Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
 };
 
 function getColor(t) {
@@ -193,6 +181,57 @@ const HISTORY_DATA = {
   }
 };
 
+// Future Projection Engine Data
+const FUTURE_DATA = {
+  gdp_per_capita: {
+    CZ: {
+      desc: "The Czech Republic's growth isn't really decided in Prague; it’s decided by consumer demand in Germany, trade policy in Washington, and the global price of gas/electricity.",
+      base_growth: 0.005, // 0.5% default baseline growth
+      factors: [
+        { id: "cz_auto", title: "Does the German Auto Industry Recover?", info: "Since the Czech Republic is essentially an industrial sub-supplier for Germany, our GDP is tied to their success.", yes: "If German car brands successfully pivot to EVs, Czech factories will boom.", no: "If Germany stays in a recession, the Czech Republic's industrial core will shrink.", impact: 0.02 },
+        { id: "cz_trade", title: "Do Global Trade Tariffs Stay Low?", info: "The Czech Republic is one of the most export-dependent countries in the world.", yes: "If global trade remains open, Czech products will continue to drive growth.", no: "If the US imposes heavy tariffs, it will devastate Czech exports.", impact: 0.015 },
+        { id: "cz_energy", title: "Will Energy Prices Stabilize?", info: "Czech industry is 'energy-heavy' (steel, glass, chemicals, automotive).", yes: "If the Czech Republic builds out new nuclear blocks, factories will stay.", no: "If electricity stays expensive, manufacturers will move.", impact: 0.01 }
+      ]
+    },
+    DE: {
+      desc: "Germany is transitioning from an export-led industrial powerhouse to a more service-oriented economy amidst severe demographic and energy challenges.",
+      base_growth: 0.002,
+      factors: [
+        { id: "de_energy", title: "Successful Green Energy Transition?", info: "Germany's 'Energiewende' must provide cheap, reliable power for heavy industry.", yes: "Abundant renewables lower industrial costs, keeping manufacturing domestic.", no: "High energy costs cause deindustrialization and capital flight.", impact: 0.015 },
+        { id: "de_tech", title: "Can Germany Catch Up in AI & Software?", info: "Germany dominates hardware but lags in global software and AI sectors.", yes: "Massive EU/state investment creates a booming European tech hub.", no: "Continued reliance on legacy mechanics limits productivity growth.", impact: 0.012 },
+        { id: "de_labor", title: "Integration of Skilled Migrants?", info: "With a rapidly aging workforce, Germany needs millions of skilled workers.", yes: "Successful integration fills labor shortages and boosts consumption.", no: "Labor shortages cripple mid-sized 'Mittelstand' companies.", impact: 0.01 }
+      ]
+    },
+    US: {
+      desc: "The US economy relies on massive consumer spending, global dollar dominance, and undisputed leadership in the technology and financial sectors.",
+      base_growth: 0.015,
+      factors: [
+        { id: "us_ai", title: "Does AI Drive the Next Productivity Boom?", info: "The US leads the global AI race, which promises massive efficiency gains.", yes: "AI adoption creates a 'Roaring 2020s' productivity miracle.", no: "AI proves to be a bubble with minimal real-world economic translation.", impact: 0.02 },
+        { id: "us_debt", title: "Can the US Manage its National Debt?", info: "Rising interest rates make the massive US deficit more expensive to maintain.", yes: "Fiscal discipline and high growth naturally shrink the debt burden.", no: "Debt servicing crowds out infrastructure and research investments.", impact: 0.01 },
+        { id: "us_reshoring", title: "Does 'Made in America' Reshoring Succeed?", info: "Trillions are being spent to bring chip and battery manufacturing back to the US.", yes: "New domestic factories create high-paying jobs and secure supply chains.", no: "High domestic labor costs make reshored products uncompetitive globally.", impact: 0.015 }
+      ]
+    },
+    CN: {
+      desc: "China is shifting from real-estate and infrastructure-led growth to high-tech manufacturing, while battling deflation and a shrinking population.",
+      base_growth: 0.03,
+      factors: [
+        { id: "cn_export", title: "Do Chinese EVs Dominate Global Markets?", info: "China has massively subsidized its EV and solar panel industries.", yes: "Chinese brands become the global standard, driving massive export wealth.", no: "Western tariffs block Chinese cars, stalling the manufacturing engine.", impact: 0.02 },
+        { id: "cn_property", title: "Does the Real Estate Market Stabilize?", info: "Property once drove 25% of China's GDP, but is now in a managed decline.", yes: "The government safely absorbs bad debts, restoring consumer confidence.", no: "A prolonged property slump causes a 'Japanese-style' lost decade.", impact: 0.015 },
+        { id: "cn_consumer", title: "Will the Chinese Consumer Spend?", info: "China needs its middle class to spend more to offset falling exports.", yes: "Social safety nets improve, unleashing trillions in domestic spending.", no: "Deflationary mindset takes hold; citizens save instead of spend.", impact: 0.015 }
+      ]
+    },
+    SK: {
+      desc: "Slovakia is the world's largest car producer per capita, making it highly vulnerable to automotive trends and automation.",
+      base_growth: 0.01,
+      factors: [
+        { id: "sk_ev", title: "Successful Pivot to EV Manufacturing?", info: "Slovak plants assemble traditional cars; they must retool for electric vehicles.", yes: "Major battery plants are built, and factories successfully retool.", no: "Automakers shift EV production to cheaper or more subsidized countries.", impact: 0.02 },
+        { id: "sk_brain", title: "Reversing the 'Brain Drain'?", info: "Hundreds of thousands of young Slovaks leave for Czechia and Austria.", yes: "Economic reforms and tech investments lure young professionals back.", no: "The loss of educated youth stifles innovation and tax revenues.", impact: 0.015 },
+        { id: "sk_infra", title: "Completion of Key Infrastructure?", info: "Slovakia's east-west highway and rail networks have been delayed for decades.", yes: "EU funds are fully utilized to connect the poorer East to European markets.", no: "Corruption and bureaucracy leave EU funds unspent and infrastructure broken.", impact: 0.01 }
+      ]
+    }
+  }
+};
+
 
 // ============================================================
 class DataComparisonMap extends HTMLElement {
@@ -216,15 +255,12 @@ class DataComparisonMap extends HTMLElement {
     this._panStartY = 0;
     this._panStartPanX = 0;
     this._panStartPanY = 0;
+    this._dragged = false;
     this._animFrame = null;
     this._isHighResVisible = false;
     this._isDesktop = false;
     this._minZoom = 1;
     this._maxZoom = 6;
-    
-    // Future tracking
-    this._activeFutureFactors = [];
-    this._activeTab = 'history';
   }
 
   connectedCallback() {
@@ -271,9 +307,18 @@ class DataComparisonMap extends HTMLElement {
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     const supportBtn = this.$('#supportBtn');
-    if (supportBtn) supportBtn.addEventListener('click', () => window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*'));
+    if (supportBtn) {
+      supportBtn.addEventListener('click', () => {
+        window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*');
+      });
+    }
+
     const aboutBtn = this.$('#aboutBtn');
-    if (aboutBtn) aboutBtn.addEventListener('click', () => window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'));
+    if (aboutBtn) {
+      aboutBtn.addEventListener('click', () => {
+        window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*');
+      });
+    }
 
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
@@ -291,8 +336,6 @@ class DataComparisonMap extends HTMLElement {
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
     if (this._isDesktop) this.initZoomPan();
-    
-    this.initTabs();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -309,6 +352,7 @@ class DataComparisonMap extends HTMLElement {
     pt.x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     pt.y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     if (pt.x === 0 && pt.y === 0) return '50% 50%';
+    
     try {
       const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
       const bbox = pathEl.getBBox();
@@ -316,7 +360,9 @@ class DataComparisonMap extends HTMLElement {
       const px = ((svgP.x - bbox.x) / bbox.width) * 100;
       const py = ((svgP.y - bbox.y) / bbox.height) * 100;
       return `${Math.max(0, Math.min(100, px))}% ${Math.max(0, Math.min(100, py))}%`;
-    } catch(err) { return '50% 50%'; }
+    } catch(err) {
+      return '50% 50%';
+    }
   }
 
   drawMap() {
@@ -328,27 +374,37 @@ class DataComparisonMap extends HTMLElement {
     this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
+    // Persistent overlays for animation
     const overlayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     overlayG.setAttribute('id', 'mapOverlayGroup');
     overlayG.style.pointerEvents = 'none';
     
     const sPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    sPath.setAttribute('id', 'selectOverlay'); sPath.setAttribute('class', 'overlay-selected'); sPath.style.clipPath = 'circle(0% at 50% 50%)';
+    sPath.setAttribute('id', 'selectOverlay');
+    sPath.setAttribute('class', 'overlay-selected');
+    sPath.style.clipPath = 'circle(0% at 50% 50%)';
+    
     const hPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    hPath.setAttribute('id', 'hoverOverlay'); hPath.setAttribute('class', 'overlay-hovered'); hPath.style.clipPath = 'circle(0% at 50% 50%)';
+    hPath.setAttribute('id', 'hoverOverlay');
+    hPath.setAttribute('class', 'overlay-hovered');
+    hPath.style.clipPath = 'circle(0% at 50% 50%)';
 
-    overlayG.appendChild(hPath); overlayG.appendChild(sPath);
+    // Hover FIRST, then select SECOND, so select is always on top!
+    overlayG.appendChild(hPath);
+    overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
     const self = this;
+    // Click ocean to deselect
     svg.addEventListener('click', function(e) {
-      if (self._dragged) return;
-      if (!e.target.classList.contains('cp')) self.closeHistoryPanel();
+      if (self._dragged) return; // ignore if we just dragged
+      if (!e.target.classList.contains('cp')) self.closeSidePanel();
     });
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
-        self.ttHide(); self.closeHistoryPanel();
+        self.ttHide();
+        self.closeSidePanel();
       }
     });
   }
@@ -361,7 +417,9 @@ class DataComparisonMap extends HTMLElement {
       if (!a2) return;
       this.geoPaths(f.geometry, proj, precision).forEach(d => {
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d); p.dataset.code = a2; p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p.setAttribute('d', d);
+        p.dataset.code = a2;
+        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
         this._bindCountryInteractions(p);
         group.appendChild(p);
@@ -373,59 +431,49 @@ class DataComparisonMap extends HTMLElement {
   _bindCountryInteractions(pathEl) {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
-      const hOverlay = self.$('#hoverOverlay'); hOverlay.style.transition = 'none';
-      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
-      const origin = self._getEventCenter(e, pathEl);
-      hOverlay.style.clipPath = `circle(0% at ${origin})`; hOverlay.offsetHeight; 
-      hOverlay.style.transition = 'clip-path 0.25s ease-out'; hOverlay.style.clipPath = `circle(150% at ${origin})`;
+      const hOverlay = self.$('#hoverOverlay');
+      if(hOverlay) {
+        hOverlay.style.transition = 'none';
+        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+        const origin = self._getEventCenter(e, pathEl);
+        hOverlay.style.clipPath = `circle(0% at ${origin})`;
+        hOverlay.offsetHeight; // reflow
+        hOverlay.style.transition = 'clip-path 0.25s ease-out';
+        hOverlay.style.clipPath = `circle(150% at ${origin})`;
+      }
       self.ttShow(e); 
     });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
     pathEl.addEventListener('mouseleave', function(e) { 
-      const hOverlay = self.$('#hoverOverlay'); const origin = self._getEventCenter(e, pathEl);
-      hOverlay.style.clipPath = `circle(0% at ${origin})`; 
+      const hOverlay = self.$('#hoverOverlay');
+      if(hOverlay) {
+        const origin = self._getEventCenter(e, pathEl);
+        hOverlay.style.clipPath = `circle(0% at ${origin})`; // Shrink back to exit point
+      }
       self.ttHide(); 
     });
     pathEl.addEventListener('click', function(e) { 
       if (self._dragged) return; 
-      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
+      self.openSidePanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       pathEl.classList.add('touched');
-      const hOverlay = self.$('#hoverOverlay'); hOverlay.style.transition = 'none';
-      hOverlay.setAttribute('d', pathEl.getAttribute('d')); hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
-      const touch = e.touches[0]; const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
-      self.ttShow(fakeEvent); self.ttMove(fakeEvent);
+      const hOverlay = self.$('#hoverOverlay');
+      if(hOverlay) {
+        hOverlay.style.transition = 'none';
+        hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+        hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
+      }
+      const touch = e.touches[0];
+      const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
+      self.ttShow(fakeEvent);
+      self.ttMove(fakeEvent);
     }, { passive: false });
   }
 
-  initTabs() {
-    this.$$('.panel-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        this.$$('.panel-tab').forEach(t => t.classList.remove('active'));
-        this.$$('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        tab.classList.add('active');
-        this._activeTab = tab.dataset.tab;
-        this.$(`#tabContent${this._activeTab.charAt(0).toUpperCase() + this._activeTab.slice(1)}`).classList.add('active');
-        
-        if (this._selectedCountryCode) {
-          if (this._activeTab === 'history') {
-            this.updateHistoryView(this.$('#histSlider').value);
-          } else {
-            this.updateFutureView();
-          }
-        }
-      });
-    });
-    
-    // Close button
-    this.$('#closeLeftBtn').onclick = () => this.closeHistoryPanel();
-  }
-
-  openHistoryPanel(code, name, pathEl, e) {
+  openSidePanel(code, name, pathEl, e) {
     this._selectedCountryCode = code;
     this._selectedCountryName = name;
 
@@ -435,47 +483,60 @@ class DataComparisonMap extends HTMLElement {
 
     if (pathEl && e) {
       const sOverlay = this.$('#selectOverlay');
-      sOverlay.style.transition = 'none';
-      sOverlay.setAttribute('d', pathEl.getAttribute('d'));
-      const origin = this._getEventCenter(e, pathEl);
-      sOverlay.style.clipPath = `circle(0% at ${origin})`;
-      sOverlay.offsetHeight; 
-      sOverlay.style.transition = 'clip-path 0.3s ease-out';
-      sOverlay.style.clipPath = `circle(150% at ${origin})`;
+      if (sOverlay) {
+        sOverlay.style.transition = 'none';
+        sOverlay.setAttribute('d', pathEl.getAttribute('d'));
+        const origin = this._getEventCenter(e, pathEl);
+        sOverlay.style.clipPath = `circle(0% at ${origin})`;
+        sOverlay.offsetHeight; 
+        sOverlay.style.transition = 'clip-path 0.3s ease-out';
+        sOverlay.style.clipPath = `circle(150% at ${origin})`;
+      }
     }
 
     if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
-      this.$('#leftPanel').classList.remove('open');
+      this.$('#panelContainer').classList.remove('open');
       return;
     }
 
-    this.$('#histCountry').textContent = name;
-    this.$('#histMetric').textContent = this.DATA[this.currentDataType].label;
+    this._activeHistoryCode = code;
+    this.$('#panelCountry').textContent = name;
+    this.$('#panelMetric').textContent = this.DATA[this.currentDataType].label;
     
-    // Reset sliders/factors
+    // Bind Mode Buttons
+    this.$$('.mode-btn').forEach(btn => {
+      btn.onclick = () => {
+        this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.$$('.panel-view').forEach(v => v.classList.remove('active'));
+        this.$(`#view${btn.dataset.mode === 'history' ? 'History' : 'Future'}`).classList.add('active');
+      };
+    });
+
     const slider = this.$('#histSlider');
-    slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
-    this._activeFutureFactors = []; 
+    slider.oninput = (e) => this.updateHistoryView(e.target.value);
     
-    this.$('#leftPanel').classList.add('open');
-    
+    this.$('#panelContainer').classList.add('open');
+    this.$('#closeLeftBtn').onclick = () => this.closeSidePanel();
+
     requestAnimationFrame(() => {
-      if (this._activeTab === 'history') this.updateHistoryView(slider.value);
-      else this.updateFutureView();
+      this.updateHistoryView(slider.value);
+      this.buildFutureView(code);
     });
   }
 
-  closeHistoryPanel() {
+  closeSidePanel() {
     this._selectedCountryCode = null;
     this._selectedCountryName = null;
-    this.$('#leftPanel').classList.remove('open');
+    this._activeHistoryCode = null;
+    this.$('#panelContainer').classList.remove('open');
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     const sOverlay = this.$('#selectOverlay');
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
   }
 
   updateHistoryView(year) {
-    const metricData = HISTORY_DATA[this.currentDataType]?.[this._selectedCountryCode];
+    const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
     if (!metricData) return;
 
     this.$('#yearLabels').querySelectorAll('span').forEach(span => {
@@ -484,7 +545,7 @@ class DataComparisonMap extends HTMLElement {
     });
     
     const svg = this.$('#histChart');
-    const w = 240, h = 140, pad = 12;
+    const w = 280, h = 140, pad = 12;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     const years = [2020, 2021, 2022, 2023, 2024];
     const vals = years.map(y => metricData[y]);
@@ -513,100 +574,86 @@ class DataComparisonMap extends HTMLElement {
     `;
   }
 
-  updateFutureView() {
-    if (!window.FutureAlgorithm || !window.FutureAlgorithm.FACTORS[this.currentDataType]) {
-      this.$('#futureDesc').textContent = "No future projection algorithm available for this data type.";
-      this.$('#futureChart').innerHTML = '';
-      this.$('#futureFactors').innerHTML = '';
+  buildFutureView(code) {
+    const futData = FUTURE_DATA[this.currentDataType] && FUTURE_DATA[this.currentDataType][code];
+    const container = this.$('#futFactors');
+    container.innerHTML = '';
+    
+    if (!futData) {
+      this.$('#futDesc').textContent = "Future projections not yet available for this metric/country.";
+      this.$('#futChart').innerHTML = '';
+      this.$('#futResult').innerHTML = '';
       return;
     }
 
-    const metric = this.currentDataType;
-    const fConfig = window.FutureAlgorithm.FACTORS[metric];
-    this.$('#futureDesc').textContent = fConfig.description;
-
-    const currentData = HISTORY_DATA[metric]?.[this._selectedCountryCode];
-    if (!currentData) return;
-    const baseVal2024 = currentData[2024];
-
-    // Build the fixed chart bounds
-    const bounds = window.FutureAlgorithm.getChartRange(metric, baseVal2024);
+    this.$('#futDesc').textContent = futData.desc;
     
-    // Draw factors 
-    this.renderFutureFactors(fConfig.factors);
-
-    // Calculate array of values
-    const projection = window.FutureAlgorithm.calculateFutureData(metric, baseVal2024, this._activeFutureFactors);
-
-    // Draw Future Chart (Static Axis)
-    const svg = this.$('#futureChart');
-    const w = 240, h = 140, pad = 12;
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    
-    const range = bounds.max === bounds.min ? 1 : bounds.max - bounds.min;
-    
-    let pathD = "", pointsHtml = "";
-    projection.forEach((val, i) => {
-      const cx = pad + (i / (projection.length - 1)) * (w - pad * 2);
-      const cy = h - pad - ((val - bounds.min) / range) * (h - pad * 2);
-      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
-      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${i === 4 ? 'active' : ''}" />`;
-    });
-    svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
-
-    // Show 2029 projected final value text
-    const finalVal = projection[4];
-    const unit = this.DATA[this.currentDataType].unit;
-    this.$('#futureText').innerHTML = `
-      <div class="hist-value-box" style="margin-top: 5px;">
-        <div style="font-size:0.7rem; color:#8395a7; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">2029 Projection</div>
-        <div class="hist-value-number">${fmt(finalVal, unit)}</div>
-      </div>
-    `;
-  }
-
-  renderFutureFactors(factors) {
-    const container = this.$('#futureFactors');
-    container.innerHTML = '';
-
-    factors.forEach(f => {
-      const isActive = this._activeFutureFactors.includes(f.id);
-      
-      const el = document.createElement('div');
-      el.className = 'factor-item';
-      el.innerHTML = `
-        <div class="factor-info">
-          <span class="factor-name">${f.label}</span>
-          <span class="factor-icon" title="${f.desc}">i</span>
-        </div>
-        <div class="toggle-group">
-          <button class="toggle-btn btn-yes ${isActive ? 'active' : ''}">YES</button>
-          <button class="toggle-btn btn-no ${!isActive ? 'active' : ''}">NO</button>
+    futData.factors.forEach((f, i) => {
+      const div = document.createElement('div');
+      div.className = 'factor-row';
+      div.innerHTML = `
+        <label class="factor-label">
+          <input type="checkbox" class="factor-cb" data-impact="${f.impact}">
+          <span class="cb-custom"></span>
+          <span class="factor-title">${f.title}</span>
+        </label>
+        <div class="factor-info-btn">i
+          <div class="factor-tooltip">
+            <strong>Context:</strong> ${f.info}<br/><br/>
+            <span style="color:#27ae60">✔ ${f.yes}</span><br/>
+            <span style="color:#c0392b">✘ ${f.no}</span>
+          </div>
         </div>
       `;
-      
-      // Bind click
-      const yesBtn = el.querySelector('.btn-yes');
-      const noBtn = el.querySelector('.btn-no');
-
-      yesBtn.onclick = () => {
-        if (!this._activeFutureFactors.includes(f.id)) {
-          this._activeFutureFactors.push(f.id);
-          this.updateFutureView();
-        }
-      };
-
-      noBtn.onclick = () => {
-        const idx = this._activeFutureFactors.indexOf(f.id);
-        if (idx !== -1) {
-          this._activeFutureFactors.splice(idx, 1);
-          this.updateFutureView();
-        }
-      };
-
-      container.appendChild(el);
+      div.querySelector('.factor-cb').onchange = () => this.updateFutureChart(code, futData);
+      container.appendChild(div);
     });
+
+    this.updateFutureChart(code, futData);
   }
+
+  updateFutureChart(code, futData) {
+    const baseVal = HISTORY_DATA[this.currentDataType][code][2024];
+    let totalGrowthRate = futData.base_growth;
+    
+    this.$$('.factor-cb').forEach(cb => {
+      if (cb.checked) totalGrowthRate += parseFloat(cb.dataset.impact);
+    });
+
+    // Project 5 years
+    const years = [2024, 2025, 2026, 2027, 2028, 2029];
+    const vals = [baseVal];
+    for(let i=1; i<=5; i++) {
+      vals.push(vals[i-1] * (1 + totalGrowthRate));
+    }
+
+    const svg = this.$('#futChart');
+    const w = 280, h = 120, pad = 12;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    
+    const min = Math.min(baseVal, ...vals), max = Math.max(baseVal, ...vals);
+    const range = max === min ? 1 : max - min;
+
+    let pathD = "", pointsHtml = "";
+    years.forEach((y, i) => {
+      const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
+      const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
+      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point fut-point" />
+                     <text x="${cx}" y="${cy-10}" class="fut-label" text-anchor="middle">${y==2024||y==2029?y:''}</text>`;
+    });
+    
+    // Draw chart with a different color scheme for the future
+    svg.innerHTML = `
+      <defs><linearGradient id="futGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8395a7"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>
+      <path class="chart-line" d="${pathD}" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />
+      ${pointsHtml}
+    `;
+
+    const finalVal = fmt(vals[5], this.DATA[this.currentDataType].unit);
+    this.$('#futResult').innerHTML = `Projected 2029: <strong>${finalVal}</strong>`;
+  }
+
 
   initZoomPan() {
     const svg = this.$('#mapSvg');
@@ -632,7 +679,8 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      this._isPanning = true; this._dragged = false;
+      this._isPanning = true; 
+      this._dragged = false; 
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       wrap.style.cursor = 'grabbing'; e.preventDefault();
@@ -640,7 +688,9 @@ class DataComparisonMap extends HTMLElement {
     
     window.addEventListener('mousemove', (e) => {
       if (!this._isPanning) return;
-      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) this._dragged = true;
+      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
+        this._dragged = true;
+      }
       const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
       this._panX = this._panStartPanX - (e.clientX - this._panStartX) * (vb.w / rect.width);
       this._panY = this._panStartPanY - (e.clientY - this._panStartY) * (vb.h / rect.height);
@@ -668,43 +718,79 @@ class DataComparisonMap extends HTMLElement {
     if (zoomReset) zoomReset.addEventListener('click', () => { this._animateTo(1, 0, 0); });
   }
 
-  _getViewBox() { const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom; return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h }; }
-  _applyTransform() { const svg = this.$('#mapSvg'); if (!svg) return; const vb = this._getViewBox(); svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`); }
+  _getViewBox() {
+    const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom;
+    return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
+  }
+  _applyTransform() {
+    const svg = this.$('#mapSvg'); if (!svg) return;
+    const vb = this._getViewBox();
+    svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
+  }
   _syncDetailLayerVisibility() {
-    const lowResGroup = this.$('.euro-group.low-res'); const highResGroup = this.$('.euro-group.high-res');
+    const lowResGroup = this.$('.euro-group.low-res');
+    const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
     if (this._isHighResVisible === showHighRes) return;
     this._isHighResVisible = showHighRes;
-    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible'; lowResGroup.style.opacity = showHighRes ? '0' : '1'; lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
-    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden'; highResGroup.style.opacity = showHighRes ? '1' : '0'; highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
+    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
+    lowResGroup.style.opacity = showHighRes ? '0' : '1';
+    lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
+    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden';
+    highResGroup.style.opacity = showHighRes ? '1' : '0';
+    highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom; const vh = this._origVB.h / this._zoom; const cb = this._contentBBox;
-    const overX = vw * 0.15; const overY = vh * 0.15;
-    return { minX: Math.min(cb.x - this._origVB.x - overX, 0), maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0), minY: Math.min(cb.y - this._origVB.y - overY, 0), maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0) };
+    const vw = this._origVB.w / this._zoom;
+    const vh = this._origVB.h / this._zoom;
+    const cb = this._contentBBox;
+    const overX = vw * 0.15; 
+    const overY = vh * 0.15;
+    
+    return {
+      minX: Math.min(cb.x - this._origVB.x - overX, 0),
+      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
+      minY: Math.min(cb.y - this._origVB.y - overY, 0),
+      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0)
+    };
   }
-  _clampPan() { const b = this._getPanBounds(); this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX)); this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY)); }
+  _clampPan() {
+    const b = this._getPanBounds();
+    this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
+    this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
+  }
   _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); }
   _snapBack() {
-    const b = this._getPanBounds(); const tx = Math.max(b.minX, Math.min(b.maxX, this._panX)); const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
-    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) { this._panX = tx; this._panY = ty; this._applyTransform(); return; }
+    const b = this._getPanBounds();
+    const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
+    const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
+    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) {
+      this._panX = tx; this._panY = ty; this._applyTransform(); return;
+    }
     this._animateTo(this._zoom, tx, ty, 350);
   }
   _animateTo(targetZoom, targetPanX, targetPanY, duration) {
-    duration = duration || 400; if (this._animFrame) cancelAnimationFrame(this._animFrame);
+    duration = duration || 400;
+    if (this._animFrame) cancelAnimationFrame(this._animFrame);
     const sz = this._zoom, sx = this._panX, sy = this._panY;
+    
     const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
     const overX = tvw * 0.15, overY = tvh * 0.15;
     targetPanX = Math.max(Math.min(cb.x - this._origVB.x - overX, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw + overX, 0), targetPanX));
     targetPanY = Math.max(Math.min(cb.y - this._origVB.y - overY, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh + overY, 0), targetPanY));
+    
     const st = performance.now();
     const tick = (now) => {
       const p = Math.min((now - st) / duration, 1);
-      const c1 = 1.70158, c3 = c1 + 1; const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
-      this._zoom = sz + (targetZoom - sz) * ease; this._panX = sx + (targetPanX - sx) * ease; this._panY = sy + (targetPanY - sy) * ease;
+      const c1 = 1.70158, c3 = c1 + 1;
+      const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
+      this._zoom = sz + (targetZoom - sz) * ease;
+      this._panX = sx + (targetPanX - sx) * ease;
+      this._panY = sy + (targetPanY - sy) * ease;
       this._applyTransform();
-      if (p < 1) this._animFrame = requestAnimationFrame(tick); else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
+      if (p < 1) this._animFrame = requestAnimationFrame(tick);
+      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
     };
     this._animFrame = requestAnimationFrame(tick);
   }
@@ -715,37 +801,67 @@ class DataComparisonMap extends HTMLElement {
 
   _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
-    const path = []; const firstPoint = proj(ring[0]); this._appendPathPoint(path, 'M', firstPoint, precision);
+    const path = [];
+    const firstPoint = proj(ring[0]);
+    this._appendPathPoint(path, 'M', firstPoint, precision);
+
     for (let i = 1; i < ring.length; i += 1) {
-      const previous = ring[i - 1]; const current = ring[i];
-      if (!this._segmentCrossesAntimeridian(previous, current)) { this._appendPathPoint(path, 'L', proj(current), precision); continue; }
+      const previous = ring[i - 1];
+      const current = ring[i];
+      if (!this._segmentCrossesAntimeridian(previous, current)) {
+        this._appendPathPoint(path, 'L', proj(current), precision);
+        continue;
+      }
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
-      this._appendPathPoint(path, 'L', exitPoint, precision); path.push('Z'); this._appendPathPoint(path, 'M', entryPoint, precision); this._appendPathPoint(path, 'L', proj(current), precision);
+      this._appendPathPoint(path, 'L', exitPoint, precision);
+      path.push('Z');
+      this._appendPathPoint(path, 'M', entryPoint, precision);
+      this._appendPathPoint(path, 'L', proj(current), precision);
     }
-    const lastPoint = ring[ring.length - 1]; const firstCoord = ring[0];
+    const lastPoint = ring[ring.length - 1];
+    const firstCoord = ring[0];
     if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
-      this._appendPathPoint(path, 'L', exitPoint, precision); path.push('Z'); this._appendPathPoint(path, 'M', entryPoint, precision); this._appendPathPoint(path, 'L', firstPoint, precision); path.push('Z');
+      this._appendPathPoint(path, 'L', exitPoint, precision);
+      path.push('Z');
+      this._appendPathPoint(path, 'M', entryPoint, precision);
+      this._appendPathPoint(path, 'L', firstPoint, precision);
+      path.push('Z');
       return path.join(' ');
     }
-    path.push('Z'); return path.join(' ');
+    path.push('Z');
+    return path.join(' ');
   }
-  geoPaths(geom, proj, precision) { const ring = r => this._ringToPath(r, proj, precision); if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')]; if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' ')); return []; }
 
-  moveSlider(container, activeBtn) { let slider = container.querySelector('.slider'); if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); } if (!activeBtn) { slider.classList.remove('visible'); return; } slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible'); }
+  geoPaths(geom, proj, precision) {
+    const ring = r => this._ringToPath(r, proj, precision);
+    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
+    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
+    return [];
+  }
+
+  moveSlider(container, activeBtn) {
+    let slider = container.querySelector('.slider');
+    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
+    if (!activeBtn) { slider.classList.remove('visible'); return; }
+    slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible');
+  }
 
   buildCategoryButtons() {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey }; const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
+      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
+      const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
       b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
     });
   }
 
   selectCategory(catKey) {
-    this.currentCategory = catKey; this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
-    this.buildDataTypeButtons(catKey); this._lastTtVal = null; this._lastTtDataType = null;
+    this.currentCategory = catKey;
+    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
+    this.buildDataTypeButtons(catKey);
+    this._lastTtVal = null; this._lastTtDataType = null;
     const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
@@ -753,8 +869,10 @@ class DataComparisonMap extends HTMLElement {
     const c = this.$('#dtBtns'); c.innerHTML = '';
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     (this.categories[catKey] || []).forEach(key => {
-      const dt = this.DATA[key]; if (!dt) return; const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      const srcCount = Object.keys(dt.sources).length; const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+      const dt = this.DATA[key]; if (!dt) return;
+      const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
+      const srcCount = Object.keys(dt.sources).length;
+      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
       b.onclick = () => this.selectDataType(key); c.appendChild(b);
     });
@@ -765,7 +883,8 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
-      const count = Object.keys(src.countries).length; const isEmpty = count === 0; const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
+      const count = Object.keys(src.countries).length; const isEmpty = count === 0;
+      const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
       else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
       c.appendChild(b);
@@ -773,7 +892,8 @@ class DataComparisonMap extends HTMLElement {
   }
 
   selectDataType(k) {
-    this.currentDataType = k; this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
+    this.currentDataType = k;
+    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     const dtc = this.$('#dtBtns'), ab = dtc.querySelector('.btn[data-key="' + k + '"]');
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
     this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
@@ -782,29 +902,31 @@ class DataComparisonMap extends HTMLElement {
     if (firstOk) {
       this.selectSource(firstOk[0]);
     } else {
-      this.currentSource = null; this.$('#mapTitle').textContent = dt.label; this.$('#mapSub').textContent = 'No data available for any source';
+      this.currentSource = null; this.$('#mapTitle').textContent = dt.label;
+      this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
     
-    // Refresh history panel if open
+    // Reactively update the left panel if a country is currently selected
     if (this._selectedCountryCode) {
-      this.$('#histMetric').textContent = this.DATA[this.currentDataType].label;
-      if (this._activeTab === 'history') this.updateHistoryView(this.$('#histSlider').value);
-      else this.updateFutureView();
+      this.openSidePanel(this._selectedCountryCode, this._selectedCountryName);
     }
   }
 
   selectSource(k) {
-    this.currentSource = k; this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
+    this.currentSource = k;
+    this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
     const sc = this.$('#srcBtns'), ab = sc.querySelector('.btn.active');
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(sc, ab)); });
     this.paint();
   }
 
   paint() {
-    const dt = this.DATA[this.currentDataType]; if (!dt) return; const src = dt.sources[this.currentSource]; if (!src) return;
-    this.$('#mapTitle').textContent = dt.label; this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
+    const dt = this.DATA[this.currentDataType]; if (!dt) return;
+    const src = dt.sources[this.currentSource]; if (!src) return;
+    this.$('#mapTitle').textContent = dt.label;
+    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return; }
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
@@ -817,16 +939,23 @@ class DataComparisonMap extends HTMLElement {
   }
 
   ttShow(e) {
-    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return; const src = dt.sources[this.currentSource]; if (!src) return;
-    const code = e.target.dataset.code; const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-    this.$('#ttName').textContent = e.target.dataset.name; this.$('#ttUnit').textContent = newVal != null ? dt.unit : ''; this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
+    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
+    const src = dt.sources[this.currentSource]; if (!src) return;
+    const code = e.target.dataset.code;
+    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
+    this.$('#ttName').textContent = e.target.dataset.name;
+    this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
+    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
     const valEl = this.$('#ttVal');
-    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal)) animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
+    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
+      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
     else valEl.textContent = fmt(newVal, dt.unit);
-    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType; this.checkDiscrepancy(code);
+    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
+    this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
     if (newVal != null) {
-      const vs = Object.values(src.countries).filter(v => v != null); const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+      const vs = Object.values(src.countries).filter(v => v != null);
+      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
       marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%'; marker.classList.add('visible');
     } else marker.classList.remove('visible');
     this.$('#tt').classList.add('visible');
@@ -834,11 +963,20 @@ class DataComparisonMap extends HTMLElement {
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) {
-    const el = this.$('#ttDisc'); const dt = this.DATA[this.currentDataType]; if (!dt) return;
-    const vals = []; Object.values(dt.sources).forEach(s => { if (s.countries[code] != null) vals.push(s.countries[code]); });
+    const el = this.$('#ttDisc');
+    const dt = this.DATA[this.currentDataType];
+    if (!dt) return;
+    const vals = [];
+    Object.values(dt.sources).forEach(s => {
+      if (s.countries[code] != null) vals.push(s.countries[code]);
+    });
     if (vals.length >= 2) {
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals); const avg = vals.reduce((a, b) => a + b, 0) / vals.length; const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-      if (diff > 10) { el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return; }
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
+      if (diff > 10) {
+        el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return;
+      }
     }
     el.style.display = 'none';
   }
@@ -871,32 +1009,24 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
-      <!-- LEFT PANEL WITH TABS -->
-      <div class="side-panel left glass" id="leftPanel">
+      <!-- MODE BAR & LEFT PANEL -->
+      <div class="panel-container" id="panelContainer">
         
-        <!-- VERTICAL TABS -->
-        <div class="panel-tabs">
-          <div class="panel-tab active" data-tab="history">
-            <span>History</span>
-          </div>
-          <div class="panel-tab" data-tab="future">
-            <span>Future</span>
-          </div>
+        <div class="mode-bar" id="modeBar">
+          <button class="mode-btn active" data-mode="history">HISTORY</button>
+          <button class="mode-btn" data-mode="future">FUTURE</button>
         </div>
 
-        <!-- PANEL CONTENT WRAPPER -->
-        <div class="panel-content-wrap">
+        <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
           <div>
-            <div class="history-header" id="histCountry">Country</div>
-            <div class="history-sub" id="histMetric">Metric</div>
+            <div class="history-header" id="panelCountry">Country</div>
+            <div class="history-sub" id="panelMetric">Metric</div>
           </div>
-
-          <!-- HISTORY TAB CONTENT -->
-          <div id="tabContentHistory" class="tab-content active">
-            <div class="chart-container">
-              <svg class="chart-svg" id="histChart"></svg>
-            </div>
+          
+          <!-- HISTORY VIEW -->
+          <div id="viewHistory" class="panel-view active">
+            <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
             <div class="year-slider-wrap">
               <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
               <div class="year-labels" id="yearLabels">
@@ -906,23 +1036,19 @@ class DataComparisonMap extends HTMLElement {
             <div class="history-content" id="histText"></div>
           </div>
 
-          <!-- FUTURE TAB CONTENT -->
-          <div id="tabContentFuture" class="tab-content">
-            <div class="future-desc" id="futureDesc">Select a factor to view projections.</div>
-            <div class="chart-container">
-              <svg class="chart-svg" id="futureChart"></svg>
+          <!-- FUTURE VIEW -->
+          <div id="viewFuture" class="panel-view">
+            <div class="future-desc" id="futDesc">Description</div>
+            <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
+            <div class="future-factors" id="futFactors">
+              <!-- Checkboxes injected here -->
             </div>
-            <div class="year-labels" style="margin-bottom: 4px;">
-              <span>2025</span><span>'26</span><span>'27</span><span>'28</span><span class="active">2029</span>
-            </div>
-            <div class="history-content">
-              <div id="futureText"></div>
-              <div class="factors-list" id="futureFactors"></div>
-            </div>
+            <div class="future-result" id="futResult"></div>
           </div>
 
         </div>
       </div>
+
     </div>
     
     <div class="controls glass">
