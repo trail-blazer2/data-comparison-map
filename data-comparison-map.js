@@ -305,37 +305,25 @@ class DataComparisonMap extends HTMLElement {
   _latToY(lat) { return ((90 - lat) * (PROJECTION_HEIGHT / 180)) + PROJECTION_Y_OFFSET; }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
 
-  _renderOverlays() {
-    let overlay = this.$('#mapOverlayGroup');
-    if (!overlay) {
-      const svg = this.$('#mapSvg');
-      overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      overlay.setAttribute('id', 'mapOverlayGroup');
-      overlay.style.pointerEvents = 'none';
-      svg.appendChild(overlay);
-    }
-    overlay.innerHTML = '';
-    
-    this.$$('.cp.selected').forEach(el => {
-      const clone = el.cloneNode(true);
-      clone.setAttribute('class', 'overlay-selected');
-      overlay.appendChild(clone);
-    });
-    
-    if (this._hoveredPath && !this._hoveredPath.classList.contains('selected')) {
-      const clone = this._hoveredPath.cloneNode(true);
-      clone.setAttribute('class', 'overlay-hovered');
-      overlay.appendChild(clone);
-    }
-  }
 
-  closeHistoryPanel() {
-    this._selectedCountryCode = null;
-    this._selectedCountryName = null;
-    this._activeHistoryCode = null;
-    this.$('#leftPanel').classList.remove('open');
-    this.$$('.cp').forEach(el => el.classList.remove('selected'));
-    this._renderOverlays();
+  _getEventCenter(e, pathEl) {
+    if (!e) return '50% 50%';
+    const svg = this.$('#mapSvg');
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    pt.y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    if (pt.x === 0 && pt.y === 0) return '50% 50%';
+    
+    try {
+      const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const bbox = pathEl.getBBox();
+      if (bbox.width === 0 || bbox.height === 0) return '50% 50%';
+      const px = ((svgP.x - bbox.x) / bbox.width) * 100;
+      const py = ((svgP.y - bbox.y) / bbox.height) * 100;
+      return `${Math.max(0, Math.min(100, px))}% ${Math.max(0, Math.min(100, py))}%`;
+    } catch(err) {
+      return '50% 50%';
+    }
   }
 
   drawMap() {
@@ -347,18 +335,34 @@ class DataComparisonMap extends HTMLElement {
     this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
+    // Persistent overlays for animation
+    const overlayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    overlayG.setAttribute('id', 'mapOverlayGroup');
+    overlayG.style.pointerEvents = 'none';
+    
+    const sPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    sPath.setAttribute('id', 'selectOverlay');
+    sPath.setAttribute('class', 'overlay-selected');
+    sPath.style.clipPath = 'circle(0% at 50% 50%)';
+    
+    const hPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hPath.setAttribute('id', 'hoverOverlay');
+    hPath.setAttribute('class', 'overlay-hovered');
+    hPath.style.clipPath = 'circle(0% at 50% 50%)';
+
+    overlayG.appendChild(sPath);
+    overlayG.appendChild(hPath);
+    svg.appendChild(overlayG);
+
     const self = this;
     // Click ocean to deselect
     svg.addEventListener('click', function(e) {
       if (self._dragged) return; // ignore if we just dragged
-      if (!e.target.classList.contains('cp')) {
-        self.closeHistoryPanel();
-      }
+      if (!e.target.classList.contains('cp')) self.closeHistoryPanel();
     });
-
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
-        self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+        self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
         self.ttHide();
         self.closeHistoryPanel();
       }
@@ -387,43 +391,61 @@ class DataComparisonMap extends HTMLElement {
   _bindCountryInteractions(pathEl) {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
-      self._hoveredPath = pathEl;
-      self._renderOverlays();
+      const hOverlay = self.$('#hoverOverlay');
+      hOverlay.style.transition = 'none';
+      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      const origin = self._getEventCenter(e, pathEl);
+      hOverlay.style.clipPath = `circle(0% at ${origin})`;
+      hOverlay.offsetHeight; // reflow
+      hOverlay.style.transition = 'clip-path 0.25s ease-out';
+      hOverlay.style.clipPath = `circle(150% at ${origin})`;
       self.ttShow(e); 
     });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
-    pathEl.addEventListener('mouseleave', function() { 
-      self._hoveredPath = null;
-      self._renderOverlays();
+    pathEl.addEventListener('mouseleave', function(e) { 
+      const hOverlay = self.$('#hoverOverlay');
+      const origin = self._getEventCenter(e, pathEl);
+      hOverlay.style.clipPath = `circle(0% at ${origin})`; // Shrink back to exit point
       self.ttHide(); 
     });
     pathEl.addEventListener('click', function(e) { 
-      if (self._dragged) return; // Prevent clicking when panning map
-      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); 
+      if (self._dragged) return; 
+      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
-      self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
+      self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       pathEl.classList.add('touched');
-      self._hoveredPath = pathEl;
-      self._renderOverlays();
-      var touch = e.touches[0];
-      var fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
+      const hOverlay = self.$('#hoverOverlay');
+      hOverlay.style.transition = 'none';
+      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
+      const touch = e.touches[0];
+      const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
       self.ttShow(fakeEvent);
       self.ttMove(fakeEvent);
     }, { passive: false });
   }
 
-  openHistoryPanel(code, name) {
+  openHistoryPanel(code, name, pathEl, e) {
     this._selectedCountryCode = code;
     this._selectedCountryName = name;
 
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
-    this.$$(`.cp[data-code="${code}"]`).forEach(el => el.classList.add('selected'));
-    
-    this._renderOverlays();
+    if (!pathEl) pathEl = this.$$(`.cp[data-code="${code}"]`)[0];
+    if (pathEl) pathEl.classList.add('selected');
 
-    // If no history data exists, close panel, but KEEP the country selected in memory
+    if (pathEl) {
+      const sOverlay = this.$('#selectOverlay');
+      sOverlay.style.transition = 'none';
+      sOverlay.setAttribute('d', pathEl.getAttribute('d'));
+      const origin = this._getEventCenter(e, pathEl);
+      sOverlay.style.clipPath = `circle(0% at ${origin})`;
+      sOverlay.offsetHeight; // reflow
+      sOverlay.style.transition = 'clip-path 0.3s ease-out';
+      sOverlay.style.clipPath = `circle(150% at ${origin})`;
+    }
+
     if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
       this.$('#leftPanel').classList.remove('open');
       return;
@@ -440,6 +462,16 @@ class DataComparisonMap extends HTMLElement {
     this.$('#closeLeftBtn').onclick = () => this.closeHistoryPanel();
 
     requestAnimationFrame(() => this.updateHistoryView(slider.value));
+  }
+
+  closeHistoryPanel() {
+    this._selectedCountryCode = null;
+    this._selectedCountryName = null;
+    this._activeHistoryCode = null;
+    this.$('#leftPanel').classList.remove('open');
+    this.$$('.cp').forEach(el => el.classList.remove('selected'));
+    const sOverlay = this.$('#selectOverlay');
+    if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
   }
 
   updateHistoryView(year) {
@@ -569,12 +601,17 @@ class DataComparisonMap extends HTMLElement {
     highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
+    const vw = this._origVB.w / this._zoom;
+    const vh = this._origVB.h / this._zoom;
+    const cb = this._contentBBox;
+    const overX = vw * 0.15; // Only allow 15% out of bounds before snapping
+    const overY = vh * 0.15;
+    
     return {
-      minX: Math.min(cb.x - this._origVB.x - vw * 0.5, 0),
-      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw * 0.5, 0),
-      minY: Math.min(cb.y - this._origVB.y - vh * 0.5, 0),
-      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh * 0.5, 0)
+      minX: Math.min(cb.x - this._origVB.x - overX, 0),
+      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
+      minY: Math.min(cb.y - this._origVB.y - overY, 0),
+      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0)
     };
   }
   _clampPan() {
@@ -596,9 +633,12 @@ class DataComparisonMap extends HTMLElement {
     duration = duration || 400;
     if (this._animFrame) cancelAnimationFrame(this._animFrame);
     const sz = this._zoom, sx = this._panX, sy = this._panY;
+    
     const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
-    targetPanX = Math.max(Math.min(cb.x - this._origVB.x - tvw * 0.5, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw * 0.5, 0), targetPanX));
-    targetPanY = Math.max(Math.min(cb.y - this._origVB.y - tvh * 0.5, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh * 0.5, 0), targetPanY));
+    const overX = tvw * 0.15, overY = tvh * 0.15;
+    targetPanX = Math.max(Math.min(cb.x - this._origVB.x - overX, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw + overX, 0), targetPanX));
+    targetPanY = Math.max(Math.min(cb.y - this._origVB.y - overY, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh + overY, 0), targetPanY));
+    
     const st = performance.now();
     const tick = (now) => {
       const p = Math.min((now - st) / duration, 1);
