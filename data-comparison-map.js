@@ -8,13 +8,12 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2.5;
 const WORLD_VIEWBOX_WIDTH = 1000;
-const WORLD_VIEWBOX_HEIGHT = 500; // Back to 500 so the UI container is nice and wide!
+const WORLD_VIEWBOX_HEIGHT = 500;
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
 
 const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
 const DETAIL_LAYER_DECIMAL_PLACES = 2; 
 
-// We use a taller height for the math to fix the "wide" look, centering it to crop empty ocean
 const PROJECTION_HEIGHT = 650; 
 const PROJECTION_Y_OFFSET = (WORLD_VIEWBOX_HEIGHT - PROJECTION_HEIGHT) / 2;
 
@@ -270,20 +269,14 @@ class DataComparisonMap extends HTMLElement {
     const supportBtn = this.$('#supportBtn');
     if (supportBtn) {
       supportBtn.addEventListener('click', () => {
-        window.parent.postMessage(
-          { action: 'openLightbox', lightboxName: 'Support Us' },
-          '*'
-        );
+        window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*');
       });
     }
 
     const aboutBtn = this.$('#aboutBtn');
     if (aboutBtn) {
       aboutBtn.addEventListener('click', () => {
-        window.parent.postMessage(
-          { action: 'redirect', url: '/landing' }, 
-          '*'
-        );
+        window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*');
       });
     }
 
@@ -308,16 +301,33 @@ class DataComparisonMap extends HTMLElement {
     this.$('#mainContent').style.opacity = '1';
   }
 
-  _lonToX(lon) {
-    return (lon + 180) * (WORLD_VIEWBOX.w / 360);
-  }
-  
-  _latToY(lat) {
-    // Uses the taller PROJECTION_HEIGHT to fix the stretch, and offsets it to center the map
-    return ((90 - lat) * (PROJECTION_HEIGHT / 180)) + PROJECTION_Y_OFFSET;
-  }
-  
+  _lonToX(lon) { return (lon + 180) * (WORLD_VIEWBOX.w / 360); }
+  _latToY(lat) { return ((90 - lat) * (PROJECTION_HEIGHT / 180)) + PROJECTION_Y_OFFSET; }
   _proj(c) { return [this._lonToX(c[0]), this._latToY(c[1])]; }
+
+  _renderOverlays() {
+    let overlay = this.$('#mapOverlayGroup');
+    if (!overlay) {
+      const svg = this.$('#mapSvg');
+      overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      overlay.setAttribute('id', 'mapOverlayGroup');
+      overlay.style.pointerEvents = 'none';
+      svg.appendChild(overlay);
+    }
+    overlay.innerHTML = '';
+    
+    this.$$('.cp.selected').forEach(el => {
+      const clone = el.cloneNode(true);
+      clone.setAttribute('class', 'overlay-selected');
+      overlay.appendChild(clone);
+    });
+    
+    if (this._hoveredPath && !this._hoveredPath.classList.contains('selected')) {
+      const clone = this._hoveredPath.cloneNode(true);
+      clone.setAttribute('class', 'overlay-hovered');
+      overlay.appendChild(clone);
+    }
+  }
 
   drawMap() {
     const svg = this.$('#mapSvg');
@@ -355,34 +365,6 @@ class DataComparisonMap extends HTMLElement {
     });
     return group;
   }
-  
-
-    _renderOverlays() {
-    let overlay = this.$('#mapOverlayGroup');
-    if (!overlay) {
-      const svg = this.$('#mapSvg');
-      overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      overlay.setAttribute('id', 'mapOverlayGroup');
-      overlay.style.pointerEvents = 'none'; // Crucial so it doesn't block clicks!
-      svg.appendChild(overlay);
-    }
-    overlay.innerHTML = '';
-    
-    // Draw selected borders on top
-    this.$$('.cp.selected').forEach(el => {
-      const clone = el.cloneNode(true);
-      clone.setAttribute('class', 'overlay-selected');
-      overlay.appendChild(clone);
-    });
-    
-    // Draw hovered borders on top of that
-    if (this._hoveredPath && !this._hoveredPath.classList.contains('selected')) {
-      const clone = this._hoveredPath.cloneNode(true);
-      clone.setAttribute('class', 'overlay-hovered');
-      overlay.appendChild(clone);
-    }
-  }
-
 
   _bindCountryInteractions(pathEl) {
     const self = this;
@@ -417,7 +399,7 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     this.$$(`.cp[data-code="${code}"]`).forEach(el => el.classList.add('selected'));
     
-    this._renderOverlays(); // Apply the border overlay!
+    this._renderOverlays();
 
     if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
       this.$('#leftPanel').classList.remove('open');
@@ -435,10 +417,9 @@ class DataComparisonMap extends HTMLElement {
     this.$('#closeLeftBtn').onclick = () => {
       this.$('#leftPanel').classList.remove('open');
       this.$$('.cp').forEach(el => el.classList.remove('selected'));
-      this._renderOverlays(); // Clear the selection border overlay
+      this._renderOverlays();
     };
 
-    // Delay update to let the panel render in DOM properly
     requestAnimationFrame(() => this.updateHistoryView(slider.value));
   }
 
@@ -446,13 +427,11 @@ class DataComparisonMap extends HTMLElement {
     const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
     if (!metricData) return;
 
-    // Update Slider Labels
     this.$('#yearLabels').querySelectorAll('span').forEach(span => {
       if (span.dataset.val === String(year)) span.classList.add('active');
       else span.classList.remove('active');
     });
     
-    // Draw SVG Chart
     const svg = this.$('#histChart');
     const w = 280, h = 140, pad = 12;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -470,8 +449,7 @@ class DataComparisonMap extends HTMLElement {
     });
     svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
 
-    // Update Texts with nice design
-    const txt = metricData.txt[year] || "Normal yearly progression. No major outliers.";
+    const txt = metricData.txt[year] || "Normal yearly progression. No major outliers recorded.";
     const valString = fmt(metricData[year], this.DATA[this.currentDataType].unit);
     
     this.$('#histText').innerHTML = `
@@ -610,31 +588,9 @@ class DataComparisonMap extends HTMLElement {
     this._animFrame = requestAnimationFrame(tick);
   }
 
-  _appendPathPoint(path, command, point, precision) {
-    path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`);
-  }
-
-  _segmentCrossesAntimeridian(from, to) {
-    const lonDelta = Math.abs(to[0] - from[0]);
-    const wrapDelta = 360 - lonDelta;
-    return lonDelta > ANTIMERIDIAN_SPLIT_THRESHOLD &&
-      wrapDelta < lonDelta &&
-      Math.abs(from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD &&
-      Math.abs(to[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD;
-  }
-
-  _splitAntimeridianSegment(from, to) {
-    const wrapsEastward = to[0] < from[0];
-    const exitLon = wrapsEastward ? 180 : -180;
-    const entryLon = wrapsEastward ? -180 : 180;
-    // Normalize the wrapped endpoint into the same continuous longitude space for interpolation.
-    const adjustedToLon = wrapsEastward ? to[0] + 360 : to[0] - 360;
-    const t = (exitLon - from[0]) / (adjustedToLon - from[0]);
-    const interpolatedLat = from[1] + (to[1] - from[1]) * t;
-    const exitPoint = this._proj([exitLon, interpolatedLat]);
-    const entryPoint = this._proj([entryLon, interpolatedLat]);
-    return { exitPoint, entryPoint };
-  }
+  _appendPathPoint(path, command, point, precision) { path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`); }
+  _segmentCrossesAntimeridian(from, to) { const lonDelta = Math.abs(to[0] - from[0]); const wrapDelta = 360 - lonDelta; return lonDelta > ANTIMERIDIAN_SPLIT_THRESHOLD && wrapDelta < lonDelta && Math.abs(from[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD && Math.abs(to[0]) > ANTIMERIDIAN_SPLIT_THRESHOLD; }
+  _splitAntimeridianSegment(from, to) { const wrapsEastward = to[0] < from[0]; const exitLon = wrapsEastward ? 180 : -180; const entryLon = wrapsEastward ? -180 : 180; const adjustedToLon = wrapsEastward ? to[0] + 360 : to[0] - 360; const t = (exitLon - from[0]) / (adjustedToLon - from[0]); const interpolatedLat = from[1] + (to[1] - from[1]) * t; const exitPoint = this._proj([exitLon, interpolatedLat]); const entryPoint = this._proj([entryLon, interpolatedLat]); return { exitPoint, entryPoint }; }
 
   _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
@@ -649,14 +605,12 @@ class DataComparisonMap extends HTMLElement {
         this._appendPathPoint(path, 'L', proj(current), precision);
         continue;
       }
-
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
       this._appendPathPoint(path, 'L', exitPoint, precision);
       path.push('Z');
       this._appendPathPoint(path, 'M', entryPoint, precision);
       this._appendPathPoint(path, 'L', proj(current), precision);
     }
-
     const lastPoint = ring[ring.length - 1];
     const firstCoord = ring[0];
     if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
@@ -668,7 +622,6 @@ class DataComparisonMap extends HTMLElement {
       path.push('Z');
       return path.join(' ');
     }
-
     path.push('Z');
     return path.join(' ');
   }
@@ -739,13 +692,16 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
     const dt = this.DATA[k]; if (!dt) return;
     const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
-    if (firstOk) this.selectSource(firstOk[0]);
-    else {
+    if (firstOk) {
+      this.selectSource(firstOk[0]);
+    } else {
       this.currentSource = null; this.$('#mapTitle').textContent = dt.label;
       this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
+    
+    // Reactively update the left panel if it's open!
     if (this.$('#leftPanel').classList.contains('open') && this._activeHistoryCode) {
       this.openHistoryPanel(this._activeHistoryCode, this.$('#histCountry').textContent);
     }
@@ -800,28 +756,24 @@ class DataComparisonMap extends HTMLElement {
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) {
-    // Data variance feature
-  const el = this.$('#ttDisc');  // ← this line was missing
-  const dt = this.DATA[this.currentDataType];
-  if (!dt) return;
-  const vals = [];
-  Object.values(dt.sources).forEach(s => {
-  if (s.countries[code] != null) vals.push(s.countries[code]);
-  });
-  if (vals.length >= 2) {
-  const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-  const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-  if (diff > 10) {
-  el.style.display = 'block';
-  el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources';
-  return;
-  }
-  }
-  el.style.display = 'none';
+    const el = this.$('#ttDisc');
+    const dt = this.DATA[this.currentDataType];
+    if (!dt) return;
+    const vals = [];
+    Object.values(dt.sources).forEach(s => {
+      if (s.countries[code] != null) vals.push(s.countries[code]);
+    });
+    if (vals.length >= 2) {
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
+      if (diff > 10) {
+        el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return;
+      }
+    }
+    el.style.display = 'none';
   }
 
-  // ← CHANGED: button now has id="supportBtn"
   html() {
     return `<div class="app">
   <nav class="top-nav">
@@ -849,34 +801,33 @@ class DataComparisonMap extends HTMLElement {
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
-    </div>
-        <div class="side-panel left glass" id="leftPanel">
-      <button class="close-btn" id="closeLeftBtn">✕</button>
-      <div>
-        <div class="history-header" id="histCountry">Country</div>
-        <div class="history-sub" id="histMetric">Metric</div>
-      </div>
       
-      <div class="chart-container" id="chartContainer">
-        <svg class="chart-svg" id="histChart"></svg>
-      </div>
+      <!-- LEFT PANEL FLOATING OVER MAP -->
+      <div class="side-panel left glass" id="leftPanel">
+        <button class="close-btn" id="closeLeftBtn">✕</button>
+        <div>
+          <div class="history-header" id="histCountry">Country</div>
+          <div class="history-sub" id="histMetric">Metric</div>
+        </div>
+        
+        <div class="chart-container" id="chartContainer">
+          <svg class="chart-svg" id="histChart"></svg>
+        </div>
 
-      <div class="year-slider-wrap">
-        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
-        <div class="year-labels" id="yearLabels">
-          <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+        <div class="year-slider-wrap">
+          <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+          <div class="year-labels" id="yearLabels">
+            <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+          </div>
+        </div>
+
+        <div class="history-content" id="histText">
+          <!-- Content gets injected here -->
         </div>
       </div>
 
-      <div class="history-content" id="histText">
-        <!-- Content gets injected here -->
-      </div>
     </div>
-
-      <div class="history-text" id="histText">
-        Select a year to see historical insights.
-      </div>
-    </div>    
+    
     <div class="controls glass">
       <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
       <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
