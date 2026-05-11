@@ -99,13 +99,13 @@
 @media (max-width: 960px) {
   .logo-desktop { display: none; }
   .logo-mobile { display: block; }
-   .map-wrap {
+  .map-wrap {
     height: 55vh;
     min-height: 380px;
   }
   .map-wrap svg {
-    width: 100%;
-    height: 100%;
+    width: 100%!important;
+    height: 100%!important;
   }
 }
 
@@ -298,7 +298,7 @@
 }
 
 .mode-bar {
-  display: flex; flex-direction: column; gap: 8px; width: 40px;
+  display: flex; flex-direction: column; gap: 8px; width: 40px; margin-top: 60px;
   pointer-events: auto; /* Buttons should be clickable */
 }
 .mode-btn {
@@ -330,7 +330,7 @@
 
 .history-header { font-size: 1.1rem; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; }
 .history-sub { font-size: 0.75rem; color: #576574; font-weight: 500; }
-.close-btn { position: absolute; top: 16px; right: 16px; background: rgba(30,58,95,0.1); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: #1e3a5f; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.close-btn { position: absolute; z-index: 100; top: 16px; right: 16px; background: rgba(30,58,95,0.1); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: #1e3a5f; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
 .close-btn:hover { background: rgba(30,58,95,0.2); }
 
 /* SVG Chart */
