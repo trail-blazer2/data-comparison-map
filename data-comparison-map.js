@@ -350,8 +350,9 @@ class DataComparisonMap extends HTMLElement {
     hPath.setAttribute('class', 'overlay-hovered');
     hPath.style.clipPath = 'circle(0% at 50% 50%)';
 
-    overlayG.appendChild(sPath);
+    // FIX: Append hover FIRST, then select SECOND, so select is always on top!
     overlayG.appendChild(hPath);
+    overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
     const self = this;
