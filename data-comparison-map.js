@@ -240,7 +240,12 @@ class DataComparisonMap extends HTMLElement {
       const filterDiv = document.createElement('div');
       filterDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" role="presentation" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox"><feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/><feComponentTransfer in="turbulence" result="mapped"><feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/><feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/><feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/></feComponentTransfer><feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/><feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight"><fePointLight x="-200" y="-200" z="300"/></feSpecularLighting><feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/><feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/></filter></svg>';
       this.shadowRoot.appendChild(filterDiv.firstChild);
+      }
+    else {
+      // ADD THIS: Forces the SVG to slice off edges instead of letterboxing on mobile
+      this.$('#mapSvg').setAttribute('preserveAspectRatio', 'xMidYMid slice');
     }
+    
 
     const lowResAll = topojson.feature(lowResTopoRaw, lowResTopoRaw.objects.countries);
     const highResAll = topojson.feature(highResTopoRaw, highResTopoRaw.objects.countries);
@@ -762,6 +767,7 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('touchmove', (e) => {
       if (e.touches.length === 1 && this._isPanning) {
+        e.preventDefault();
         const dx = e.touches[0].clientX - this._panStartX;
         const dy = e.touches[0].clientY - this._panStartY;
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
