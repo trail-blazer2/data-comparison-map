@@ -516,7 +516,6 @@ class DataComparisonMap extends HTMLElement {
     });
     
     let svg = this.$('#histChart');
-    // rebuild if not svg element
     if(svg.tagName !== 'svg' && svg.tagName !== 'SVG') {
       this.$('#viewHistory .chart-container').innerHTML = '<svg class="chart-svg" id="histChart"></svg>';
       svg = this.$('#histChart');
@@ -539,16 +538,31 @@ class DataComparisonMap extends HTMLElement {
     svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
 
     const txt = metricData.txt[year] || "Normal yearly progression. No major outliers recorded.";
-    const valString = fmt(metricData[year], this.DATA[this.currentDataType].unit);
-    
-    this.$('#histText').innerHTML = `
-      <div class="hist-value-box">
-        <div class="hist-value-number">${valString}</div>
-      </div>
-      <div class="hist-info-text">
-        <strong>${year} Context:</strong><br/>${txt}
-      </div>
-    `;
+    const dt = this.DATA[this.currentDataType];
+    const targetVal = metricData[year];
+
+    // Check if the structure exists so we can animate the number
+    let valContainer = this.$('#histText .hist-value-number');
+    if (!valContainer) {
+      this.$('#histText').innerHTML = `
+        <div class="hist-value-box">
+          <div class="hist-value-number" id="histValNum">${fmt(targetVal, dt.unit)}</div>
+        </div>
+        <div class="hist-info-text" id="histInfoTxt"></div>
+      `;
+      valContainer = this.$('#histValNum');
+      this._lastHistVal = targetVal;
+    }
+
+    // Animate the number
+    if (this._lastHistVal !== undefined && !isNaN(this._lastHistVal) && !isNaN(targetVal)) {
+      animateValue(valContainer, this._lastHistVal, targetVal, dt.unit, 300);
+    } else {
+      valContainer.textContent = fmt(targetVal, dt.unit);
+    }
+    this._lastHistVal = targetVal;
+
+    this.$('#histInfoTxt').innerHTML = `<strong>${year} Context:</strong><br/>${txt}`;
   }
 
   buildFutureView(code) {
@@ -677,8 +691,23 @@ class DataComparisonMap extends HTMLElement {
     const line = svg.querySelector('#futLine');
     if(line) line.setAttribute('d', pathD);
 
-    const finalVal = fmt(currentValues[5], this.DATA[this.currentDataType].unit);
-    this.$('#futResult').innerHTML = `Projected 2029: <strong>${finalVal}</strong>`;
+    const dt = this.DATA[this.currentDataType];
+    const targetVal = currentValues[5];
+    
+    let resultContainer = this.$('#futResultVal');
+    if (!resultContainer) {
+      this.$('#futResult').innerHTML = `Projected 2029: <strong id="futResultVal">${fmt(targetVal, dt.unit)}</strong>`;
+      resultContainer = this.$('#futResultVal');
+      this._lastFutVal = targetVal;
+    }
+
+    // Animate the future result number
+    if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(targetVal)) {
+      animateValue(resultContainer, this._lastFutVal, targetVal, dt.unit, 300);
+    } else {
+      resultContainer.textContent = fmt(targetVal, dt.unit);
+    }
+    this._lastFutVal = targetVal;
   }
 
   initZoomPan() {
@@ -693,8 +722,8 @@ class DataComparisonMap extends HTMLElement {
       this._zoom = 1.8; 
       const vw = this._origVB.w / this._zoom;
       const vh = this._origVB.h / this._zoom;
-      this._panX = 90; 
-      this._panY = 20;
+      this._panX = 150; 
+      this._panY = 5;
     } else {
       this._zoom = 1; this._panX = 0; this._panY = 0;
     }
@@ -844,8 +873,8 @@ class DataComparisonMap extends HTMLElement {
     const vw = this._origVB.w / this._zoom;
     const vh = this._origVB.h / this._zoom;
     const cb = this._contentBBox;
-    const overX = vw * 0.15; 
-    const overY = vh * 0.15;
+    const overX = vw * 0.02; 
+    const overY = vh * 0.02;
     
     return {
       minX: Math.min(cb.x - this._origVB.x - overX, 0),
