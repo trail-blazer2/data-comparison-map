@@ -345,7 +345,7 @@
 
 /* History Data Text */
 .history-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.hist-value-box { background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.3)); border: 1.5px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+.hist-value-box { background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.3)); border: 1.5px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-top: 30px; }
 .hist-value-number { font-size: 2.2rem; font-weight: 800; color: #0a1628; letter-spacing: -0.02em; }
 .hist-info-text { font-size: 0.8rem; color: #1e3a5f; line-height: 1.6; padding: 14px 16px; background: rgba(30,58,95,0.04); border-radius: 12px; border-left: 4px solid #1e3a5f; }
 .hist-no-data { text-align: center; color: #8395a7; padding: 20px 0; font-size: 0.9rem; font-style: italic; }
