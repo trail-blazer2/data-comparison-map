@@ -332,8 +332,23 @@ class DataComparisonMap extends HTMLElement {
         btn.classList.add('active');
         this.$$('.panel-view').forEach(v => v.classList.remove('active'));
         this.$(`#view${btn.dataset.mode === 'history' ? 'History' : 'Future'}`).classList.add('active');
+        
+        // Open the panel side menu
+        this.$('#leftPanel').classList.add('open');
+        
+        // Setup slider
+        const slider = this.$('#histSlider');
+        slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
+        
+        if (btn.dataset.mode === 'history') {
+            this.updateHistoryView(slider.value);
+        } else {
+            this.buildFutureView(this._selectedCountryCode);
+        }
       };
     });
+    
+    this.$('#closeLeftBtn').onclick = () => this.closeLeftPanelOnly();
   }
 
   _buildResolutionGroup(features, className, proj, precision) {
@@ -403,6 +418,7 @@ class DataComparisonMap extends HTMLElement {
   openSidePanel(code, name, pathEl, e) {
     this._selectedCountryCode = code;
     this._selectedCountryName = name;
+    this._activeHistoryCode = code;
 
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     if (!pathEl) pathEl = this.$$(`.cp[data-code="${code}"]`)[0];
@@ -423,58 +439,56 @@ class DataComparisonMap extends HTMLElement {
 
     this.$('#panelCountry').textContent = name;
     this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.DATA[this.currentDataType].label : '';
-    this.$('#panelContainer').classList.add('open');
-    this.$('#closeLeftBtn').onclick = () => this.closeSidePanel();
 
-    const hasData = HISTORY_DATA[this.currentDataType] && HISTORY_DATA[this.currentDataType][code];
+    const hasData = window.HISTORY_DATA && window.HISTORY_DATA[this.currentDataType] && window.HISTORY_DATA[this.currentDataType][code];
     
     if (!hasData) {
       this.$$('.mode-btn').forEach(b => {
         b.disabled = true;
         b.classList.remove('active');
       });
-      this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-      
-      // Clear or show fallback message in history view
-      this.$('#viewHistory').classList.add('active'); // fallback view
-      this.$('#viewHistory .chart-container').innerHTML = '';
-      this.$('#yearLabels').querySelectorAll('span').forEach(span => span.classList.remove('active'));
-      this.$('#histText').innerHTML = '<div class="hist-no-data">Historical & future data not available for this country/metric yet.</div>';
-      
+      // Important: Ensure panel closes and remains closed if no data is available
+      this.closeLeftPanelOnly();
       return;
     }
 
-    // Has data, enable buttons
+    // Has data, enable buttons (but don't open the panel automatically)
     this.$$('.mode-btn').forEach(b => b.disabled = false);
     
-    // If none active, activate History by default
-    if(!this.$$('.mode-btn.active').length) {
-      this.$('[data-mode="history"]').classList.add('active');
-      this.$('#viewHistory').classList.add('active');
+    // If the panel is ALREADY open, we seamlessly update it
+    if (this.$('#leftPanel').classList.contains('open')) {
+        const activeBtn = this.$('.mode-btn.active');
+        if (activeBtn) {
+            const slider = this.$('#histSlider');
+            if (activeBtn.dataset.mode === 'history') {
+                this.updateHistoryView(slider.value);
+            } else {
+                this.buildFutureView(code);
+            }
+        }
     }
+  }
 
-    this._activeHistoryCode = code;
-    const slider = this.$('#histSlider');
-    slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
-    
-    requestAnimationFrame(() => {
-      this.updateHistoryView(slider.value);
-      this.buildFutureView(code);
-    });
+  closeLeftPanelOnly() {
+    this.$('#leftPanel').classList.remove('open');
+    this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
   }
 
   closeSidePanel() {
     this._selectedCountryCode = null;
     this._selectedCountryName = null;
     this._activeHistoryCode = null;
-    this.$('#panelContainer').classList.remove('open');
+    
+    this.closeLeftPanelOnly();
+    this.$$('.mode-btn').forEach(b => b.disabled = true);
+    
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     const sOverlay = this.$('#selectOverlay');
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
   }
 
   updateHistoryView(year) {
-    const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
+    const metricData = window.HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
     if (!metricData) return;
 
     this.$('#yearLabels').querySelectorAll('span').forEach(span => {
@@ -519,7 +533,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   buildFutureView(code) {
-    const futData = FUTURE_DATA[this.currentDataType] && FUTURE_DATA[this.currentDataType][code];
+    const futData = window.FUTURE_DATA[this.currentDataType] && window.FUTURE_DATA[this.currentDataType][code];
     const container = this.$('#futFactors');
     container.innerHTML = '';
     
@@ -569,7 +583,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   updateFutureChart(code, futData, isInitial = false) {
-    const baseVal = HISTORY_DATA[this.currentDataType][code][2024];
+    const baseVal = window.HISTORY_DATA[this.currentDataType][code][2024];
     let currentGrowthRate = futData.base_growth;
     let minGrowthRate = futData.base_growth;
     let maxGrowthRate = futData.base_growth;
@@ -893,7 +907,7 @@ class DataComparisonMap extends HTMLElement {
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
     
-    // Reactively update the left panel if a country is currently selected
+    // Reactively update the left panel/buttons if a country is currently selected
     if (this._selectedCountryCode) {
       this.openSidePanel(this._selectedCountryCode, this._selectedCountryName);
     }
@@ -995,7 +1009,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
       <!-- MODE BAR & LEFT PANEL -->
-      <div class="panel-container" id="panelContainer">
+      <div class="panel-wrapper" id="panelWrapper">
         
         <div class="mode-bar" id="modeBar">
           <button class="mode-btn" data-mode="history" disabled>HISTORY</button>
