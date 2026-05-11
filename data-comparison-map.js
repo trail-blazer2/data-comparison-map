@@ -693,12 +693,23 @@ class DataComparisonMap extends HTMLElement {
       this._zoom = 1.8; 
       const vw = this._origVB.w / this._zoom;
       const vh = this._origVB.h / this._zoom;
-      this._panX = (this._origVB.w - vw) / 2 + 50; // Shifted slightly for better center
-      this._panY = (this._origVB.h - vh) / 2;
+      this._panX = 90; 
+      this._panY = 20;
     } else {
       this._zoom = 1; this._panX = 0; this._panY = 0;
     }
     this._applyTransform();
+
+    // Helper to calculate exact 1:1 pan speed based on scaling mode
+    const getScale = () => {
+      const rect = svg.getBoundingClientRect();
+      const vb = this._getViewBox();
+      const scaleX = rect.width / vb.w;
+      const scaleY = rect.height / vb.h;
+      return (svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') 
+        ? Math.max(scaleX, scaleY) 
+        : Math.min(scaleX, scaleY);
+    };
 
     // -- DESKTOP MOUSE / WHEEL EVENTS --
     wrap.addEventListener('wheel', (e) => {
@@ -747,62 +758,47 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        this._isPanning = true; 
-        this._dragged = false; 
-        this._panStartX = e.touches[0].clientX; 
-        this._panStartY = e.touches[0].clientY;
-        this._panStartPanX = this._panX; 
-        this._panStartPanY = this._panY;
+        this._isPanning = true; this._dragged = false; 
+        this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
+        this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       } else if (e.touches.length === 2) {
         this._isPanning = false; // Switch to pinch mode
         const t1 = e.touches[0], t2 = e.touches[1];
         initialDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        initialMidX = (t1.clientX + t2.clientX) / 2;
-        initialMidY = (t1.clientY + t2.clientY) / 2;
-        startZoom = this._zoom;
-        this._panStartPanX = this._panX; 
-        this._panStartPanY = this._panY;
+        initialMidX = (t1.clientX + t2.clientX) / 2; initialMidY = (t1.clientY + t2.clientY) / 2;
+        startZoom = this._zoom; this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       }
     }, { passive: true });
 
     wrap.addEventListener('touchmove', (e) => {
       if (e.touches.length === 1 && this._isPanning) {
-        e.preventDefault();
+        e.preventDefault(); // Stop page scrolling during pan
         const dx = e.touches[0].clientX - this._panStartX;
         const dy = e.touches[0].clientY - this._panStartY;
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
-        
-        const rect = svg.getBoundingClientRect(); 
-        const vb = this._getViewBox();
-        this._panX = this._panStartPanX - dx * (vb.w / rect.width);
-        this._panY = this._panStartPanY - dy * (vb.h / rect.height);
+        const scale = getScale();
+        this._panX = this._panStartPanX - dx / scale;
+        this._panY = this._panStartPanY - dy / scale;
         this._applyTransform();
       } else if (e.touches.length === 2) {
-        this._dragged = true;
-        e.preventDefault(); // Stop page scrolling during pinch
+        this._dragged = true; e.preventDefault();
         const t1 = e.touches[0], t2 = e.touches[1];
         const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const scale = dist / initialDist;
-        const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * scale));
+        const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * (dist / initialDist)));
         
         const rect = svg.getBoundingClientRect();
         const mx = (initialMidX - rect.left) / rect.width;
         const my = (initialMidY - rect.top) / rect.height;
-        
         const oldW = this._origVB.w / startZoom, newW = this._origVB.w / newZoom;
         const oldH = this._origVB.h / startZoom, newH = this._origVB.h / newZoom;
         
         this._panX = this._panStartPanX + (oldW - newW) * mx; 
         this._panY = this._panStartPanY + (oldH - newH) * my;
-        this._zoom = newZoom; 
-        this._clampAndApply();
+        this._zoom = newZoom; this._clampAndApply();
       }
     }, { passive: false });
 
-    wrap.addEventListener('touchend', () => {
-      this._isPanning = false;
-      this._snapBack();
-    });
+    wrap.addEventListener('touchend', () => { this._isPanning = false; this._snapBack(); });
 
     // Zoom Buttons
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
