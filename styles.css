@@ -283,16 +283,15 @@
 @media (max-width: 480px) { .cat-tabs { grid-template-columns: 1fr; } .app { padding: 0 12px 12px; } }
 
 /* ===== PANEL CONTAINER & MODE BAR ===== */
-.panel-container {
+.panel-wrapper {
   position: absolute; top: 16px; left: 16px; bottom: 16px;
   display: flex; gap: 10px; z-index: 10;
-  transform: translateX(calc(-100% - 40px));
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none; /* Let map clicks pass through */
 }
-.panel-container.open { transform: translateX(0); }
 
 .mode-bar {
   display: flex; flex-direction: column; gap: 8px; width: 40px;
+  pointer-events: auto; /* Buttons should be clickable */
 }
 .mode-btn {
   flex: 1; border: none; border-radius: 12px; background: rgba(255,255,255,0.7);
@@ -305,12 +304,18 @@
 .mode-btn.active:not(:disabled) { background: linear-gradient(180deg, #1e3a5f, #0a1628); color: #fff; box-shadow: 0 4px 16px rgba(10,22,40,0.3); }
 .mode-btn:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(255,255,255,0.4); box-shadow: none; color: #a1aab3; }
 
-/* Update side-panel to live inside container natively */
+/* The side panel now sits statically beside the buttons and slides in/out via transform */
 .side-panel.left {
-  position: relative; top: 0; left: 0; bottom: 0; transform: none; width: 320px;
+  position: relative; top: 0; left: 0; bottom: 0; width: 320px;
   display: flex; flex-direction: column; gap: 16px; padding: 20px; box-sizing: border-box;
   box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+  transform: translateX(calc(-100% - 60px));
+  opacity: 0;
+  pointer-events: auto; /* Let clicks work on the panel */
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
+.side-panel.left.open { transform: translateX(0); opacity: 1; }
+
 .panel-view { display: none; flex-direction: column; height: 100%; }
 .panel-view.active { display: flex; }
 
