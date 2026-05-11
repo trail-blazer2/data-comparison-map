@@ -8,7 +8,7 @@ const HIGH_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/co
 const TOPOJSON_CLIENT_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
 const DETAIL_LAYER_ZOOM_THRESHOLD = 2.5;
 const WORLD_VIEWBOX_WIDTH = 1000;
-const WORLD_VIEWBOX_HEIGHT = 500; 
+const WORLD_VIEWBOX_HEIGHT = 500;
 const WORLD_VIEWBOX = { x: 0, y: 0, w: WORLD_VIEWBOX_WIDTH, h: WORLD_VIEWBOX_HEIGHT };
 
 const OVERVIEW_LAYER_DECIMAL_PLACES = 1;
@@ -171,61 +171,28 @@ const HISTORY_DATA = {
     SK: { 2020: 19442, 2021: 21383, 2022: 21258, 2023: 24470, 2024: 25100, txt: { 2020: "Automotive sector slowdown during pandemic." } }
   },
   population: {
-    US: { 2020: 331400000, 2021: 332000000, 2022: 333200000, 2023: 334900000, 2024: 335800000, txt: {} },
-    CN: { 2020: 1411100000, 2021: 1412300000, 2022: 1412100000, 2023: 1409600000, 2024: 1407000000, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
-    DE: { 2020: 83100000, 2021: 83200000, 2022: 84300000, 2023: 84400000, 2024: 84500000, txt: { 2022: "Population bump due to Ukrainian refugees." } },
-    CZ: { 2020: 10700000, 2021: 10500000, 2022: 10800000, 2023: 10900000, 2024: 10900000, txt: { 2022: "Significant influx of refugees increased total pop." } },
-    SK: { 2020: 5460000, 2021: 5430000, 2022: 5430000, 2023: 5420000, 2024: 5420000, txt: {} }
+    US: { 2020: 331.4, 2021: 332.0, 2022: 333.2, 2023: 334.9, 2024: 335.8, txt: {} },
+    CN: { 2020: 1411.1, 2021: 1412.3, 2022: 1412.1, 2023: 1409.6, 2024: 1407.0, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
+    DE: { 2020: 83.1, 2021: 83.2, 2022: 84.3, 2023: 84.4, 2024: 84.5, txt: { 2022: "Population bump due to Ukrainian refugees." } },
+    CZ: { 2020: 10.7, 2021: 10.5, 2022: 10.8, 2023: 10.9, 2024: 10.9, txt: { 2022: "Significant influx of refugees increased total pop." } },
+    SK: { 2020: 5.46, 2021: 5.43, 2022: 5.43, 2023: 5.42, 2024: 5.42, txt: {} }
+  },
+  rd_spending: {
+    US: { 2020: 3.45, 2021: 3.46, 2022: 3.46, 2023: 3.50, 2024: 3.52, txt: {} },
+    CN: { 2020: 2.40, 2021: 2.43, 2022: 2.54, 2023: 2.64, 2024: 2.70, txt: { 2024: "Heavy investments in AI and semiconductors." } },
+    DE: { 2020: 3.13, 2021: 3.13, 2022: 3.13, 2023: 3.14, 2024: 3.15, txt: {} },
+    CZ: { 2020: 1.99, 2021: 1.99, 2022: 1.96, 2023: 1.98, 2024: 2.00, txt: {} },
+    SK: { 2020: 0.91, 2021: 0.92, 2022: 0.98, 2023: 1.00, 2024: 1.05, txt: {} }
+  },
+  life_expectancy: {
+    US: { 2020: 77.0, 2021: 76.4, 2022: 77.5, 2023: 77.6, 2024: 77.8, txt: { 2021: "Significant drop due to pandemic." } },
+    CN: { 2020: 77.9, 2021: 78.2, 2022: 78.5, 2023: 78.6, 2024: 78.8, txt: {} },
+    DE: { 2020: 81.1, 2021: 80.8, 2022: 80.7, 2023: 81.2, 2024: 81.5, txt: {} },
+    CZ: { 2020: 78.2, 2021: 77.3, 2022: 79.0, 2023: 79.5, 2024: 79.8, txt: {} },
+    SK: { 2020: 76.8, 2021: 74.5, 2022: 77.0, 2023: 77.8, 2024: 78.1, txt: { 2021: "Severe COVID impact on mortality rates." } }
   }
 };
 
-// Hardcoded Future Projection Data (2024 baseline + factors)
-const FUTURE_DATA = {
-  gdp_per_capita: {
-    US: { baseline: 85300, growthRate: 0.02, factors: [
-      { id: 'us_ai', label: 'AI Super-cycle', impact: 0.015, desc: 'Widespread commercialization of AI accelerates productivity.' },
-      { id: 'us_trade', label: 'Global Trade War', impact: -0.01, desc: 'Increased tariffs and fragmentation slow growth.' }
-    ]},
-    CN: { baseline: 13100, growthRate: 0.04, factors: [
-      { id: 'cn_tech', label: 'Domestic Tech Boom', impact: 0.02, desc: 'Successful transition to high-tech manufacturing.' },
-      { id: 'cn_demo', label: 'Demographic Drag', impact: -0.015, desc: 'Aging workforce limits economic expansion.' }
-    ]},
-    DE: { baseline: 54200, growthRate: 0.015, factors: [
-      { id: 'de_green', label: 'Green Energy Shift', impact: 0.01, desc: 'Successful energy transition boosts industrial competitiveness.' },
-      { id: 'de_auto', label: 'Auto Industry Slump', impact: -0.01, desc: 'Loss of market share to foreign EV manufacturers.' }
-    ]},
-    CZ: { baseline: 31200, growthRate: 0.025, factors: [
-      { id: 'cz_nearshore', label: 'Nearshoring Hub', impact: 0.015, desc: 'EU supply chains relocate closer to home.' },
-      { id: 'cz_inflation', label: 'Persistent Inflation', impact: -0.01, desc: 'High energy and labor costs drag down real GDP.' }
-    ]},
-    SK: { baseline: 25100, growthRate: 0.025, factors: [
-      { id: 'sk_ev', label: 'EV Manufacturing Hub', impact: 0.02, desc: 'Major new auto plants begin full EV production.' },
-      { id: 'sk_brain', label: 'Brain Drain', impact: -0.01, desc: 'Emigration of skilled workers to Western EU.' }
-    ]}
-  },
-  population: {
-    US: { baseline: 335800000, growthRate: 0.004, factors: [
-      { id: 'us_imm_high', label: 'High Immigration', impact: 0.003, desc: 'Policy changes allow higher influx of global talent.' },
-      { id: 'us_birth_drop', label: 'Birth Rate Drop', impact: -0.002, desc: 'Fertility rates continue dropping below replacement levels.' }
-    ]},
-    CN: { baseline: 1407000000, growthRate: -0.002, factors: [
-      { id: 'cn_fert_boost', label: 'Pro-Natalist Success', impact: 0.0015, desc: 'Government incentives slightly stabilize birth rates.' },
-      { id: 'cn_aging_accel', label: 'Accelerated Aging', impact: -0.003, desc: 'Mortality rises due to a highly concentrated elderly population.' }
-    ]},
-    DE: { baseline: 84500000, growthRate: 0.001, factors: [
-      { id: 'de_imm_boom', label: 'Skilled Migration', impact: 0.004, desc: 'Aggressive foreign talent acquisition programs.' },
-      { id: 'de_emig', label: 'Retiree Exodus', impact: -0.002, desc: 'Higher rate of retirees moving to Southern Europe.' }
-    ]},
-    CZ: { baseline: 10900000, growthRate: -0.001, factors: [
-      { id: 'cz_ref_stay', label: 'Refugee Integration', impact: 0.003, desc: 'Temporary residents become permanent citizens.' },
-      { id: 'cz_low_birth', label: 'Low Fertility', impact: -0.002, desc: 'Economic uncertainty keeps birth rates extremely low.' }
-    ]},
-    SK: { baseline: 5420000, growthRate: -0.002, factors: [
-      { id: 'sk_return', label: 'Diaspora Return', impact: 0.003, desc: 'Economic growth incentivizes expatriates to return.' },
-      { id: 'sk_brain_drain', label: 'Youth Emigration', impact: -0.004, desc: 'Young professionals leave for better opportunities abroad.' }
-    ]}
-  }
-};
 
 // ============================================================
 class DataComparisonMap extends HTMLElement {
@@ -255,10 +222,9 @@ class DataComparisonMap extends HTMLElement {
     this._minZoom = 1;
     this._maxZoom = 6;
     
-    this._selectedCountryCode = null;
-    this._selectedCountryName = null;
-    this._activePanelMode = null; // 'history' or 'future'
-    this._activeFactors = new Set();
+    // Future tracking
+    this._activeFutureFactors = [];
+    this._activeTab = 'history';
   }
 
   connectedCallback() {
@@ -325,7 +291,8 @@ class DataComparisonMap extends HTMLElement {
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
     if (this._isDesktop) this.initZoomPan();
-    this.initActionMenu();
+    
+    this.initTabs();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
@@ -342,7 +309,6 @@ class DataComparisonMap extends HTMLElement {
     pt.x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     pt.y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     if (pt.x === 0 && pt.y === 0) return '50% 50%';
-    
     try {
       const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
       const bbox = pathEl.getBBox();
@@ -350,9 +316,7 @@ class DataComparisonMap extends HTMLElement {
       const px = ((svgP.x - bbox.x) / bbox.width) * 100;
       const py = ((svgP.y - bbox.y) / bbox.height) * 100;
       return `${Math.max(0, Math.min(100, px))}% ${Math.max(0, Math.min(100, py))}%`;
-    } catch(err) {
-      return '50% 50%';
-    }
+    } catch(err) { return '50% 50%'; }
   }
 
   drawMap() {
@@ -369,31 +333,22 @@ class DataComparisonMap extends HTMLElement {
     overlayG.style.pointerEvents = 'none';
     
     const sPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    sPath.setAttribute('id', 'selectOverlay');
-    sPath.setAttribute('class', 'overlay-selected');
-    sPath.style.clipPath = 'circle(0% at 50% 50%)';
-    
+    sPath.setAttribute('id', 'selectOverlay'); sPath.setAttribute('class', 'overlay-selected'); sPath.style.clipPath = 'circle(0% at 50% 50%)';
     const hPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    hPath.setAttribute('id', 'hoverOverlay');
-    hPath.setAttribute('class', 'overlay-hovered');
-    hPath.style.clipPath = 'circle(0% at 50% 50%)';
+    hPath.setAttribute('id', 'hoverOverlay'); hPath.setAttribute('class', 'overlay-hovered'); hPath.style.clipPath = 'circle(0% at 50% 50%)';
 
-    overlayG.appendChild(hPath);
-    overlayG.appendChild(sPath);
+    overlayG.appendChild(hPath); overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
     const self = this;
     svg.addEventListener('click', function(e) {
-      if (self._dragged) return; 
-      if (!e.target.classList.contains('cp')) {
-        self.deselectCountry();
-      }
+      if (self._dragged) return;
+      if (!e.target.classList.contains('cp')) self.closeHistoryPanel();
     });
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
-        self.ttHide();
-        self.deselectCountry();
+        self.ttHide(); self.closeHistoryPanel();
       }
     });
   }
@@ -406,9 +361,7 @@ class DataComparisonMap extends HTMLElement {
       if (!a2) return;
       this.geoPaths(f.geometry, proj, precision).forEach(d => {
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.dataset.code = a2;
-        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p.setAttribute('d', d); p.dataset.code = a2; p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
         p.classList.add('cp', 'no-data');
         this._bindCountryInteractions(p);
         group.appendChild(p);
@@ -420,50 +373,59 @@ class DataComparisonMap extends HTMLElement {
   _bindCountryInteractions(pathEl) {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
-      const hOverlay = self.$('#hoverOverlay');
-      hOverlay.style.transition = 'none';
+      const hOverlay = self.$('#hoverOverlay'); hOverlay.style.transition = 'none';
       hOverlay.setAttribute('d', pathEl.getAttribute('d'));
       const origin = self._getEventCenter(e, pathEl);
-      hOverlay.style.clipPath = `circle(0% at ${origin})`;
-      hOverlay.offsetHeight; 
-      hOverlay.style.transition = 'clip-path 0.25s ease-out';
-      hOverlay.style.clipPath = `circle(150% at ${origin})`;
+      hOverlay.style.clipPath = `circle(0% at ${origin})`; hOverlay.offsetHeight; 
+      hOverlay.style.transition = 'clip-path 0.25s ease-out'; hOverlay.style.clipPath = `circle(150% at ${origin})`;
       self.ttShow(e); 
     });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
     pathEl.addEventListener('mouseleave', function(e) { 
-      const hOverlay = self.$('#hoverOverlay');
-      const origin = self._getEventCenter(e, pathEl);
+      const hOverlay = self.$('#hoverOverlay'); const origin = self._getEventCenter(e, pathEl);
       hOverlay.style.clipPath = `circle(0% at ${origin})`; 
       self.ttHide(); 
     });
     pathEl.addEventListener('click', function(e) { 
       if (self._dragged) return; 
-      self.selectCountry(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
+      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       pathEl.classList.add('touched');
-      const hOverlay = self.$('#hoverOverlay');
-      hOverlay.style.transition = 'none';
-      hOverlay.setAttribute('d', pathEl.getAttribute('d'));
-      hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
-      const touch = e.touches[0];
-      const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
-      self.ttShow(fakeEvent);
-      self.ttMove(fakeEvent);
+      const hOverlay = self.$('#hoverOverlay'); hOverlay.style.transition = 'none';
+      hOverlay.setAttribute('d', pathEl.getAttribute('d')); hOverlay.style.clipPath = 'circle(150% at 50% 50%)';
+      const touch = e.touches[0]; const fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
+      self.ttShow(fakeEvent); self.ttMove(fakeEvent);
     }, { passive: false });
   }
 
-  // --- Actions Menu & Selection Logic ---
-  initActionMenu() {
-    this.$('#btnHistory').addEventListener('click', () => this.openPanel('history'));
-    this.$('#btnFuture').addEventListener('click', () => this.openPanel('future'));
-    this.$('#closeLeftBtn').addEventListener('click', () => this.closePanel());
+  initTabs() {
+    this.$$('.panel-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.$$('.panel-tab').forEach(t => t.classList.remove('active'));
+        this.$$('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        this._activeTab = tab.dataset.tab;
+        this.$(`#tabContent${this._activeTab.charAt(0).toUpperCase() + this._activeTab.slice(1)}`).classList.add('active');
+        
+        if (this._selectedCountryCode) {
+          if (this._activeTab === 'history') {
+            this.updateHistoryView(this.$('#histSlider').value);
+          } else {
+            this.updateFutureView();
+          }
+        }
+      });
+    });
+    
+    // Close button
+    this.$('#closeLeftBtn').onclick = () => this.closeHistoryPanel();
   }
 
-  selectCountry(code, name, pathEl, e) {
+  openHistoryPanel(code, name, pathEl, e) {
     this._selectedCountryCode = code;
     this._selectedCountryName = name;
 
@@ -482,89 +444,38 @@ class DataComparisonMap extends HTMLElement {
       sOverlay.style.clipPath = `circle(150% at ${origin})`;
     }
 
-    this.updateActionMenu();
-    
-    if (this._activePanelMode) {
-      this.openPanel(this._activePanelMode);
-    }
-  }
-
-  deselectCountry() {
-    this._selectedCountryCode = null;
-    this._selectedCountryName = null;
-    this.$$('.cp').forEach(el => el.classList.remove('selected'));
-    const sOverlay = this.$('#selectOverlay');
-    if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
-    this.updateActionMenu();
-    this.closePanel();
-  }
-
-  updateActionMenu() {
-    const actLbl = this.$('#actionCountryLabel');
-    const btnH = this.$('#btnHistory');
-    const btnF = this.$('#btnFuture');
-
-    if (!this._selectedCountryCode) {
-      actLbl.textContent = 'Select a country';
-      btnH.disabled = true;
-      btnF.disabled = true;
+    if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
+      this.$('#leftPanel').classList.remove('open');
       return;
     }
 
-    actLbl.textContent = this._selectedCountryName;
+    this.$('#histCountry').textContent = name;
+    this.$('#histMetric').textContent = this.DATA[this.currentDataType].label;
     
-    const hasHistory = HISTORY_DATA[this.currentDataType] && HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
-    btnH.disabled = !hasHistory;
-
-    const hasFuture = FUTURE_DATA[this.currentDataType] && FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
-    btnF.disabled = !hasFuture;
-  }
-
-  openPanel(mode) {
-    if (mode === 'history' && this.$('#btnHistory').disabled) return;
-    if (mode === 'future' && this.$('#btnFuture').disabled) return;
-
-    this._activePanelMode = mode;
-    this.$('#leftPanel').classList.add('open');
-    this.$('#histCountry').textContent = this._selectedCountryName;
-    
-    if (mode === 'history') {
-      this.$('#histMetric').textContent = 'Historical ' + this.DATA[this.currentDataType].label;
-      this.renderHistoryPanel();
-    } else {
-      this.$('#histMetric').textContent = 'Future Projection: ' + this.DATA[this.currentDataType].label;
-      this._activeFactors.clear(); // reset factors on open
-      this.renderFuturePanel();
-    }
-  }
-
-  closePanel() {
-    this._activePanelMode = null;
-    this.$('#leftPanel').classList.remove('open');
-  }
-
-  // --- History Panel Rendering ---
-  renderHistoryPanel() {
-    const metricData = HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
-    if (!metricData) return;
-
-    this.$('#panelControls').innerHTML = `
-      <div class="year-slider-wrap">
-        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
-        <div class="year-labels" id="yearLabels">
-          <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
-        </div>
-      </div>
-    `;
-
+    // Reset sliders/factors
     const slider = this.$('#histSlider');
-    slider.oninput = (e) => this.updateHistoryChart(e.target.value);
+    slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
+    this._activeFutureFactors = []; 
     
-    requestAnimationFrame(() => this.updateHistoryChart(slider.value));
+    this.$('#leftPanel').classList.add('open');
+    
+    requestAnimationFrame(() => {
+      if (this._activeTab === 'history') this.updateHistoryView(slider.value);
+      else this.updateFutureView();
+    });
   }
 
-  updateHistoryChart(year) {
-    const metricData = HISTORY_DATA[this.currentDataType][this._selectedCountryCode];
+  closeHistoryPanel() {
+    this._selectedCountryCode = null;
+    this._selectedCountryName = null;
+    this.$('#leftPanel').classList.remove('open');
+    this.$$('.cp').forEach(el => el.classList.remove('selected'));
+    const sOverlay = this.$('#selectOverlay');
+    if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
+  }
+
+  updateHistoryView(year) {
+    const metricData = HISTORY_DATA[this.currentDataType]?.[this._selectedCountryCode];
     if (!metricData) return;
 
     this.$('#yearLabels').querySelectorAll('span').forEach(span => {
@@ -573,17 +484,26 @@ class DataComparisonMap extends HTMLElement {
     });
     
     const svg = this.$('#histChart');
-    const w = 280, h = 140, pad = 12, padBottom = 25;
+    const w = 240, h = 140, pad = 12;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     const years = [2020, 2021, 2022, 2023, 2024];
     const vals = years.map(y => metricData[y]);
-    
-    this.drawChartWithLabels(svg, years, vals, year, w, h, pad, padBottom);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max === min ? 1 : max - min;
+
+    let pathD = "", pointsHtml = "";
+    years.forEach((y, i) => {
+      const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
+      const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
+      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${y == year ? 'active' : ''}" />`;
+    });
+    svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
 
     const txt = metricData.txt[year] || "Normal yearly progression. No major outliers recorded.";
     const valString = fmt(metricData[year], this.DATA[this.currentDataType].unit);
     
-    this.$('#panelContent').innerHTML = `
+    this.$('#histText').innerHTML = `
       <div class="hist-value-box">
         <div class="hist-value-number">${valString}</div>
       </div>
@@ -593,110 +513,100 @@ class DataComparisonMap extends HTMLElement {
     `;
   }
 
-  // --- Future Panel Rendering ---
-  renderFuturePanel() {
-    const futureData = FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
-    if (!futureData) return;
-
-    let checkboxesHTML = futureData.factors.map(f => `
-      <label class="factor-checkbox">
-        <input type="checkbox" value="${f.id}">
-        <span class="factor-label-text">${f.label}</span>
-        <div class="factor-tooltip">${f.desc} <br><strong>Impact: ${(f.impact > 0 ? '+' : '')}${(f.impact*100).toFixed(1)}%</strong></div>
-      </label>
-    `).join('');
-
-    this.$('#panelControls').innerHTML = `
-      <div class="future-algorithm-header">Future projection algorithm</div>
-      <div class="future-algorithm-sub">Tick what you think will happen:</div>
-      <div class="factors-list">
-        ${checkboxesHTML}
-      </div>
-    `;
-
-    this.$('#panelControls').querySelectorAll('input[type="checkbox"]').forEach(chk => {
-      chk.onchange = (e) => {
-        if (e.target.checked) this._activeFactors.add(e.target.value);
-        else this._activeFactors.delete(e.target.value);
-        this.updateFutureChart();
-      };
-    });
-
-    requestAnimationFrame(() => this.updateFutureChart());
-  }
-
-  updateFutureChart() {
-    const futureData = FUTURE_DATA[this.currentDataType][this._selectedCountryCode];
-    if (!futureData) return;
-
-    let combinedGrowth = futureData.growthRate;
-    futureData.factors.forEach(f => {
-      if (this._activeFactors.has(f.id)) combinedGrowth += f.impact;
-    });
-
-    const years = [2024, 2026, 2028, 2030];
-    const vals = [];
-    let currentVal = futureData.baseline;
-    for(let i=0; i<years.length; i++) {
-      if (i === 0) {
-        vals.push(currentVal);
-      } else {
-        const yearDiff = years[i] - years[i-1];
-        currentVal = currentVal * Math.pow((1 + combinedGrowth), yearDiff);
-        vals.push(currentVal);
-      }
+  updateFutureView() {
+    if (!window.FutureAlgorithm || !window.FutureAlgorithm.FACTORS[this.currentDataType]) {
+      this.$('#futureDesc').textContent = "No future projection algorithm available for this data type.";
+      this.$('#futureChart').innerHTML = '';
+      this.$('#futureFactors').innerHTML = '';
+      return;
     }
 
-    const svg = this.$('#histChart');
-    const w = 280, h = 140, pad = 12, padBottom = 25;
+    const metric = this.currentDataType;
+    const fConfig = window.FutureAlgorithm.FACTORS[metric];
+    this.$('#futureDesc').textContent = fConfig.description;
+
+    const currentData = HISTORY_DATA[metric]?.[this._selectedCountryCode];
+    if (!currentData) return;
+    const baseVal2024 = currentData[2024];
+
+    // Build the fixed chart bounds
+    const bounds = window.FutureAlgorithm.getChartRange(metric, baseVal2024);
+    
+    // Draw factors 
+    this.renderFutureFactors(fConfig.factors);
+
+    // Calculate array of values
+    const projection = window.FutureAlgorithm.calculateFutureData(metric, baseVal2024, this._activeFutureFactors);
+
+    // Draw Future Chart (Static Axis)
+    const svg = this.$('#futureChart');
+    const w = 240, h = 140, pad = 12;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     
-    this.drawChartWithLabels(svg, years, vals, 2030, w, h, pad, padBottom, true);
-
-    const valString = fmt(vals[vals.length-1], this.DATA[this.currentDataType].unit);
+    const range = bounds.max === bounds.min ? 1 : bounds.max - bounds.min;
     
-    this.$('#panelContent').innerHTML = `
-      <div class="hist-value-box future-box">
-        <div class="hist-value-number">${valString}</div>
-        <div style="font-size:0.75rem; color:#576574; margin-top:4px;">Projected in 2030</div>
-      </div>
-      <div class="hist-info-text">
-        <strong>Algorithm Active:</strong><br/>
-        Baseline annual growth: ${(futureData.growthRate * 100).toFixed(1)}%. <br/>
-        Net projected growth: ${(combinedGrowth * 100).toFixed(1)}% annually.
+    let pathD = "", pointsHtml = "";
+    projection.forEach((val, i) => {
+      const cx = pad + (i / (projection.length - 1)) * (w - pad * 2);
+      const cy = h - pad - ((val - bounds.min) / range) * (h - pad * 2);
+      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${i === 4 ? 'active' : ''}" />`;
+    });
+    svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
+
+    // Show 2029 projected final value text
+    const finalVal = projection[4];
+    const unit = this.DATA[this.currentDataType].unit;
+    this.$('#futureText').innerHTML = `
+      <div class="hist-value-box" style="margin-top: 5px;">
+        <div style="font-size:0.7rem; color:#8395a7; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">2029 Projection</div>
+        <div class="hist-value-number">${fmt(finalVal, unit)}</div>
       </div>
     `;
   }
 
-  // Generalized chart drawing with Y-Axis min/max texts
-  drawChartWithLabels(svg, xLabels, vals, activeLabel, w, h, pad, padBottom, dashed = false) {
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const range = max === min ? 1 : max - min;
-    
-    // Expand range slightly for aesthetics
-    const plotMin = min - (range * 0.1);
-    const plotMax = max + (range * 0.1);
-    const plotRange = plotMax - plotMin;
+  renderFutureFactors(factors) {
+    const container = this.$('#futureFactors');
+    container.innerHTML = '';
 
-    let pathD = "", pointsHtml = "";
-    xLabels.forEach((lbl, i) => {
-      const cx = pad + (i / (xLabels.length - 1)) * (w - pad * 2);
-      const cy = (h - padBottom) - ((vals[i] - plotMin) / plotRange) * ((h - padBottom) - pad);
-      pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
-      pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${lbl == activeLabel ? 'active' : ''}" />`;
-      // X-axis label (for future chart mainly, or clean up)
-      pointsHtml += `<text x="${cx}" y="${h - 5}" class="axis-label" text-anchor="middle">${lbl}</text>`;
+    factors.forEach(f => {
+      const isActive = this._activeFutureFactors.includes(f.id);
+      
+      const el = document.createElement('div');
+      el.className = 'factor-item';
+      el.innerHTML = `
+        <div class="factor-info">
+          <span class="factor-name">${f.label}</span>
+          <span class="factor-icon" title="${f.desc}">i</span>
+        </div>
+        <div class="toggle-group">
+          <button class="toggle-btn btn-yes ${isActive ? 'active' : ''}">YES</button>
+          <button class="toggle-btn btn-no ${!isActive ? 'active' : ''}">NO</button>
+        </div>
+      `;
+      
+      // Bind click
+      const yesBtn = el.querySelector('.btn-yes');
+      const noBtn = el.querySelector('.btn-no');
+
+      yesBtn.onclick = () => {
+        if (!this._activeFutureFactors.includes(f.id)) {
+          this._activeFutureFactors.push(f.id);
+          this.updateFutureView();
+        }
+      };
+
+      noBtn.onclick = () => {
+        const idx = this._activeFutureFactors.indexOf(f.id);
+        if (idx !== -1) {
+          this._activeFutureFactors.splice(idx, 1);
+          this.updateFutureView();
+        }
+      };
+
+      container.appendChild(el);
     });
-
-    // Y Axis min/max labels (on left side)
-    const unit = this.DATA[this.currentDataType].unit;
-    pointsHtml += `<text x="${pad}" y="${pad}" class="axis-label y-label" text-anchor="start">${fmt(max, unit)}</text>`;
-    pointsHtml += `<text x="${pad}" y="${h - padBottom - 5}" class="axis-label y-label" text-anchor="start">${fmt(min, unit)}</text>`;
-
-    const strokeClass = dashed ? "chart-line-dashed" : "chart-line";
-    svg.innerHTML = `<path class="${strokeClass}" d="${pathD}" />${pointsHtml}`;
   }
-
 
   initZoomPan() {
     const svg = this.$('#mapSvg');
@@ -722,8 +632,7 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      this._isPanning = true; 
-      this._dragged = false;
+      this._isPanning = true; this._dragged = false;
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       wrap.style.cursor = 'grabbing'; e.preventDefault();
@@ -731,9 +640,7 @@ class DataComparisonMap extends HTMLElement {
     
     window.addEventListener('mousemove', (e) => {
       if (!this._isPanning) return;
-      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
-        this._dragged = true;
-      }
+      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) this._dragged = true;
       const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
       this._panX = this._panStartPanX - (e.clientX - this._panStartX) * (vb.w / rect.width);
       this._panY = this._panStartPanY - (e.clientY - this._panStartY) * (vb.h / rect.height);
@@ -761,57 +668,31 @@ class DataComparisonMap extends HTMLElement {
     if (zoomReset) zoomReset.addEventListener('click', () => { this._animateTo(1, 0, 0); });
   }
 
-  _getViewBox() {
-    const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom;
-    return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
-  }
-  _applyTransform() {
-    const svg = this.$('#mapSvg'); if (!svg) return;
-    const vb = this._getViewBox();
-    svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
-  }
+  _getViewBox() { const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom; return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h }; }
+  _applyTransform() { const svg = this.$('#mapSvg'); if (!svg) return; const vb = this._getViewBox(); svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`); }
   _syncDetailLayerVisibility() {
-    const lowResGroup = this.$('.euro-group.low-res');
-    const highResGroup = this.$('.euro-group.high-res');
+    const lowResGroup = this.$('.euro-group.low-res'); const highResGroup = this.$('.euro-group.high-res');
     if (!lowResGroup || !highResGroup) return;
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
     if (this._isHighResVisible === showHighRes) return;
     this._isHighResVisible = showHighRes;
-    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
-    lowResGroup.style.opacity = showHighRes ? '0' : '1';
-    lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
-    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden';
-    highResGroup.style.opacity = showHighRes ? '1' : '0';
-    highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
+    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible'; lowResGroup.style.opacity = showHighRes ? '0' : '1'; lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
+    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden'; highResGroup.style.opacity = showHighRes ? '1' : '0'; highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom, vh = this._origVB.h / this._zoom, cb = this._contentBBox;
-    const overX = vw * 0.15, overY = vh * 0.15;
-    return {
-      minX: Math.min(cb.x - this._origVB.x - overX, 0),
-      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
-      minY: Math.min(cb.y - this._origVB.y - overY, 0),
-      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0)
-    };
+    const vw = this._origVB.w / this._zoom; const vh = this._origVB.h / this._zoom; const cb = this._contentBBox;
+    const overX = vw * 0.15; const overY = vh * 0.15;
+    return { minX: Math.min(cb.x - this._origVB.x - overX, 0), maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0), minY: Math.min(cb.y - this._origVB.y - overY, 0), maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0) };
   }
-  _clampPan() {
-    const b = this._getPanBounds();
-    this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
-  }
+  _clampPan() { const b = this._getPanBounds(); this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX)); this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY)); }
   _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); }
   _snapBack() {
-    const b = this._getPanBounds();
-    const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
-    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) {
-      this._panX = tx; this._panY = ty; this._applyTransform(); return;
-    }
+    const b = this._getPanBounds(); const tx = Math.max(b.minX, Math.min(b.maxX, this._panX)); const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
+    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) { this._panX = tx; this._panY = ty; this._applyTransform(); return; }
     this._animateTo(this._zoom, tx, ty, 350);
   }
   _animateTo(targetZoom, targetPanX, targetPanY, duration) {
-    duration = duration || 400;
-    if (this._animFrame) cancelAnimationFrame(this._animFrame);
+    duration = duration || 400; if (this._animFrame) cancelAnimationFrame(this._animFrame);
     const sz = this._zoom, sx = this._panX, sy = this._panY;
     const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
     const overX = tvw * 0.15, overY = tvh * 0.15;
@@ -820,14 +701,10 @@ class DataComparisonMap extends HTMLElement {
     const st = performance.now();
     const tick = (now) => {
       const p = Math.min((now - st) / duration, 1);
-      const c1 = 1.70158, c3 = c1 + 1;
-      const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
-      this._zoom = sz + (targetZoom - sz) * ease;
-      this._panX = sx + (targetPanX - sx) * ease;
-      this._panY = sy + (targetPanY - sy) * ease;
+      const c1 = 1.70158, c3 = c1 + 1; const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
+      this._zoom = sz + (targetZoom - sz) * ease; this._panX = sx + (targetPanX - sx) * ease; this._panY = sy + (targetPanY - sy) * ease;
       this._applyTransform();
-      if (p < 1) this._animFrame = requestAnimationFrame(tick);
-      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
+      if (p < 1) this._animFrame = requestAnimationFrame(tick); else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
     };
     this._animFrame = requestAnimationFrame(tick);
   }
@@ -838,67 +715,37 @@ class DataComparisonMap extends HTMLElement {
 
   _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
-    const path = [];
-    const firstPoint = proj(ring[0]);
-    this._appendPathPoint(path, 'M', firstPoint, precision);
-
+    const path = []; const firstPoint = proj(ring[0]); this._appendPathPoint(path, 'M', firstPoint, precision);
     for (let i = 1; i < ring.length; i += 1) {
-      const previous = ring[i - 1];
-      const current = ring[i];
-      if (!this._segmentCrossesAntimeridian(previous, current)) {
-        this._appendPathPoint(path, 'L', proj(current), precision);
-        continue;
-      }
+      const previous = ring[i - 1]; const current = ring[i];
+      if (!this._segmentCrossesAntimeridian(previous, current)) { this._appendPathPoint(path, 'L', proj(current), precision); continue; }
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(previous, current);
-      this._appendPathPoint(path, 'L', exitPoint, precision);
-      path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint, precision);
-      this._appendPathPoint(path, 'L', proj(current), precision);
+      this._appendPathPoint(path, 'L', exitPoint, precision); path.push('Z'); this._appendPathPoint(path, 'M', entryPoint, precision); this._appendPathPoint(path, 'L', proj(current), precision);
     }
-    const lastPoint = ring[ring.length - 1];
-    const firstCoord = ring[0];
+    const lastPoint = ring[ring.length - 1]; const firstCoord = ring[0];
     if (this._segmentCrossesAntimeridian(lastPoint, firstCoord)) {
       const { exitPoint, entryPoint } = this._splitAntimeridianSegment(lastPoint, firstCoord);
-      this._appendPathPoint(path, 'L', exitPoint, precision);
-      path.push('Z');
-      this._appendPathPoint(path, 'M', entryPoint, precision);
-      this._appendPathPoint(path, 'L', firstPoint, precision);
-      path.push('Z');
+      this._appendPathPoint(path, 'L', exitPoint, precision); path.push('Z'); this._appendPathPoint(path, 'M', entryPoint, precision); this._appendPathPoint(path, 'L', firstPoint, precision); path.push('Z');
       return path.join(' ');
     }
-    path.push('Z');
-    return path.join(' ');
+    path.push('Z'); return path.join(' ');
   }
+  geoPaths(geom, proj, precision) { const ring = r => this._ringToPath(r, proj, precision); if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')]; if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' ')); return []; }
 
-  geoPaths(geom, proj, precision) {
-    const ring = r => this._ringToPath(r, proj, precision);
-    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
-    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
-    return [];
-  }
-
-  moveSlider(container, activeBtn) {
-    let slider = container.querySelector('.slider');
-    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
-    if (!activeBtn) { slider.classList.remove('visible'); return; }
-    slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible');
-  }
+  moveSlider(container, activeBtn) { let slider = container.querySelector('.slider'); if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); } if (!activeBtn) { slider.classList.remove('visible'); return; } slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible'); }
 
   buildCategoryButtons() {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
-      const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
+      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey }; const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
       b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
     });
   }
 
   selectCategory(catKey) {
-    this.currentCategory = catKey;
-    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
-    this.buildDataTypeButtons(catKey);
-    this._lastTtVal = null; this._lastTtDataType = null;
+    this.currentCategory = catKey; this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
+    this.buildDataTypeButtons(catKey); this._lastTtVal = null; this._lastTtDataType = null;
     const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
@@ -906,10 +753,8 @@ class DataComparisonMap extends HTMLElement {
     const c = this.$('#dtBtns'); c.innerHTML = '';
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     (this.categories[catKey] || []).forEach(key => {
-      const dt = this.DATA[key]; if (!dt) return;
-      const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      const srcCount = Object.keys(dt.sources).length;
-      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+      const dt = this.DATA[key]; if (!dt) return; const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
+      const srcCount = Object.keys(dt.sources).length; const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
       b.onclick = () => this.selectDataType(key); c.appendChild(b);
     });
@@ -920,8 +765,7 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
-      const count = Object.keys(src.countries).length; const isEmpty = count === 0;
-      const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
+      const count = Object.keys(src.countries).length; const isEmpty = count === 0; const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
       else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
       c.appendChild(b);
@@ -929,8 +773,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   selectDataType(k) {
-    this.currentDataType = k;
-    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
+    this.currentDataType = k; this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
     const dtc = this.$('#dtBtns'), ab = dtc.querySelector('.btn[data-key="' + k + '"]');
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
     this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
@@ -939,31 +782,29 @@ class DataComparisonMap extends HTMLElement {
     if (firstOk) {
       this.selectSource(firstOk[0]);
     } else {
-      this.currentSource = null; this.$('#mapTitle').textContent = dt.label;
-      this.$('#mapSub').textContent = 'No data available for any source';
+      this.currentSource = null; this.$('#mapTitle').textContent = dt.label; this.$('#mapSub').textContent = 'No data available for any source';
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
     
-    this.updateActionMenu();
-    if (this._activePanelMode) {
-      this.openPanel(this._activePanelMode);
+    // Refresh history panel if open
+    if (this._selectedCountryCode) {
+      this.$('#histMetric').textContent = this.DATA[this.currentDataType].label;
+      if (this._activeTab === 'history') this.updateHistoryView(this.$('#histSlider').value);
+      else this.updateFutureView();
     }
   }
 
   selectSource(k) {
-    this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
+    this.currentSource = k; this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
     const sc = this.$('#srcBtns'), ab = sc.querySelector('.btn.active');
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(sc, ab)); });
     this.paint();
   }
 
   paint() {
-    const dt = this.DATA[this.currentDataType]; if (!dt) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    this.$('#mapTitle').textContent = dt.label;
-    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
+    const dt = this.DATA[this.currentDataType]; if (!dt) return; const src = dt.sources[this.currentSource]; if (!src) return;
+    this.$('#mapTitle').textContent = dt.label; this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return; }
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
@@ -976,23 +817,16 @@ class DataComparisonMap extends HTMLElement {
   }
 
   ttShow(e) {
-    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    const code = e.target.dataset.code;
-    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-    this.$('#ttName').textContent = e.target.dataset.name;
-    this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
-    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
+    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return; const src = dt.sources[this.currentSource]; if (!src) return;
+    const code = e.target.dataset.code; const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
+    this.$('#ttName').textContent = e.target.dataset.name; this.$('#ttUnit').textContent = newVal != null ? dt.unit : ''; this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
     const valEl = this.$('#ttVal');
-    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
-      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
+    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal)) animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
     else valEl.textContent = fmt(newVal, dt.unit);
-    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
-    this.checkDiscrepancy(code);
+    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType; this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
     if (newVal != null) {
-      const vs = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+      const vs = Object.values(src.countries).filter(v => v != null); const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
       marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%'; marker.classList.add('visible');
     } else marker.classList.remove('visible');
     this.$('#tt').classList.add('visible');
@@ -1000,20 +834,11 @@ class DataComparisonMap extends HTMLElement {
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
   checkDiscrepancy(code) {
-    const el = this.$('#ttDisc');
-    const dt = this.DATA[this.currentDataType];
-    if (!dt) return;
-    const vals = [];
-    Object.values(dt.sources).forEach(s => {
-      if (s.countries[code] != null) vals.push(s.countries[code]);
-    });
+    const el = this.$('#ttDisc'); const dt = this.DATA[this.currentDataType]; if (!dt) return;
+    const vals = []; Object.values(dt.sources).forEach(s => { if (s.countries[code] != null) vals.push(s.countries[code]); });
     if (vals.length >= 2) {
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-      if (diff > 10) {
-        el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return;
-      }
+      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals); const avg = vals.reduce((a, b) => a + b, 0) / vals.length; const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
+      if (diff > 10) { el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return; }
     }
     el.style.display = 'none';
   }
@@ -1046,40 +871,56 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
-      <!-- LEFT PANEL FLOATING OVER MAP -->
+      <!-- LEFT PANEL WITH TABS -->
       <div class="side-panel left glass" id="leftPanel">
-        <button class="close-btn" id="closeLeftBtn">✕</button>
-        <div>
-          <div class="history-header" id="histCountry">Country</div>
-          <div class="history-sub" id="histMetric">Metric</div>
-        </div>
         
-        <div class="chart-container" id="chartContainer">
-          <svg class="chart-svg" id="histChart"></svg>
+        <!-- VERTICAL TABS -->
+        <div class="panel-tabs">
+          <div class="panel-tab active" data-tab="history">
+            <span>History</span>
+          </div>
+          <div class="panel-tab" data-tab="future">
+            <span>Future</span>
+          </div>
         </div>
 
-        <!-- Inject either slider OR future controls here -->
-        <div id="panelControls"></div>
+        <!-- PANEL CONTENT WRAPPER -->
+        <div class="panel-content-wrap">
+          <button class="close-btn" id="closeLeftBtn">✕</button>
+          <div>
+            <div class="history-header" id="histCountry">Country</div>
+            <div class="history-sub" id="histMetric">Metric</div>
+          </div>
 
-        <div class="history-content" id="panelContent">
-          <!-- Data info injected here -->
-        </div>
-      </div>
+          <!-- HISTORY TAB CONTENT -->
+          <div id="tabContentHistory" class="tab-content active">
+            <div class="chart-container">
+              <svg class="chart-svg" id="histChart"></svg>
+            </div>
+            <div class="year-slider-wrap">
+              <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+              <div class="year-labels" id="yearLabels">
+                <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+              </div>
+            </div>
+            <div class="history-content" id="histText"></div>
+          </div>
 
-      <!-- BOTTOM ACTION MENU -->
-      <div class="action-bar glass">
-        <div class="action-status">
-          <span class="action-label" id="actionCountryLabel">Select a country</span>
-        </div>
-        <div class="action-buttons">
-          <button class="action-btn" id="btnHistory" disabled>
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M13 3a9 9 0 00-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0013 21a9 9 0 000-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-            History
-          </button>
-          <button class="action-btn" id="btnFuture" disabled>
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V9h14v10zm0-12H5V5h14v2zm-7 4H7v5h5v-5z"/></svg>
-            Future Projection
-          </button>
+          <!-- FUTURE TAB CONTENT -->
+          <div id="tabContentFuture" class="tab-content">
+            <div class="future-desc" id="futureDesc">Select a factor to view projections.</div>
+            <div class="chart-container">
+              <svg class="chart-svg" id="futureChart"></svg>
+            </div>
+            <div class="year-labels" style="margin-bottom: 4px;">
+              <span>2025</span><span>'26</span><span>'27</span><span>'28</span><span class="active">2029</span>
+            </div>
+            <div class="history-content">
+              <div id="futureText"></div>
+              <div class="factors-list" id="futureFactors"></div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
