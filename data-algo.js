@@ -1,5 +1,5 @@
 // Hardcoded Historical Data (2020-2024)
-const HISTORY_DATA = {
+window.HISTORY_DATA = {
   gdp_per_capita: {
     US: { 2020: 63527, 2021: 70667, 2022: 76329, 2023: 81632, 2024: 85300, txt: { 2020: "COVID-19 pandemic caused a dip in GDP.", 2024: "Strong economic recovery and tech sector growth." } },
     CN: { 2020: 10408, 2021: 12556, 2022: 12720, 2023: 12614, 2024: 13100, txt: { 2020: "Only major economy to grow in 2020.", 2024: "Post-lockdown adjustments and real estate cooling." } },
@@ -31,7 +31,7 @@ const HISTORY_DATA = {
 };
 
 // Future Projection Engine Data
-const FUTURE_DATA = {
+window.FUTURE_DATA = {
   gdp_per_capita: {
     CZ: {
       desc: "The Czech Republic's growth isn't really decided in Prague; it’s decided by consumer demand in Germany, trade policy in Washington, and the global price of gas/electricity.",
