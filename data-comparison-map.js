@@ -355,17 +355,57 @@ class DataComparisonMap extends HTMLElement {
     });
     return group;
   }
+  
+
+    _renderOverlays() {
+    let overlay = this.$('#mapOverlayGroup');
+    if (!overlay) {
+      const svg = this.$('#mapSvg');
+      overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      overlay.setAttribute('id', 'mapOverlayGroup');
+      overlay.style.pointerEvents = 'none'; // Crucial so it doesn't block clicks!
+      svg.appendChild(overlay);
+    }
+    overlay.innerHTML = '';
+    
+    // Draw selected borders on top
+    this.$$('.cp.selected').forEach(el => {
+      const clone = el.cloneNode(true);
+      clone.setAttribute('class', 'overlay-selected');
+      overlay.appendChild(clone);
+    });
+    
+    // Draw hovered borders on top of that
+    if (this._hoveredPath && !this._hoveredPath.classList.contains('selected')) {
+      const clone = this._hoveredPath.cloneNode(true);
+      clone.setAttribute('class', 'overlay-hovered');
+      overlay.appendChild(clone);
+    }
+  }
+
 
   _bindCountryInteractions(pathEl) {
     const self = this;
-    pathEl.addEventListener('mouseenter', function(e) { self.ttShow(e); });
+    pathEl.addEventListener('mouseenter', function(e) { 
+      self._hoveredPath = pathEl;
+      self._renderOverlays();
+      self.ttShow(e); 
+    });
     pathEl.addEventListener('mousemove', function(e) { self.ttMove(e); });
-    pathEl.addEventListener('mouseleave', function() { self.ttHide(); });
-    pathEl.addEventListener('click', function(e) { self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); });
+    pathEl.addEventListener('mouseleave', function() { 
+      self._hoveredPath = null;
+      self._renderOverlays();
+      self.ttHide(); 
+    });
+    pathEl.addEventListener('click', function(e) { 
+      self.openHistoryPanel(pathEl.dataset.code, pathEl.dataset.name); 
+    });
     pathEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       self.$$('.cp.touched').forEach(function(el) { el.classList.remove('touched'); });
       pathEl.classList.add('touched');
+      self._hoveredPath = pathEl;
+      self._renderOverlays();
       var touch = e.touches[0];
       var fakeEvent = { target: pathEl, clientX: touch.clientX, clientY: touch.clientY };
       self.ttShow(fakeEvent);
@@ -377,7 +417,8 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     this.$$(`.cp[data-code="${code}"]`).forEach(el => el.classList.add('selected'));
     
-    // Check if we have history for this metric and country
+    this._renderOverlays(); // Apply the border overlay!
+
     if (!HISTORY_DATA[this.currentDataType] || !HISTORY_DATA[this.currentDataType][code]) {
       this.$('#leftPanel').classList.remove('open');
       return;
@@ -394,38 +435,53 @@ class DataComparisonMap extends HTMLElement {
     this.$('#closeLeftBtn').onclick = () => {
       this.$('#leftPanel').classList.remove('open');
       this.$$('.cp').forEach(el => el.classList.remove('selected'));
+      this._renderOverlays(); // Clear the selection border overlay
     };
 
-    this.updateHistoryView(slider.value);
+    // Delay update to let the panel render in DOM properly
+    requestAnimationFrame(() => this.updateHistoryView(slider.value));
   }
 
   updateHistoryView(year) {
-    this.$('#histYearLabel').textContent = year;
     const metricData = HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
-    
-    // Update text
-    const txt = metricData.txt[year] || "Normal yearly progression. Placeholder text for " + year + ".";
-    this.$('#histText').innerHTML = `<strong>${year}:</strong> ${txt} <br><br>Value: ${metricData[year]} ${this.DATA[this.currentDataType].unit}`;
+    if (!metricData) return;
 
+    // Update Slider Labels
+    this.$('#yearLabels').querySelectorAll('span').forEach(span => {
+      if (span.dataset.val === String(year)) span.classList.add('active');
+      else span.classList.remove('active');
+    });
+    
     // Draw SVG Chart
     const svg = this.$('#histChart');
-    const w = svg.parentElement.clientWidth, h = 140, pad = 10;
+    const w = 280, h = 140, pad = 12;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     const years = [2020, 2021, 2022, 2023, 2024];
     const vals = years.map(y => metricData[y]);
     const min = Math.min(...vals), max = Math.max(...vals);
     const range = max === min ? 1 : max - min;
 
-    let pathD = "";
-    let pointsHtml = "";
-
+    let pathD = "", pointsHtml = "";
     years.forEach((y, i) => {
       const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
       const cy = h - pad - ((vals[i] - min) / range) * (h - pad * 2);
       pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
       pointsHtml += `<circle cx="${cx}" cy="${cy}" r="4" class="chart-point ${y == year ? 'active' : ''}" />`;
     });
-
     svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
+
+    // Update Texts with nice design
+    const txt = metricData.txt[year] || "Normal yearly progression. No major outliers.";
+    const valString = fmt(metricData[year], this.DATA[this.currentDataType].unit);
+    
+    this.$('#histText').innerHTML = `
+      <div class="hist-value-box">
+        <div class="hist-value-number">${valString}</div>
+      </div>
+      <div class="hist-info-text">
+        <strong>${year} Context:</strong><br/>${txt}
+      </div>
+    `;
   }
 
   initZoomPan() {
@@ -690,6 +746,9 @@ class DataComparisonMap extends HTMLElement {
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
+    if (this.$('#leftPanel').classList.contains('open') && this._activeHistoryCode) {
+      this.openHistoryPanel(this._activeHistoryCode, this.$('#histCountry').textContent);
+    }
   }
 
   selectSource(k) {
@@ -791,7 +850,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
     </div>
-    <div class="side-panel left glass" id="leftPanel">
+        <div class="side-panel left glass" id="leftPanel">
       <button class="close-btn" id="closeLeftBtn">✕</button>
       <div>
         <div class="history-header" id="histCountry">Country</div>
@@ -803,11 +862,16 @@ class DataComparisonMap extends HTMLElement {
       </div>
 
       <div class="year-slider-wrap">
-        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#8395a7; font-weight:600;">
-          <span>2020</span><span id="histYearLabel" style="color:#1e3a5f; font-size:0.8rem;">2024</span><span>2024</span>
+        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+        <div class="year-labels" id="yearLabels">
+          <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
         </div>
-        <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider">
       </div>
+
+      <div class="history-content" id="histText">
+        <!-- Content gets injected here -->
+      </div>
+    </div>
 
       <div class="history-text" id="histText">
         Select a year to see historical insights.
