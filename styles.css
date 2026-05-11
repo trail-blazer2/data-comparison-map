@@ -5,7 +5,7 @@
 :host {
   display: block; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #1a1a2e; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
-}
+} 
 
 .app {
   max-width: 1840px; margin: 0 auto; padding: 0 128px 20px;
