@@ -355,7 +355,15 @@
 .future-factors::-webkit-scrollbar { width: 3px; }
 .future-factors::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
 
-.factor-row { display: flex; align-items: flex-start; gap: 8px; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.8); }
+.factor-row { 
+  display: flex; align-items: flex-start; gap: 8px; 
+  background: rgba(255,255,255,0.5); padding: 10px; 
+  border-radius: 10px; border: 1px solid rgba(255,255,255,0.8); 
+  position: relative; z-index: 1; 
+}
+.factor-row:hover { 
+  z-index: 10; /* Pops the row and its tooltip above all other rows */
+}
 .factor-label { display: flex; gap: 10px; cursor: pointer; flex: 1; align-items: center; }
 .factor-cb { display: none; }
 .cb-custom { width: 18px; height: 18px; border: 2px solid #8395a7; border-radius: 4px; display: inline-block; position: relative; transition: all 0.2s; flex-shrink: 0; }
@@ -369,7 +377,7 @@
   justify-content: center; cursor: help; position: relative; flex-shrink: 0;
 }
 .factor-tooltip {
-  display: none; position: absolute; right: 28px; top: -20px; width: 200px;
+  display: none; position: absolute; right: 28px; top: -10px; width: 220px;
   background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-size: 0.75rem; font-weight: normal; color: #4b5563; z-index: 100; border: 1px solid #ddd; text-align: left; line-height: 1.4;
 }
