@@ -193,8 +193,8 @@
 .cp.no-data { fill: #dfe6e9 !important; opacity: 0.35; cursor: default; }
 
 /* SVG OVERLAYS FOR BORDERS (Thinner, cleaner) */
-.overlay-hovered { stroke: #fff; stroke-width: 0.8; fill: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); pointer-events: none; }
-.overlay-selected { stroke: #1e3a5f; stroke-width: 1.2; fill: none; filter: drop-shadow(0 0 6px rgba(30,58,95,0.4)); pointer-events: none; }
+.overlay-hovered { stroke: #fff; stroke-width: 0.6; fill: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); pointer-events: none; }
+.overlay-selected { stroke: #1e3a5f; stroke-width: 0.7; fill: none; filter: drop-shadow(0 0 6px rgba(30,58,95,0.4)); pointer-events: none; }
 
 /* ===== TOOLTIP ===== */
 .tooltip { position: fixed; pointer-events: none; z-index: 9999; padding: 16px 20px; isolation: isolate; background-color: rgb(255 255 255 / 55%); border-radius: 18px; border: 1px solid rgb(255 255 255 / 50%); box-shadow: 0 12px 48px rgba(0,0,0,0.12), inset 1.5px 1.5px 1px 0 rgb(255 255 255 / 50%), inset -1px -1px 1px 1px rgb(255 255 255 / 25%); backdrop-filter: blur(32px) saturate(200%) brightness(1.12); -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.12); opacity: 0; transition: opacity 0.12s; max-width: 280px; }
