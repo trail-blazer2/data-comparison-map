@@ -301,8 +301,9 @@
   writing-mode: vertical-rl; transform: rotate(180deg);
   transition: all 0.2s;
 }
-.mode-btn:hover { background: #fff; color: #1e3a5f; }
-.mode-btn.active { background: linear-gradient(180deg, #1e3a5f, #0a1628); color: #fff; box-shadow: 0 4px 16px rgba(10,22,40,0.3); }
+.mode-btn:hover:not(:disabled) { background: #fff; color: #1e3a5f; }
+.mode-btn.active:not(:disabled) { background: linear-gradient(180deg, #1e3a5f, #0a1628); color: #fff; box-shadow: 0 4px 16px rgba(10,22,40,0.3); }
+.mode-btn:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(255,255,255,0.4); box-shadow: none; color: #a1aab3; }
 
 /* Update side-panel to live inside container natively */
 .side-panel.left {
@@ -321,9 +322,10 @@
 /* SVG Chart */
 .chart-container { width: 100%; height: 140px; margin-top: 10px; position: relative; }
 .chart-svg { width: 100%; height: 100%; overflow: visible; display: block; }
-.chart-line { fill: none; stroke: #1e3a5f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.chart-point { fill: #fff; stroke: #1e3a5f; stroke-width: 2; transition: r 0.2s, fill 0.2s; pointer-events: none; }
+.chart-line { fill: none; stroke: #1e3a5f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: d 0.3s ease; }
+.chart-point { fill: #fff; stroke: #1e3a5f; stroke-width: 2; transition: r 0.2s, fill 0.2s, cx 0.3s ease, cy 0.3s ease; pointer-events: none; }
 .chart-point.active { fill: #34d399; stroke: #0a1628; r: 6; }
+.fut-label { transition: x 0.3s ease, y 0.3s ease; }
 
 /* Custom Slider & Years (Using transform to prevent layout shake) */
 .year-slider-wrap { margin-top: 4px; }
@@ -340,6 +342,7 @@
 .hist-value-box { background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.3)); border: 1.5px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
 .hist-value-number { font-size: 2.2rem; font-weight: 800; color: #0a1628; letter-spacing: -0.02em; }
 .hist-info-text { font-size: 0.8rem; color: #1e3a5f; line-height: 1.6; padding: 14px 16px; background: rgba(30,58,95,0.04); border-radius: 12px; border-left: 4px solid #1e3a5f; }
+.hist-no-data { text-align: center; color: #8395a7; padding: 20px 0; font-size: 0.9rem; font-style: italic; }
 
 /* ===== FUTURE PANEL UI ===== */
 .future-desc { font-size: 0.75rem; color: #576574; line-height: 1.5; font-style: italic; margin-bottom: 5px; }
@@ -361,12 +364,11 @@
   justify-content: center; cursor: help; position: relative; flex-shrink: 0;
 }
 .factor-tooltip {
-  display: none; position: absolute; right: 24px; top: -50px; width: 220px;
-  background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  font-size: 0.7rem; color: #576574; z-index: 100; border: 1px solid #eee; text-align: left;
+  display: none; position: absolute; right: 24px; top: -50px; width: 300px;
+  background: #fff; padding: 14px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  font-size: 0.82rem; font-weight: normal; color: #4b5563; z-index: 100; border: 1px solid #eee; text-align: left; line-height: 1.4;
 }
 .factor-info-btn:hover .factor-tooltip { display: block; }
 
 .future-result { background: rgba(52, 211, 153, 0.15); padding: 14px; border-radius: 12px; text-align: center; color: #0a1628; font-size: 0.9rem; border: 1px solid rgba(52, 211, 153, 0.4); margin-top: 10px; }
 .fut-point { fill: #34d399; stroke: #fff; }
-.fut-label { font-size: 10px; fill: #8395a7; font-weight: bold; }
