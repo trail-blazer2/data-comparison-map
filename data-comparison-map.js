@@ -1019,16 +1019,16 @@ class DataComparisonMap extends HTMLElement {
     });
 
     // 3D TOGGLE BUTTON EVENT
+        // 3D TOGGLE BUTTON EVENT WITH FADE & ZOOM EFFECTS (FIXED)
     const toggle3D = this.$('#toggle3D');
     if (toggle3D) {
       toggle3D.addEventListener('click', () => {
-        const svg = this.$('#mapSvg');
+        // TARGET THE HTML WRAPPER INSTEAD OF THE SVG
+        const wrap = this.$('.map-wrap'); 
         
-        // 1. Fast fade out
-        svg.style.transition = 'opacity 0.15s ease-out';
-        svg.style.opacity = '0';
+        wrap.style.transition = 'opacity 0.15s ease-out';
+        wrap.style.opacity = '0';
         
-        // Wait for fade out to complete before redrawing
         setTimeout(() => {
           this._is3D = !this._is3D;
           toggle3D.classList.toggle('active-3d', this._is3D);
@@ -1041,31 +1041,26 @@ class DataComparisonMap extends HTMLElement {
             if (zoomOut) zoomOut.style.opacity = '0.4';
             if (zoomReset) zoomReset.style.opacity = '0.4';
             
-            // Set up for "zoom in" effect (starts small)
-            svg.style.transform = 'scale(0.85)';
+            wrap.style.transform = 'scale(0.85)';
           } else {
             if (zoomIn) zoomIn.style.opacity = '1';
             if (zoomOut) zoomOut.style.opacity = '1';
             if (zoomReset) zoomReset.style.opacity = '1';
             
-            // Set up for "zoom out" effect (starts large)
-            svg.style.transform = 'scale(1.15)';
+            wrap.style.transform = 'scale(1.15)';
           }
           
           this.drawMap();
           
-          // Force browser reflow to apply the starting scale and invisible state
-          void svg.offsetHeight;
+          void wrap.offsetHeight; // Force browser reflow
           
-          // 2. Fade in and smooth scale back to normal (1)
-          svg.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1)';
-          svg.style.opacity = '1';
-          svg.style.transform = 'scale(1)';
+          wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1)';
+          wrap.style.opacity = '1';
+          wrap.style.transform = 'scale(1)';
           
-          // Clean up inline styles once the animation finishes
           setTimeout(() => {
-            svg.style.transition = '';
-            svg.style.transform = '';
+            wrap.style.transition = '';
+            wrap.style.transform = '';
           }, 450);
           
         }, 150);
