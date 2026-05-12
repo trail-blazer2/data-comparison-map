@@ -100,11 +100,11 @@ const CATEGORY_META = {
 
 function getColor(t) {
   const c = [
-    [206,220,236], // lighter soft blue
-    [138,158,181], // cleaner steel blue
-    [92,108,130],  // more trustworthy mid tone
-    [38,52,72],    // deep navy slate
-    [12,24,44]     // rich dark navy
+    [204,219,238],
+    [135,156,183],
+    [88,106,134],
+    [36,53,76],
+    [11,25,47]
   ];
 
   const n = c.length - 1;
