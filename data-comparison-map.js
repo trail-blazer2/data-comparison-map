@@ -1022,28 +1022,53 @@ class DataComparisonMap extends HTMLElement {
     const toggle3D = this.$('#toggle3D');
     if (toggle3D) {
       toggle3D.addEventListener('click', () => {
-        this._is3D = !this._is3D;
-        toggle3D.classList.toggle('active-3d', this._is3D);
+        const svg = this.$('#mapSvg');
         
-        if (this._is3D) {
-          // Force fully zoomed-out and centered view for globe
-          this._zoom = 1;
-          this._panX = 0;
-          this._panY = 0;
-          this._applyTransform();
+        // 1. Fast fade out
+        svg.style.transition = 'opacity 0.15s ease-out';
+        svg.style.opacity = '0';
+        
+        // Wait for fade out to complete before redrawing
+        setTimeout(() => {
+          this._is3D = !this._is3D;
+          toggle3D.classList.toggle('active-3d', this._is3D);
           
-          // Visually disable zoom buttons
-          if (zoomIn) zoomIn.style.opacity = '0.4';
-          if (zoomOut) zoomOut.style.opacity = '0.4';
-          if (zoomReset) zoomReset.style.opacity = '0.4';
-        } else {
-          // Restore visual zoom buttons
-          if (zoomIn) zoomIn.style.opacity = '1';
-          if (zoomOut) zoomOut.style.opacity = '1';
-          if (zoomReset) zoomReset.style.opacity = '1';
-        }
-        
-        this.drawMap();
+          if (this._is3D) {
+            this._zoom = 1; this._panX = 0; this._panY = 0;
+            this._applyTransform();
+            
+            if (zoomIn) zoomIn.style.opacity = '0.4';
+            if (zoomOut) zoomOut.style.opacity = '0.4';
+            if (zoomReset) zoomReset.style.opacity = '0.4';
+            
+            // Set up for "zoom in" effect (starts small)
+            svg.style.transform = 'scale(0.85)';
+          } else {
+            if (zoomIn) zoomIn.style.opacity = '1';
+            if (zoomOut) zoomOut.style.opacity = '1';
+            if (zoomReset) zoomReset.style.opacity = '1';
+            
+            // Set up for "zoom out" effect (starts large)
+            svg.style.transform = 'scale(1.15)';
+          }
+          
+          this.drawMap();
+          
+          // Force browser reflow to apply the starting scale and invisible state
+          void svg.offsetHeight;
+          
+          // 2. Fade in and smooth scale back to normal (1)
+          svg.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1)';
+          svg.style.opacity = '1';
+          svg.style.transform = 'scale(1)';
+          
+          // Clean up inline styles once the animation finishes
+          setTimeout(() => {
+            svg.style.transition = '';
+            svg.style.transform = '';
+          }, 450);
+          
+        }, 150);
       });
     }
   }
