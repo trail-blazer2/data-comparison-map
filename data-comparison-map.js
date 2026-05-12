@@ -99,7 +99,8 @@ const CATEGORY_META = {
 };
 
 function getColor(t) {
-  const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
+  // Colors: Light Blue (219,234,254), Bright Blue (147,197,253), Primary Blue (37,99,235), Dark Blue (29,78,216), Navy (30,58,138)
+  const c = [[219,234,254],[147,197,253],[37,99,235],[29,78,216],[30,58,138]];
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
   const f = (t * n) - i;
