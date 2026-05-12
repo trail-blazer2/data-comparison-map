@@ -99,8 +99,10 @@
 @media (max-width: 960px) {
   .logo-desktop { display: none; }
   .logo-mobile { display: block; }
-   .app {
+  .app {
     min-height: auto!important;
+    height: auto!important;
+    overflow: visible!important; 
   }
   .map-wrap {
     height: 420px; 
