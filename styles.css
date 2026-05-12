@@ -113,7 +113,7 @@
     width: 90%!important;
   }
   .mode-bar {
-  margin-top: 75px;
+  margin-top: 85px!important;
   }
 }
 
@@ -139,7 +139,7 @@
 }
 .glass::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  backdrop-filter: blur(16px) saturate(180%) brightness(1.06); -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.06); z-index: -1;
+  backdrop-filter: blur(32px) saturate(140%) brightness(1.04); -webkit-backdrop-filter: blur(32px) saturate(140%) brightness(1.04); z-index: -1;
 }
 @media (hover: hover) and (pointer: fine) {
   .glass::before { filter: url(#glass-distortion); }
