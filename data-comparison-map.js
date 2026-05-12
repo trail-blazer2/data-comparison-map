@@ -99,11 +99,25 @@ const CATEGORY_META = {
 };
 
 function getColor(t) {
-  const c = [[200,214,229],[131,149,167],[87,101,116],[34,47,62],[10,22,40]];
+  const c = [
+    [206,220,236], // lighter soft blue
+    [138,158,181], // cleaner steel blue
+    [92,108,130],  // more trustworthy mid tone
+    [38,52,72],    // deep navy slate
+    [12,24,44]     // rich dark navy
+  ];
+
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
   const f = (t * n) - i;
-  return `rgb(${Math.round(c[i][0]+(c[i+1][0]-c[i][0])*f)},${Math.round(c[i][1]+(c[i+1][1]-c[i][1])*f)},${Math.round(c[i][2]+(c[i+1][2]-c[i][2])*f)})`;
+
+  return `rgb(${
+    Math.round(c[i][0] + (c[i+1][0] - c[i][0]) * f)
+  },${
+    Math.round(c[i][1] + (c[i+1][1] - c[i][1]) * f)
+  },${
+    Math.round(c[i][2] + (c[i+1][2] - c[i][2]) * f)
+  })`;
 }
 
 function fmt(val, unit) {
