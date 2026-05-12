@@ -918,14 +918,16 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     let vw = this._origVB.w / this._zoom;
     let vh = this._origVB.h / this._zoom;
+    let isMobile = false;
     
-    // If mobile (slice), calculate the *actual* visible width/height based on the crop
+    // Check if we are in mobile 'slice' mode
     if (svg && svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') {
+      isMobile = true;
       const rect = svg.getBoundingClientRect();
       const vb = this._getViewBox();
       const scaleX = rect.width / vb.w;
       const scaleY = rect.height / vb.h;
-      const scale = Math.max(scaleX, scaleY); // 'slice' uses the max scale
+      const scale = Math.max(scaleX, scaleY);
       if (scale > 0) {
         vw = rect.width / scale;
         vh = rect.height / scale;
@@ -933,7 +935,9 @@ class DataComparisonMap extends HTMLElement {
     }
 
     const cb = this._contentBBox;
-    const overX = vw * 0.05; // 5% bounce buffer
+    
+    // Desktop gets 5% buffer. Mobile gets 40% horizontal buffer, 5% vertical.
+    const overX = isMobile ? (this._origVB.w * 0.4) : (vw * 0.05); 
     const overY = vh * 0.05; 
     
     return {
