@@ -318,7 +318,7 @@
 
 /* The side panel now sits statically beside the buttons and slides in/out via transform */
 .side-panel.left {
-  position: relative; top: 0; left: 0; bottom: 0; width: 320px;
+  position: relative; top: 0; left: 0; bottom: 0; width: 90%!important;
   display: flex; flex-direction: column; gap: 16px; padding: 20px; box-sizing: border-box;
   box-shadow: 0 12px 48px rgba(0,0,0,0.15);
   transform: translateX(calc(-100% - 60px));
