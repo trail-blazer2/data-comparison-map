@@ -193,7 +193,6 @@ class DataComparisonMap extends HTMLElement {
     this._minZoom = 1;
     this._maxZoom = 6;
     
-    // 3D MODE STATE
     this._is3D = false;
     this._globeRotation = [0, 0, 0];
     this._spinVelocity = 0;
@@ -332,12 +331,10 @@ class DataComparisonMap extends HTMLElement {
     // Always draw low-res
     svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
     
-    // PERFORMANCE: Skip heavy high-res map calculation while spinning the globe!
     if (!this._is3D || !isSpinning) {
       svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
     }
 
-    // 3D FOG EFFECT
     if (this._is3D) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
       defs.innerHTML = `
@@ -846,7 +843,6 @@ class DataComparisonMap extends HTMLElement {
         : Math.min(scaleX, scaleY);
     };
 
-    // Global Animation Loop for Auto-Spin & Momentum Physics
     const animLoop = () => {
       let needsRedraw = false;
       if (this._is3D) {
@@ -928,7 +924,6 @@ class DataComparisonMap extends HTMLElement {
       this._animateTo(1, 0, 0); 
     });
 
-    // -- MOBILE TOUCH EVENTS --
     let initialDist = 0;
     let initialMidX = 0;
     let initialMidY = 0;
@@ -1018,12 +1013,9 @@ class DataComparisonMap extends HTMLElement {
       this._animateTo(1, 0, 0); 
     });
 
-    // 3D TOGGLE BUTTON EVENT
-        // 3D TOGGLE BUTTON EVENT WITH FADE & ZOOM EFFECTS (FIXED)
     const toggle3D = this.$('#toggle3D');
     if (toggle3D) {
       toggle3D.addEventListener('click', () => {
-        // TARGET THE HTML WRAPPER INSTEAD OF THE SVG
         const wrap = this.$('.map-wrap'); 
         
         wrap.style.transition = 'opacity 0.15s ease-out';
@@ -1052,9 +1044,9 @@ class DataComparisonMap extends HTMLElement {
           
           this.drawMap();
           
-          void wrap.offsetHeight; // Force browser reflow
+          void wrap.offsetHeight; 
           
-          wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1)';
+          wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1)';
           wrap.style.opacity = '1';
           wrap.style.transform = 'scale(1)';
           
