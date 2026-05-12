@@ -220,7 +220,7 @@ class DataComparisonMap extends HTMLElement {
       fetch(HIGH_RES_MAP_TOPO_URL).then(r => r.json())
     ]);
 
-    // Initialize the 3D globe
+    // Initialize the 3D klobe
     const allFeaturesCollection = { type: "FeatureCollection", features: this.geoFeaturesLowRes };
     this.globe3D = new Globe3D("globe-3d", allFeaturesCollection);
 
