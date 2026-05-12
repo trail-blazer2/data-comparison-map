@@ -733,7 +733,7 @@ class DataComparisonMap extends HTMLElement {
       this._zoom = 1.8; 
       const vw = this._origVB.w / this._zoom;
       const vh = this._origVB.h / this._zoom;
-      this._panX = 280; 
+      this._panX = 260; 
       this._panY = -20;
     } else {
       this._zoom = 1; this._panX = 0; this._panY = 0;
