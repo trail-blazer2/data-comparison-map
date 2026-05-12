@@ -102,7 +102,7 @@
   .app {
     min-height: auto!important;
     height: auto!important;
-    overflow: visible!important; 
+    overflow: hidden!important; 
   }
   .map-wrap {
     height: 420px; 
