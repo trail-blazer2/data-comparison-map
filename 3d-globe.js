@@ -1,5 +1,7 @@
 class Globe3D {
   constructor(canvasId, geoData) {
+    const canvas = canvasElement;
+    const ctx = canvas.getContext('webgl'); // or '2d' depending on your script
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
     this.geoData = geoData;
