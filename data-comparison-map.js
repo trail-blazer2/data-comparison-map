@@ -950,8 +950,7 @@ class DataComparisonMap extends HTMLElement {
 
     const cb = this._contentBBox;
     
-    // Desktop gets 5% buffer. Mobile gets 40% horizontal buffer, 5% vertical.
-    const overX = isMobile ? (this._origVB.w * 0.4) : (vw * 0.05); 
+    const overX = isMobile ? (this._origVB.w * 0.5) : (vw * 0.05); 
     const overY = vh * 0.05; 
     
     return {
