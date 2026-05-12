@@ -1363,4 +1363,47 @@ class DataComparisonMap extends HTMLElement {
           </div>
           
           <!-- HISTORY VIEW -->
-          <`*
+          <div id="viewHistory" class="panel-view">
+            <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
+            <div class="year-slider-wrap">
+              <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+              <div class="year-labels" id="yearLabels">
+                <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+              </div>
+            </div>
+            <div class="history-content" id="histText"></div>
+          </div>
+
+          <!-- FUTURE VIEW -->
+          <div id="viewFuture" class="panel-view">
+            <div class="future-desc" id="futDesc">Description</div>
+            <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
+            <div class="future-factors" id="futFactors">
+              <!-- Checkboxes injected here -->
+            </div>
+            <div class="future-result" id="futResult"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="controls glass">
+      <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+      <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
+      <div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>
+    </div>
+  </div>
+  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
+</div>
+<div class="tooltip" id="tt">
+  <div class="tt-name" id="ttName">\u2014</div>
+  <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
+  <div class="tt-src" id="ttSrc"></div>
+  <div class="tt-disc" id="ttDisc"></div>
+</div>`;
+  }
+}
+
+customElements.define('data-comparison-map', DataComparisonMap);
