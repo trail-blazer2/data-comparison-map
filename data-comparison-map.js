@@ -754,7 +754,6 @@ class DataComparisonMap extends HTMLElement {
     // Save the state for the next animation
     this._lastFutVal = targetVal;
   }
-  }
 
   initZoomPan() {
     const svg = this.$('#mapSvg');
