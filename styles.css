@@ -281,7 +281,7 @@
   :host { font-size: 16px !important; }
   .main { grid-template-columns: 1fr; }
   .controls { position: static; max-height: none; }
-  .glass::before { backdrop-filter: none; -webkit-backdrop-filter: none; filter: none; background: rgb(255 255 255 / 65%); }
+  .glass::before { backdrop-filter: none; -webkit-backdrop-filter: none; filter: none; background: rgb(255 255 255 / 85%); }
   .top-nav { padding: 10px 14px 10px 16px; }
   .nav-link { font-size: min(2.93vw, 13px); padding: 6px 12px; }
   .nav-link.primary { font-size: min(2.93vw, 13px); }
