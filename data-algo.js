@@ -1,32 +1,305 @@
 // Hardcoded Historical Data (2020-2024)
 window.HISTORY_DATA = {
   gdp_per_capita: {
-    US: { 2020: 63527, 2021: 70667, 2022: 76329, 2023: 81632, 2024: 85300, txt: { 2020: "COVID-19 pandemic caused a dip in GDP.", 2024: "Strong economic recovery and tech sector growth." } },
-    CN: { 2020: 10408, 2021: 12556, 2022: 12720, 2023: 12614, 2024: 13100, txt: { 2020: "Only major economy to grow in 2020.", 2024: "Post-lockdown adjustments and real estate cooling." } },
-    DE: { 2020: 46772, 2021: 51203, 2022: 48717, 2023: 52729, 2024: 54200, txt: { 2022: "Energy crisis impacted industrial output." } },
-    CZ: { 2020: 22933, 2021: 26821, 2022: 27691, 2023: 30426, 2024: 31200, txt: { 2023: "High inflation impacted real wage growth." } },
-    SK: { 2020: 19442, 2021: 21383, 2022: 21258, 2023: 24470, 2024: 25100, txt: { 2020: "Automotive sector slowdown during pandemic." } }
+    US: {
+      2020: 63527,
+      2021: 70667,
+      2022: 76329,
+      2023: 81632,
+      2024: 85300,
+      txt: {
+        2020: "COVID-19-related decline. The downturn was driven by declines in consumer spending, exports, inventories, and business investment.",
+        2021: "GDP grew because all major components recovered at once: consumption, business investment, exports, housing investment and inventories.",
+        2022: "Consumption, exports, and inventories were the driving forces, while housing investment, on the contrary, was dragging things down. The economy is stable, but under pressure from high inflation.",
+        2023: "The economy remains positive, despite policy tightening. Growth was driven by consumption, non-residential fixed investment, state and local government spending, exports, and federal spending, while residential investment and inventories dragged it down.",
+        2024: "Moderately strong expansion amid declining inflation. The contributions of consumption, investment, government spending, and exports were significant; however, inflation indices themselves slowed."
+      }
+    },
+
+    CN: {
+      2020: 10408,
+      2021: 12556,
+      2022: 12720,
+      2023: 12614,
+      2024: 13100,
+      txt: {
+        2020: "In terms of growth structure, this was not a “healthy” demand-led recovery, but a combination of weak consumption, a strong role for investment, and a positive contribution from net exports.",
+        2021: "It was a year of strong rebound, with the biggest contribution coming from final demand – especially consumption.",
+        2022: "Growth has slowed. Several brakes have converged here: the Omicron outbreak has led to a broad weakening of production and domestic demand, as well as a decline in trade flows amid weaker external demand.",
+        2023: "Growth was supported by services demand, public infrastructure and manufacturing investment, while the property market slump and subdued exports dragged the economy down.",
+        2024: "The contribution of consumption and investment was positive, and the external sector also supported growth. Since the second quarter of 2024, growth has slowed due to weak domestic demand, with the property sector remaining the main drag."
+      }
+    },
+
+    DE: {
+      2020: 46772,
+      2021: 51203,
+      2022: 48717,
+      2023: 52729,
+      2024: 54200,
+      txt: {
+        2020: "A sharp decline due to COVID-19.",
+        2021: "The economy rebounded from the COVID-19 slump, but recovery was slowed by new waves of COVID-19, restrictions, and shortages of components.",
+        2022: "There's still growth, but it's already \"on inertia.\" The year passed under pressure from the war in Ukraine, a sharp rise in energy prices, material shortages, logistical disruptions, and a labour shortage.",
+        2023: "A slight negative. The reasons were structural: high prices across the entire supply chain, unfavourable financing conditions due to rising interest rates, and weak domestic and external demand.",
+        2024: "A weak continuation of the downturn, rather than a full-fledged recovery. Growth was hampered by competition in key sales markets, high energy prices, still-high interest rates, and uncertainty."
+      }
+    },
+
+    CZ: {
+      2020: 22933,
+      2021: 26821,
+      2022: 27691,
+      2023: 30426,
+      2024: 31200,
+      txt: {
+        2020: "The pandemic has hit services, domestic demand and production.",
+        2021: "Following the lifting of restrictions, the economy recovered from a very low base in 2020, with government and monetary support helping to restore growth.",
+        2022: "Growth is still positive, but noticeably weaker. Several factors converged here: a surge in inflation, a deterioration in household financial situations, a slowdown in external demand, and the gradual fading of the post-pandemic recovery.",
+        2023: "Inflation ate into real incomes, households were cautious, domestic demand weakened, and the external environment remained unfavourable.",
+        2024: "A moderate recovery has already been achieved. This has been helped by lower inflation, a recovery in real wages, and a return to consumption, although investment remained weak and external demand, particularly from Germany, recovered slowly."
+      }
+    },
+
+    SK: {
+      2020: 19442,
+      2021: 21383,
+      2022: 21258,
+      2023: 24470,
+      2024: 25100,
+      txt: {
+        2020: "Covid-19 slump, even though early reopening, fiscal support, and strong external demand for exports helped to quickly turn activity up in the second half of the year.",
+        2021: "A strong recovery, but not without problems. This was precisely the post-COVID rebound.",
+        2022: "Growth slowed significantly in 2022. Imports grew in line with high gas prices and domestic demand, while exports were held back by supply chain disruptions, particularly in the auto sector.",
+        2023: "Near stagnation. \"Pandemic-era savings\" were exhausted, and negative growth in real wages was putting pressure on consumption.",
+        2024: "A moderate recovery, driven primarily by private consumption, was supported by growth in real wages, extended energy support, and more generous pensions."
+      }
+    }
   },
+
   population: {
-    US: { 2020: 331.4, 2021: 332.0, 2022: 333.2, 2023: 334.9, 2024: 335.8, txt: {} },
-    CN: { 2020: 1411.1, 2021: 1412.3, 2022: 1412.1, 2023: 1409.6, 2024: 1407.0, txt: { 2022: "First population decline in decades.", 2024: "Aging population demographics accelerate." } },
-    DE: { 2020: 83.1, 2021: 83.2, 2022: 84.3, 2023: 84.4, 2024: 84.5, txt: { 2022: "Population bump due to Ukrainian refugees." } },
-    CZ: { 2020: 10.7, 2021: 10.5, 2022: 10.8, 2023: 10.9, 2024: 10.9, txt: { 2022: "Significant influx of refugees increased total pop." } },
-    SK: { 2020: 5.46, 2021: 5.43, 2022: 5.43, 2023: 5.42, 2024: 5.42, txt: {} }
+    US: {
+      2020: 331.4,
+      2021: 332.0,
+      2022: 333.2,
+      2023: 334.9,
+      2024: 335.8,
+      txt: {
+        2020: "The population has been growing significantly, but the pace was slow at the beginning of the period due to COVID. The main driver is rising net international migration.",
+        2021: "The population has been growing significantly, but the pace was slow at the beginning of the period due to COVID. The main driver is rising net international migration.",
+        2022: "The population has been growing significantly, but the pace was slow at the beginning of the period due to COVID. The main driver is rising net international migration.",
+        2023: "The population has been growing significantly, but the pace was slow at the beginning of the period due to COVID. The main driver is rising net international migration.",
+        2024: "The population has been growing significantly, but the pace was slow at the beginning of the period due to COVID. The main driver is rising net international migration."
+      }
+    },
+
+    CN: {
+      2020: 1411.1,
+      2021: 1412.3,
+      2022: 1412.1,
+      2023: 1409.6,
+      2024: 1407.0,
+      txt: {
+        2020: "Natural increase remains negative due to low fertility and rapid aging. China is among the countries with some of the lowest fertility rates in Asia.",
+        2021: "Natural increase remains negative due to low fertility and rapid aging. China is among the countries with some of the lowest fertility rates in Asia.",
+        2022: "Natural increase remains negative due to low fertility and rapid aging. China is among the countries with some of the lowest fertility rates in Asia.",
+        2023: "Natural increase remains negative due to low fertility and rapid aging. China is among the countries with some of the lowest fertility rates in Asia.",
+        2024: "Natural increase remains negative due to low fertility and rapid aging. China is among the countries with some of the lowest fertility rates in Asia."
+      }
+    },
+
+    DE: {
+      2020: 83.1,
+      2021: 83.2,
+      2022: 84.3,
+      2023: 84.4,
+      2024: 84.5,
+      txt: {
+        2020: "The basic demographic background is aging and natural decline, while population growth is provided by infusions from outside.",
+        2021: "The basic demographic background is aging and natural decline, while population growth is provided by infusions from outside.",
+        2022: "The basic demographic background is aging and natural decline, while population growth is provided by infusions from outside.",
+        2023: "The basic demographic background is aging and natural decline, while population growth is provided by infusions from outside.",
+        2024: "The basic demographic background is aging and natural decline, while population growth is provided by infusions from outside."
+      }
+    },
+
+    CZ: {
+      2020: 10.7,
+      2021: 10.5,
+      2022: 10.8,
+      2023: 10.9,
+      2024: 10.9,
+      txt: {
+        2020: "Almost all the growth was due to net migration from Ukraine, not natural growth. The birth/death balance was negative.",
+        2021: "Almost all the growth was due to net migration from Ukraine, not natural growth. The birth/death balance was negative.",
+        2022: "Almost all the growth was due to net migration from Ukraine, not natural growth. The birth/death balance was negative.",
+        2023: "Almost all the growth was due to net migration from Ukraine, not natural growth. The birth/death balance was negative.",
+        2024: "Almost all the growth was due to net migration from Ukraine, not natural growth. The birth/death balance was negative."
+      }
+    },
+
+    SK: {
+      2020: 5.46,
+      2021: 5.43,
+      2022: 5.43,
+      2023: 5.42,
+      2024: 5.42,
+      txt: {
+        2020: "A natural decline due to a low birth rate. Migration was of little help and did not compensate for the natural decline. Slovak emigration to OECD countries increased by 32% to 27,000 in 2022, with a significant share going to the Czech Republic.",
+        2021: "A natural decline due to a low birth rate. Migration was of little help and did not compensate for the natural decline. Slovak emigration to OECD countries increased by 32% to 27,000 in 2022, with a significant share going to the Czech Republic.",
+        2022: "A natural decline due to a low birth rate. Migration was of little help and did not compensate for the natural decline. Slovak emigration to OECD countries increased by 32% to 27,000 in 2022, with a significant share going to the Czech Republic.",
+        2023: "A natural decline due to a low birth rate. Migration was of little help and did not compensate for the natural decline. Slovak emigration to OECD countries increased by 32% to 27,000 in 2022, with a significant share going to the Czech Republic.",
+        2024: "A natural decline due to a low birth rate. Migration was of little help and did not compensate for the natural decline. Slovak emigration to OECD countries increased by 32% to 27,000 in 2022, with a significant share going to the Czech Republic."
+      }
+    }
   },
+
   rd_spending: {
-    US: { 2020: 3.45, 2021: 3.46, 2022: 3.46, 2023: 3.50, 2024: 3.52, txt: {} },
-    CN: { 2020: 2.40, 2021: 2.43, 2022: 2.54, 2023: 2.64, 2024: 2.70, txt: { 2024: "Heavy investments in AI and semiconductors." } },
-    DE: { 2020: 3.13, 2021: 3.13, 2022: 3.13, 2023: 3.14, 2024: 3.15, txt: {} },
-    CZ: { 2020: 1.99, 2021: 1.99, 2022: 1.96, 2023: 1.98, 2024: 2.00, txt: {} },
-    SK: { 2020: 0.91, 2021: 0.92, 2022: 0.98, 2023: 1.00, 2024: 1.05, txt: {} }
+    US: {
+      2020: 3.45,
+      2021: 3.46,
+      2022: 3.46,
+      2023: 3.50,
+      2024: 3.52,
+      txt: {
+        2020: "High and very stable level: the main driver is business financing.",
+        2021: "High and very stable level: the main driver is business financing.",
+        2022: "High and very stable level: the main driver is business financing.",
+        2023: "High and very stable level: the main driver is business financing.",
+        2024: "High and very stable level: the main driver is business financing."
+      }
+    },
+
+    CN: {
+      2020: 2.40,
+      2021: 2.43,
+      2022: 2.54,
+      2023: 2.64,
+      2024: 2.70,
+      txt: {
+        2020: "Rising line: R&D grew faster than GDP almost every year. Enterprises accounted for about 77% of all R&D spending.",
+        2021: "Rising line: R&D grew faster than GDP almost every year. Enterprises accounted for about 77% of all R&D spending.",
+        2022: "Rising line: R&D grew faster than GDP almost every year. Enterprises accounted for about 77% of all R&D spending.",
+        2023: "Rising line: R&D grew faster than GDP almost every year. Enterprises accounted for about 77% of all R&D spending.",
+        2024: "Rising line: R&D grew faster than GDP almost every year. Enterprises accounted for about 77% of all R&D spending."
+      }
+    },
+
+    DE: {
+      2020: 3.13,
+      2021: 3.13,
+      2022: 3.13,
+      2023: 3.14,
+      2024: 3.15,
+      txt: {
+        2020: "Almost a plateau around 3%: a strong industrial base and a large private sector prevented the indicator from falling sharply during the pandemic and did not allow it to accelerate sharply afterwards.",
+        2021: "Almost a plateau around 3%: a strong industrial base and a large private sector prevented the indicator from falling sharply during the pandemic and did not allow it to accelerate sharply afterwards.",
+        2022: "Almost a plateau around 3%: a strong industrial base and a large private sector prevented the indicator from falling sharply during the pandemic and did not allow it to accelerate sharply afterwards.",
+        2023: "Almost a plateau around 3%: a strong industrial base and a large private sector prevented the indicator from falling sharply during the pandemic and did not allow it to accelerate sharply afterwards.",
+        2024: "Almost a plateau around 3%: a strong industrial base and a large private sector prevented the indicator from falling sharply during the pandemic and did not allow it to accelerate sharply afterwards."
+      }
+    },
+
+    CZ: {
+      2020: 1.99,
+      2021: 1.99,
+      2022: 1.96,
+      2023: 1.98,
+      2024: 2.00,
+      txt: {
+        2020: "Declining intensity: nominal spending increased, but GDP grew faster, so the share of R&D in the economy fell slightly.",
+        2021: "Declining intensity: nominal spending increased, but GDP grew faster, so the share of R&D in the economy fell slightly.",
+        2022: "Declining intensity: nominal spending increased, but GDP grew faster, so the share of R&D in the economy fell slightly.",
+        2023: "Declining intensity: nominal spending increased, but GDP grew faster, so the share of R&D in the economy fell slightly.",
+        2024: "Declining intensity: nominal spending increased, but GDP grew faster, so the share of R&D in the economy fell slightly."
+      }
+    },
+
+    SK: {
+      2020: 0.91,
+      2021: 0.92,
+      2022: 0.98,
+      2023: 1.00,
+      2024: 1.05,
+      txt: {
+        2020: "Moderate growth until 2023 and a rebound in 2024. Business R&D remains low, government support for R&D has historically been around 0.4% of GDP, and additional funding is highly dependent on EU funds.",
+        2021: "Moderate growth until 2023 and a rebound in 2024. Business R&D remains low, government support for R&D has historically been around 0.4% of GDP, and additional funding is highly dependent on EU funds.",
+        2022: "Moderate growth until 2023 and a rebound in 2024. Business R&D remains low, government support for R&D has historically been around 0.4% of GDP, and additional funding is highly dependent on EU funds.",
+        2023: "Moderate growth until 2023 and a rebound in 2024. Business R&D remains low, government support for R&D has historically been around 0.4% of GDP, and additional funding is highly dependent on EU funds.",
+        2024: "Moderate growth until 2023 and a rebound in 2024. Business R&D remains low, government support for R&D has historically been around 0.4% of GDP, and additional funding is highly dependent on EU funds."
+      }
+    }
   },
+
   life_expectancy: {
-    US: { 2020: 77.0, 2021: 76.4, 2022: 77.5, 2023: 77.6, 2024: 77.8, txt: { 2021: "Significant drop due to pandemic." } },
-    CN: { 2020: 77.9, 2021: 78.2, 2022: 78.5, 2023: 78.6, 2024: 78.8, txt: {} },
-    DE: { 2020: 81.1, 2021: 80.8, 2022: 80.7, 2023: 81.2, 2024: 81.5, txt: {} },
-    CZ: { 2020: 78.2, 2021: 77.3, 2022: 79.0, 2023: 79.5, 2024: 79.8, txt: {} },
-    SK: { 2020: 76.8, 2021: 74.5, 2022: 77.0, 2023: 77.8, 2024: 78.1, txt: { 2021: "Severe COVID impact on mortality rates." } }
+    US: {
+      2020: 77.0,
+      2021: 76.4,
+      2022: 77.5,
+      2023: 77.6,
+      2024: 77.8,
+      txt: {
+        2020: "The United States initially suffered the pandemic's brunt more than other countries, but then quickly recovered some of its losses as mortality from several major causes declined.",
+        2021: "The United States initially suffered the pandemic's brunt more than other countries, but then quickly recovered some of its losses as mortality from several major causes declined.",
+        2022: "The United States initially suffered the pandemic's brunt more than other countries, but then quickly recovered some of its losses as mortality from several major causes declined.",
+        2023: "The United States initially suffered the pandemic's brunt more than other countries, but then quickly recovered some of its losses as mortality from several major causes declined.",
+        2024: "The United States initially suffered the pandemic's brunt more than other countries, but then quickly recovered some of its losses as mortality from several major causes declined."
+      }
+    },
+
+    CN: {
+      2020: 77.9,
+      2021: 78.2,
+      2022: 78.5,
+      2023: 78.6,
+      2024: 78.8,
+      txt: {}
+    },
+
+    DE: {
+      2020: 81.1,
+      2021: 80.8,
+      2022: 80.7,
+      2023: 81.2,
+      2024: 81.5,
+      txt: {
+        2020: "There was a COVID-19 crisis, followed by a gradual return to normal. This dynamic was driven by excess mortality during COVID, not some long-term structural collapse.",
+        2021: "There was a COVID-19 crisis, followed by a gradual return to normal. This dynamic was driven by excess mortality during COVID, not some long-term structural collapse.",
+        2022: "There was a COVID-19 crisis, followed by a gradual return to normal. This dynamic was driven by excess mortality during COVID, not some long-term structural collapse.",
+        2023: "There was a COVID-19 crisis, followed by a gradual return to normal. This dynamic was driven by excess mortality during COVID, not some long-term structural collapse.",
+        2024: "There was a COVID-19 crisis, followed by a gradual return to normal. This dynamic was driven by excess mortality during COVID, not some long-term structural collapse."
+      }
+    },
+
+    CZ: {
+      2020: 78.2,
+      2021: 77.3,
+      2022: 79.0,
+      2023: 79.5,
+      2024: 79.8,
+      txt: {
+        2020: "Life expectancy fell during the first two years of the pandemic and then recovered. The contribution of mortality from cardiovascular disease and cancer, as well as behavioural factors such as smoking and heavy alcohol consumption, is very significant.",
+        2021: "Life expectancy fell during the first two years of the pandemic and then recovered. The contribution of mortality from cardiovascular disease and cancer, as well as behavioural factors such as smoking and heavy alcohol consumption, is very significant.",
+        2022: "Life expectancy fell during the first two years of the pandemic and then recovered. The contribution of mortality from cardiovascular disease and cancer, as well as behavioural factors such as smoking and heavy alcohol consumption, is very significant.",
+        2023: "Life expectancy fell during the first two years of the pandemic and then recovered. The contribution of mortality from cardiovascular disease and cancer, as well as behavioural factors such as smoking and heavy alcohol consumption, is very significant.",
+        2024: "Life expectancy fell during the first two years of the pandemic and then recovered. The contribution of mortality from cardiovascular disease and cancer, as well as behavioural factors such as smoking and heavy alcohol consumption, is very significant."
+      }
+    },
+
+    SK: {
+      2020: 76.8,
+      2021: 74.5,
+      2022: 77.0,
+      2023: 77.8,
+      2024: 78.1,
+      txt: {
+        2020: "Life expectancy in Slovakia fell sharply during the pandemic, but then recovered in 2024, exceeding pre-pandemic levels; however, the country remains below the EU average.",
+        2021: "Life expectancy in Slovakia fell sharply during the pandemic, but then recovered in 2024, exceeding pre-pandemic levels; however, the country remains below the EU average.",
+        2022: "Life expectancy in Slovakia fell sharply during the pandemic, but then recovered in 2024, exceeding pre-pandemic levels; however, the country remains below the EU average.",
+        2023: "Life expectancy in Slovakia fell sharply during the pandemic, but then recovered in 2024, exceeding pre-pandemic levels; however, the country remains below the EU average.",
+        2024: "Life expectancy in Slovakia fell sharply during the pandemic, but then recovered in 2024, exceeding pre-pandemic levels; however, the country remains below the EU average."
+      }
+    }
   }
 };
 
