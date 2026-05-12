@@ -784,7 +784,7 @@ class DataComparisonMap extends HTMLElement {
       this._panX = 260; 
       this._panY = -20;
     } else {
-      this._zoom = 1; this._panX = 0; this._panY = 0;
+      this._zoom = 1; this._panX = 0; this._panY = -10;
     }
     this._applyTransform();
 
