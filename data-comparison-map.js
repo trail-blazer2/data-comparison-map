@@ -950,7 +950,7 @@ class DataComparisonMap extends HTMLElement {
 
     const cb = this._contentBBox;
     
-    const overX = isMobile ? (this._origVB.w * 0.5) : (vw * 0.05); 
+    const overX = isMobile ? (this._origVB.w * 0.7) : (vw * 0.05); 
     const overY = vh * 0.05; 
     
     return {
