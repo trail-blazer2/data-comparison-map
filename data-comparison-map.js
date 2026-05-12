@@ -698,8 +698,42 @@ class DataComparisonMap extends HTMLElement {
       }
     });
     
-    const line = svg.querySelector('#futLine');
-    if(line) line.setAttribute('d', pathD);
+        const line = svg.querySelector('#futLine');
+    if (line) {
+      const newD = pathD;
+      const oldD = line.getAttribute('d');
+      
+      // Cancel previous frame to prevent glitching if user clicks rapidly
+      if (this._lineAnimFrame) cancelAnimationFrame(this._lineAnimFrame);
+      
+      // If we have an old path, animate cleanly point-by-point to the new path
+      if (oldD && oldD !== newD && oldD.includes('M')) {
+        const parseD = (dStr) => dStr.trim().split(/[ML\s]+/).filter(Boolean).map(s => s.split(',').map(Number));
+        const oldPts = parseD(oldD);
+        const newPts = parseD(newD);
+        
+        if (oldPts.length === newPts.length) {
+          const startT = performance.now();
+          const animD = (now) => {
+            const p = Math.min((now - startT) / 300, 1);
+            const ease = 1 - Math.pow(1 - p, 3); // Cubic ease out
+            let curD = "";
+            for(let j = 0; j < oldPts.length; j++) {
+              const curX = oldPts[j][0] + (newPts[j][0] - oldPts[j][0]) * ease;
+              const curY = oldPts[j][1] + (newPts[j][1] - oldPts[j][1]) * ease;
+              curD += `${j === 0 ? 'M' : 'L'}${curX},${curY} `;
+            }
+            line.setAttribute('d', curD);
+            if (p < 1) this._lineAnimFrame = requestAnimationFrame(animD);
+          };
+          this._lineAnimFrame = requestAnimationFrame(animD);
+        } else {
+          line.setAttribute('d', newD);
+        }
+      } else {
+        line.setAttribute('d', newD);
+      }
+    }
 
     const targetVal = currentValues[5];
     
@@ -719,6 +753,7 @@ class DataComparisonMap extends HTMLElement {
     
     // Save the state for the next animation
     this._lastFutVal = targetVal;
+  }
   }
 
   initZoomPan() {
@@ -881,11 +916,26 @@ class DataComparisonMap extends HTMLElement {
     highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
   }
   _getPanBounds() {
-    const vw = this._origVB.w / this._zoom;
-    const vh = this._origVB.h / this._zoom;
+    const svg = this.$('#mapSvg');
+    let vw = this._origVB.w / this._zoom;
+    let vh = this._origVB.h / this._zoom;
+    
+    // If mobile (slice), calculate the *actual* visible width/height based on the crop
+    if (svg && svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') {
+      const rect = svg.getBoundingClientRect();
+      const vb = this._getViewBox();
+      const scaleX = rect.width / vb.w;
+      const scaleY = rect.height / vb.h;
+      const scale = Math.max(scaleX, scaleY); // 'slice' uses the max scale
+      if (scale > 0) {
+        vw = rect.width / scale;
+        vh = rect.height / scale;
+      }
+    }
+
     const cb = this._contentBBox;
-    const overX = vw * 0.02; 
-    const overY = vh * 0.02;
+    const overX = vw * 0.05; // 5% bounce buffer
+    const overY = vh * 0.05; 
     
     return {
       minX: Math.min(cb.x - this._origVB.x - overX, 0),
