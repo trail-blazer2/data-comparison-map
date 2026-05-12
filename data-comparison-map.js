@@ -656,6 +656,8 @@ class DataComparisonMap extends HTMLElement {
     if(isInitial) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     
     let pathD = "";
+    const dt = this.DATA[this.currentDataType];
+
     years.forEach((y, i) => {
       const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
       const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
@@ -675,14 +677,22 @@ class DataComparisonMap extends HTMLElement {
         lbl.setAttribute('class', 'fut-label');
         svg.appendChild(lbl);
       }
-      pt.setAttribute('cx', cx);
-      pt.setAttribute('cy', cy);
-      lbl.setAttribute('x', cx);
-      lbl.setAttribute('y', cy - 10);
+      
+      // Using transforms instead of cx/cy guarantees smooth hardware acceleration on all browsers!
+      pt.style.transform = `translate(${cx}px, ${cy}px)`;
+      lbl.style.transform = `translate(${cx}px, ${cy - 10}px)`;
 
-      if (i === 0 || i === 5) {
-        lbl.textContent = fmt(currentValues[i], this.DATA[this.currentDataType].unit);
-        lbl.setAttribute('text-anchor', i === 0 ? 'start' : 'end');
+      if (i === 0) {
+        lbl.textContent = fmt(currentValues[i], dt.unit);
+        lbl.setAttribute('text-anchor', 'start');
+      } else if (i === 5) {
+        lbl.setAttribute('text-anchor', 'end');
+        // Animate the actual text number inside the SVG
+        if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(currentValues[i])) {
+          animateValue(lbl, this._lastFutVal, currentValues[i], dt.unit, 300);
+        } else {
+          lbl.textContent = fmt(currentValues[i], dt.unit);
+        }
       } else {
         lbl.textContent = '';
       }
@@ -691,7 +701,6 @@ class DataComparisonMap extends HTMLElement {
     const line = svg.querySelector('#futLine');
     if(line) line.setAttribute('d', pathD);
 
-    const dt = this.DATA[this.currentDataType];
     const targetVal = currentValues[5];
     
     let resultContainer = this.$('#futResultVal');
@@ -701,12 +710,14 @@ class DataComparisonMap extends HTMLElement {
       this._lastFutVal = targetVal;
     }
 
-    // Animate the future result number
+    // Animate the bold result number at the bottom
     if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(targetVal)) {
       animateValue(resultContainer, this._lastFutVal, targetVal, dt.unit, 300);
     } else {
       resultContainer.textContent = fmt(targetVal, dt.unit);
     }
+    
+    // Save the state for the next animation
     this._lastFutVal = targetVal;
   }
 
