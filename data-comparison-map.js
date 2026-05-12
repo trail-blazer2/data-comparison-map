@@ -198,7 +198,7 @@ class DataComparisonMap extends HTMLElement {
     this._globeRotation = [0, 0, 0];
     this._spinVelocity = 0;
     this._lastSpinTime = 0;
-    this._spinAnimFrame = null;
+    this._autoSpinning = true; // Slowly spin until interaction
   }
 
   connectedCallback() {
@@ -310,20 +310,52 @@ class DataComparisonMap extends HTMLElement {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     
+    const isSpinning = this._is3D && (this._isPanning || Math.abs(this._spinVelocity) > 0.01 || this._autoSpinning);
+    let cx, cy, scale;
+
     // 3D Ocean Background
     if (this._is3D) {
-      const scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
+      scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
+      cx = WORLD_VIEWBOX.w / 2 + this._panX;
+      cy = WORLD_VIEWBOX.h / 2 + this._panY;
+      
       const ocean = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      ocean.setAttribute('cx', WORLD_VIEWBOX.w / 2 + this._panX);
-      ocean.setAttribute('cy', WORLD_VIEWBOX.h / 2 + this._panY);
+      ocean.setAttribute('cx', cx);
+      ocean.setAttribute('cy', cy);
       ocean.setAttribute('r', scale * this._zoom);
       ocean.setAttribute('class', 'globe-ocean');
       svg.appendChild(ocean);
     }
     
     const proj = c => this._proj(c);
+    
+    // Always draw low-res
     svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
-    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
+    
+    // PERFORMANCE: Skip heavy high-res map calculation while spinning the globe!
+    if (!this._is3D || !isSpinning) {
+      svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
+    }
+
+    // 3D FOG EFFECT
+    if (this._is3D) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = `
+        <radialGradient id="globeFog" cx="50%" cy="50%" r="50%">
+          <stop offset="65%" stop-color="rgba(224, 242, 254, 0)"/>
+          <stop offset="100%" stop-color="rgba(224, 242, 254, 1)"/>
+        </radialGradient>`;
+      svg.appendChild(defs);
+
+      const fog = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      fog.setAttribute('cx', cx);
+      fog.setAttribute('cy', cy);
+      fog.setAttribute('r', scale * this._zoom);
+      fog.setAttribute('fill', 'url(#globeFog)');
+      fog.setAttribute('pointer-events', 'none'); // Let clicks pass through to countries
+      svg.appendChild(fog);
+    }
+
     this._isHighResVisible = !(this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD);
     this._syncDetailLayerVisibility();
 
@@ -380,7 +412,7 @@ class DataComparisonMap extends HTMLElement {
     
     this.$('#closeLeftBtn').onclick = () => this.closeLeftPanelOnly();
     
-    if(this.currentSource) this.paint(); // Repaint if we redrew the globe
+    if(this.currentSource) this.paint();
   }
 
   _buildResolutionGroup(features, className, proj, precision) {
@@ -814,19 +846,29 @@ class DataComparisonMap extends HTMLElement {
         : Math.min(scaleX, scaleY);
     };
 
-    const spinGlobe = () => {
-      if (Math.abs(this._spinVelocity) > 0.01) {
-        this._globeRotation[0] += this._spinVelocity;
-        this._spinVelocity *= 0.95; // friction
-        this.drawMap();
-        this._spinAnimFrame = requestAnimationFrame(spinGlobe);
-      } else {
-        this._spinVelocity = 0;
+    // Global Animation Loop for Auto-Spin & Momentum Physics
+    const animLoop = () => {
+      let needsRedraw = false;
+      if (this._is3D) {
+        if (this._autoSpinning && !this._isPanning) {
+          this._globeRotation[0] += 0.15; // Slow ambient spin
+          needsRedraw = true;
+        } else if (!this._isPanning && Math.abs(this._spinVelocity) > 0.01) {
+          this._globeRotation[0] += this._spinVelocity;
+          this._spinVelocity *= 0.95; // Momentum friction
+          needsRedraw = true;
+        } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
+          this._spinVelocity = 0;
+        }
       }
+      if (needsRedraw) this.drawMap();
+      requestAnimationFrame(animLoop);
     };
+    requestAnimationFrame(animLoop);
 
     wrap.addEventListener('wheel', (e) => {
       e.preventDefault();
+      if (this._is3D) return; // Disable zoom in 3D mode
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
       const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
       const rect = svg.getBoundingClientRect();
@@ -836,18 +878,17 @@ class DataComparisonMap extends HTMLElement {
       const oldH = this._origVB.h / this._zoom, newH = this._origVB.h / newZoom;
       this._panX += (oldW - newW) * mx; this._panY += (oldH - newH) * my;
       this._zoom = newZoom; this._clampAndApply();
-      if(this._is3D) this.drawMap();
     }, { passive: false });
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       this._isPanning = true; 
       this._dragged = false; 
+      this._autoSpinning = false; // Stop auto-spin forever
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       this._panStartRotation = [...this._globeRotation];
       this._spinVelocity = 0;
-      if (this._spinAnimFrame) cancelAnimationFrame(this._spinAnimFrame);
       this._lastSpinTime = performance.now();
       wrap.style.cursor = 'grabbing'; e.preventDefault();
     });
@@ -879,10 +920,13 @@ class DataComparisonMap extends HTMLElement {
     window.addEventListener('mouseup', () => {
       if (!this._isPanning) return;
       this._isPanning = false; wrap.style.cursor = ''; 
-      if (this._is3D) spinGlobe();
-      else this._snapBack();
+      if (!this._is3D) this._snapBack();
     });
-    wrap.addEventListener('dblclick', (e) => { e.preventDefault(); this._animateTo(1, 0, 0); });
+    wrap.addEventListener('dblclick', (e) => { 
+      e.preventDefault(); 
+      if (this._is3D) return; // Disable double-click zoom in 3D mode
+      this._animateTo(1, 0, 0); 
+    });
 
     // -- MOBILE TOUCH EVENTS --
     let initialDist = 0;
@@ -893,11 +937,11 @@ class DataComparisonMap extends HTMLElement {
     wrap.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         this._isPanning = true; this._dragged = false; 
+        this._autoSpinning = false; // Stop auto-spin forever
         this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
         this._panStartPanX = this._panX; this._panStartPanY = this._panY;
         this._panStartRotation = [...this._globeRotation];
         this._spinVelocity = 0;
-        if (this._spinAnimFrame) cancelAnimationFrame(this._spinAnimFrame);
         this._lastSpinTime = performance.now();
       } else if (e.touches.length === 2) {
         this._isPanning = false;
@@ -931,6 +975,8 @@ class DataComparisonMap extends HTMLElement {
         }
       } else if (e.touches.length === 2) {
         this._dragged = true; e.preventDefault();
+        if (this._is3D) return; // Disable pinch zoom in 3D mode
+        
         const t1 = e.touches[0], t2 = e.touches[1];
         const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * (dist / initialDist)));
@@ -944,35 +990,32 @@ class DataComparisonMap extends HTMLElement {
         this._panX = this._panStartPanX + (oldW - newW) * mx; 
         this._panY = this._panStartPanY + (oldH - newH) * my;
         this._zoom = newZoom; this._clampAndApply();
-        if(this._is3D) this.drawMap();
       }
     }, { passive: false });
 
     wrap.addEventListener('touchend', () => { 
       this._isPanning = false; 
-      if (this._is3D) spinGlobe();
-      else this._snapBack(); 
+      if (!this._is3D) this._snapBack(); 
     });
 
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
+      if (this._is3D) return; // Disable button zoom in 3D mode
       const nz = Math.min(this._maxZoom, this._zoom + 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
       this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-      if(this._is3D) setTimeout(() => this.drawMap(), 100);
     });
     if (zoomOut) zoomOut.addEventListener('click', () => {
+      if (this._is3D) return; // Disable button zoom in 3D mode
       const nz = Math.max(this._minZoom, this._zoom - 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
       this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-      if(this._is3D) setTimeout(() => this.drawMap(), 100);
     });
     if (zoomReset) zoomReset.addEventListener('click', () => { 
+      if (this._is3D) return;
       this._animateTo(1, 0, 0); 
-      this._globeRotation = [0, 0, 0];
-      if(this._is3D) setTimeout(() => this.drawMap(), 100);
     });
 
     // 3D TOGGLE BUTTON EVENT
@@ -981,6 +1024,25 @@ class DataComparisonMap extends HTMLElement {
       toggle3D.addEventListener('click', () => {
         this._is3D = !this._is3D;
         toggle3D.classList.toggle('active-3d', this._is3D);
+        
+        if (this._is3D) {
+          // Force fully zoomed-out and centered view for globe
+          this._zoom = 1;
+          this._panX = 0;
+          this._panY = 0;
+          this._applyTransform();
+          
+          // Visually disable zoom buttons
+          if (zoomIn) zoomIn.style.opacity = '0.4';
+          if (zoomOut) zoomOut.style.opacity = '0.4';
+          if (zoomReset) zoomReset.style.opacity = '0.4';
+        } else {
+          // Restore visual zoom buttons
+          if (zoomIn) zoomIn.style.opacity = '1';
+          if (zoomOut) zoomOut.style.opacity = '1';
+          if (zoomReset) zoomReset.style.opacity = '1';
+        }
+        
         this.drawMap();
       });
     }
@@ -1301,47 +1363,4 @@ class DataComparisonMap extends HTMLElement {
           </div>
           
           <!-- HISTORY VIEW -->
-          <div id="viewHistory" class="panel-view">
-            <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
-            <div class="year-slider-wrap">
-              <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
-              <div class="year-labels" id="yearLabels">
-                <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
-              </div>
-            </div>
-            <div class="history-content" id="histText"></div>
-          </div>
-
-          <!-- FUTURE VIEW -->
-          <div id="viewFuture" class="panel-view">
-            <div class="future-desc" id="futDesc">Description</div>
-            <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
-            <div class="future-factors" id="futFactors">
-              <!-- Checkboxes injected here -->
-            </div>
-            <div class="future-result" id="futResult"></div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-    
-    <div class="controls glass">
-      <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
-      <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
-      <div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>
-    </div>
-  </div>
-  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
-</div>
-<div class="tooltip" id="tt">
-  <div class="tt-name" id="ttName">\u2014</div>
-  <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
-  <div class="tt-src" id="ttSrc"></div>
-  <div class="tt-disc" id="ttDisc"></div>
-</div>`;
-  }
-}
-
-customElements.define('data-comparison-map', DataComparisonMap);
+          <`*
