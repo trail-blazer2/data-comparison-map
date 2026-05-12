@@ -224,6 +224,12 @@ class DataComparisonMap extends HTMLElement {
     const allFeaturesCollection = { type: "FeatureCollection", features: this.geoFeaturesLowRes };
     this.globe3D = new Globe3D("globe-3d", allFeaturesCollection);
 
+    const globeCanvas = this.shadowRoot.querySelector('#globe-3d');
+  
+    if (globeCanvas) {
+      this.globe = new Globe3D(globeCanvas);
+    }
+
     // Set up the toggle
     const toggleBtn = this.$('#toggle3dBtn');
     const svgEl = this.$('#mapSvg');
