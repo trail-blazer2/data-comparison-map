@@ -342,8 +342,8 @@ class DataComparisonMap extends HTMLElement {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
       defs.innerHTML = `
         <radialGradient id="globeFog" cx="50%" cy="50%" r="50%">
-          <stop offset="65%" stop-color="rgba(224, 242, 254, 0)"/>
-          <stop offset="100%" stop-color="rgba(224, 242, 254, 1)"/>
+          <stop offset="85%" stop-color="rgba(224, 242, 254, 0)"/>
+          <stop offset="100%" stop-color="rgba(224, 242, 254, 0.4)"/>
         </radialGradient>`;
       svg.appendChild(defs);
 
