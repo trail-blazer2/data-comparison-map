@@ -1,7 +1,7 @@
 name: Fetch Fresh Data
 
 on:
-  # NO schedule — you trigger this manually when you want fresh data
+  # No schedule, manual trigger for fresh data
   workflow_dispatch:
 
 permissions:
