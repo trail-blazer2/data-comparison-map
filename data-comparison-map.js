@@ -198,7 +198,7 @@ class DataComparisonMap extends HTMLElement {
     this._globeRotation = [0, 0, 0];
     this._spinVelocity = 0;
     this._lastSpinTime = 0;
-    this._autoSpinning = true; // Slowly spin until interaction
+    this._autoSpinning = true; 
   }
 
   connectedCallback() {
@@ -272,7 +272,7 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeaturesLowRes = lowResAll.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
     this.geoFeaturesHighRes = highResAll.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
 
-    this.drawMap();
+    this.drawMap(); // Creates DOM elements
     this.buildCategoryButtons();
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
@@ -306,14 +306,14 @@ class DataComparisonMap extends HTMLElement {
     }
   }
 
+  // Called only on init and when toggling 2D/3D to rebuild DOM structure
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
     
-    const isSpinning = this._is3D && (this._isPanning || Math.abs(this._spinVelocity) > 0.01 || this._autoSpinning);
     let cx, cy, scale;
 
-    // 3D Ocean Background
+    // 3D Background Setup
     if (this._is3D) {
       scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
       cx = WORLD_VIEWBOX.w / 2 + this._panX;
@@ -329,21 +329,16 @@ class DataComparisonMap extends HTMLElement {
     
     const proj = c => this._proj(c);
     
-    // Always draw low-res
     svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
-    
-    // PERFORMANCE: Skip heavy high-res map calculation while spinning the globe!
-    if (!this._is3D || !isSpinning) {
-      svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
-    }
+    svg.appendChild(this._buildResolutionGroup(this.geoFeaturesHighRes, 'euro-group high-res', proj, DETAIL_LAYER_DECIMAL_PLACES));
 
-    // 3D FOG EFFECT
+    // 3D FOG EFFECT Setup
     if (this._is3D) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
       defs.innerHTML = `
         <radialGradient id="globeFog" cx="50%" cy="50%" r="50%">
-          <stop offset="85%" stop-color="rgba(224, 242, 254, 0)"/>
-          <stop offset="100%" stop-color="rgba(224, 242, 254, 0.4)"/>
+          <stop offset="65%" stop-color="rgba(224, 242, 254, 0)"/>
+          <stop offset="100%" stop-color="rgba(224, 242, 254, 1)"/>
         </radialGradient>`;
       svg.appendChild(defs);
 
@@ -351,8 +346,9 @@ class DataComparisonMap extends HTMLElement {
       fog.setAttribute('cx', cx);
       fog.setAttribute('cy', cy);
       fog.setAttribute('r', scale * this._zoom);
+      fog.setAttribute('class', 'globe-fog');
       fog.setAttribute('fill', 'url(#globeFog)');
-      fog.setAttribute('pointer-events', 'none'); // Let clicks pass through to countries
+      fog.setAttribute('pointer-events', 'none'); 
       svg.appendChild(fog);
     }
 
@@ -413,6 +409,58 @@ class DataComparisonMap extends HTMLElement {
     this.$('#closeLeftBtn').onclick = () => this.closeLeftPanelOnly();
     
     if(this.currentSource) this.paint();
+    
+    // Initial 3D frame render
+    if (this._is3D) this.updateGlobe();
+  }
+
+  // Highly optimized function for rendering frames of spinning animation without touching DOM structures
+  updateGlobe() {
+    if (!this._is3D) return;
+    
+    const scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
+    const cx = WORLD_VIEWBOX.w / 2 + this._panX;
+    const cy = WORLD_VIEWBOX.h / 2 + this._panY;
+    
+    const projection = d3.geoOrthographic()
+      .scale(scale * this._zoom)
+      .translate([cx, cy])
+      .rotate(this._globeRotation);
+    const pathGenerator = d3.geoPath().projection(projection);
+
+    const isSpinning = this._isPanning || Math.abs(this._spinVelocity) > 0.01 || this._autoSpinning;
+
+    // Update Low Res paths directly
+    this.$$('.euro-group.low-res .cp').forEach(p => {
+      if (p._geoFeature) p.setAttribute('d', pathGenerator(p._geoFeature) || '');
+    });
+
+    // Hide High Res while spinning to save massive CPU/Memory
+    const hrGroup = this.$('.euro-group.high-res');
+    if (hrGroup) {
+      if (isSpinning) {
+        hrGroup.style.display = 'none';
+      } else {
+        hrGroup.style.display = '';
+        this.$$('.euro-group.high-res .cp').forEach(p => {
+          if (p._geoFeature) p.setAttribute('d', pathGenerator(p._geoFeature) || '');
+        });
+      }
+    }
+    
+    // Update ocean and fog
+    const r = scale * this._zoom;
+    const ocean = this.$('.globe-ocean');
+    if (ocean) { ocean.setAttribute('cx', cx); ocean.setAttribute('cy', cy); ocean.setAttribute('r', r); }
+    const fog = this.$('.globe-fog');
+    if (fog) { fog.setAttribute('cx', cx); fog.setAttribute('cy', cy); fog.setAttribute('r', r); }
+    
+    // Clear hover/select overlays if spinning to avoid visual bugs
+    if (isSpinning) {
+       const hOverlay = this.$('#hoverOverlay');
+       if(hOverlay) hOverlay.style.clipPath = 'circle(0% at 50% 50%)';
+       this.ttHide();
+    }
   }
 
   _buildResolutionGroup(features, className, proj, precision) {
@@ -446,6 +494,7 @@ class DataComparisonMap extends HTMLElement {
         p.setAttribute('d', d);
         p.dataset.code = a2;
         p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p._geoFeature = f; // Cache object reference directly on DOM node for extremely fast O(1) lookups during rotation
         p.classList.add('cp', 'no-data');
         this._bindCountryInteractions(p);
         group.appendChild(p);
@@ -457,6 +506,9 @@ class DataComparisonMap extends HTMLElement {
   _bindCountryInteractions(pathEl) {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
+      const isSpinning = self._is3D && (self._isPanning || Math.abs(self._spinVelocity) > 0.01 || self._autoSpinning);
+      if (isSpinning) return;
+        
       const hOverlay = self.$('#hoverOverlay');
       if(hOverlay) {
         const code = pathEl.dataset.code;
@@ -488,6 +540,9 @@ class DataComparisonMap extends HTMLElement {
       self.openSidePanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
+      const isSpinning = self._is3D && (self._isPanning || Math.abs(self._spinVelocity) > 0.01 || self._autoSpinning);
+      if (isSpinning) return;
+        
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       
       const code = pathEl.dataset.code;
@@ -851,24 +906,24 @@ class DataComparisonMap extends HTMLElement {
       let needsRedraw = false;
       if (this._is3D) {
         if (this._autoSpinning && !this._isPanning) {
-          this._globeRotation[0] += 0.15; // Slow ambient spin
+          this._globeRotation[0] += 0.15; 
           needsRedraw = true;
         } else if (!this._isPanning && Math.abs(this._spinVelocity) > 0.01) {
           this._globeRotation[0] += this._spinVelocity;
-          this._spinVelocity *= 0.95; // Momentum friction
+          this._spinVelocity *= 0.95; 
           needsRedraw = true;
         } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
           this._spinVelocity = 0;
         }
       }
-      if (needsRedraw) this.drawMap();
+      if (needsRedraw) this.updateGlobe(); // Reusing DOM, drastically lowering memory usage
       requestAnimationFrame(animLoop);
     };
     requestAnimationFrame(animLoop);
 
     wrap.addEventListener('wheel', (e) => {
       e.preventDefault();
-      if (this._is3D) return; // Disable zoom in 3D mode
+      if (this._is3D) return; 
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
       const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
       const rect = svg.getBoundingClientRect();
@@ -884,7 +939,7 @@ class DataComparisonMap extends HTMLElement {
       if (e.button !== 0) return;
       this._isPanning = true; 
       this._dragged = false; 
-      this._autoSpinning = false; // Stop auto-spin forever
+      this._autoSpinning = false; 
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       this._panStartRotation = [...this._globeRotation];
@@ -909,7 +964,7 @@ class DataComparisonMap extends HTMLElement {
         if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
         this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
         this._lastSpinTime = now;
-        this.drawMap();
+        this.updateGlobe();
       } else {
         const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
         this._panX = this._panStartPanX - dx * (vb.w / rect.width);
@@ -924,11 +979,10 @@ class DataComparisonMap extends HTMLElement {
     });
     wrap.addEventListener('dblclick', (e) => { 
       e.preventDefault(); 
-      if (this._is3D) return; // Disable double-click zoom in 3D mode
+      if (this._is3D) return; 
       this._animateTo(1, 0, 0); 
     });
 
-    // -- MOBILE TOUCH EVENTS --
     let initialDist = 0;
     let initialMidX = 0;
     let initialMidY = 0;
@@ -937,7 +991,7 @@ class DataComparisonMap extends HTMLElement {
     wrap.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         this._isPanning = true; this._dragged = false; 
-        this._autoSpinning = false; // Stop auto-spin forever
+        this._autoSpinning = false; 
         this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
         this._panStartPanX = this._panX; this._panStartPanY = this._panY;
         this._panStartRotation = [...this._globeRotation];
@@ -966,7 +1020,7 @@ class DataComparisonMap extends HTMLElement {
           if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
           this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
           this._lastSpinTime = now;
-          this.drawMap();
+          this.updateGlobe();
         } else {
           const scale = getScale();
           this._panX = this._panStartPanX - dx / scale;
@@ -975,7 +1029,7 @@ class DataComparisonMap extends HTMLElement {
         }
       } else if (e.touches.length === 2) {
         this._dragged = true; e.preventDefault();
-        if (this._is3D) return; // Disable pinch zoom in 3D mode
+        if (this._is3D) return; 
         
         const t1 = e.touches[0], t2 = e.touches[1];
         const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -1000,14 +1054,14 @@ class DataComparisonMap extends HTMLElement {
 
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
-      if (this._is3D) return; // Disable button zoom in 3D mode
+      if (this._is3D) return; 
       const nz = Math.min(this._maxZoom, this._zoom + 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
       this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
     });
     if (zoomOut) zoomOut.addEventListener('click', () => {
-      if (this._is3D) return; // Disable button zoom in 3D mode
+      if (this._is3D) return; 
       const nz = Math.max(this._minZoom, this._zoom - 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
@@ -1018,7 +1072,6 @@ class DataComparisonMap extends HTMLElement {
       this._animateTo(1, 0, 0); 
     });
 
-    // 3D TOGGLE BUTTON EVENT
     const toggle3D = this.$('#toggle3D');
     if (toggle3D) {
       toggle3D.addEventListener('click', () => {
@@ -1026,18 +1079,15 @@ class DataComparisonMap extends HTMLElement {
         toggle3D.classList.toggle('active-3d', this._is3D);
         
         if (this._is3D) {
-          // Force fully zoomed-out and centered view for globe
           this._zoom = 1;
           this._panX = 0;
           this._panY = 0;
           this._applyTransform();
           
-          // Visually disable zoom buttons
           if (zoomIn) zoomIn.style.opacity = '0.4';
           if (zoomOut) zoomOut.style.opacity = '0.4';
           if (zoomReset) zoomReset.style.opacity = '0.4';
         } else {
-          // Restore visual zoom buttons
           if (zoomIn) zoomIn.style.opacity = '1';
           if (zoomOut) zoomOut.style.opacity = '1';
           if (zoomReset) zoomReset.style.opacity = '1';
@@ -1103,7 +1153,7 @@ class DataComparisonMap extends HTMLElement {
     };
   }
   _clampPan() {
-    if(this._is3D) return; // Don't clamp pan bounds in 3D to allow free rotation centering
+    if(this._is3D) return; 
     const b = this._getPanBounds();
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
@@ -1140,7 +1190,7 @@ class DataComparisonMap extends HTMLElement {
       this._panX = sx + (targetPanX - sx) * ease;
       this._panY = sy + (targetPanY - sy) * ease;
       this._applyTransform();
-      if(this._is3D) this.drawMap();
+      if(this._is3D) this.updateGlobe();
       if (p < 1) this._animFrame = requestAnimationFrame(tick);
       else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
     };
