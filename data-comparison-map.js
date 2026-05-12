@@ -220,6 +220,23 @@ class DataComparisonMap extends HTMLElement {
       fetch(HIGH_RES_MAP_TOPO_URL).then(r => r.json())
     ]);
 
+    // Initialize the 3D globe
+    const allFeaturesCollection = { type: "FeatureCollection", features: this.geoFeaturesLowRes };
+    this.globe3D = new Globe3D("globe-3d", allFeaturesCollection);
+
+    // Set up the toggle
+    const toggleBtn = this.$('#toggle3dBtn');
+    const svgEl = this.$('#mapSvg');
+    const canvasEl = this.$('#globe-3d');
+    let is3D = false;
+
+    toggleBtn.addEventListener('click', () => {
+      is3D = !is3D;
+      toggleBtn.textContent = is3D ? "Switch to 2D" : "Switch to 3D";
+      svgEl.style.display = is3D ? "none" : "block";
+      canvasEl.style.display = is3D ? "block" : "none";
+    });
+
     Object.entries(dataRaw).forEach(([k, v]) => { if (k !== '_meta') this.DATA[k] = v; });
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
@@ -1183,6 +1200,7 @@ class DataComparisonMap extends HTMLElement {
 
   html() {
     return `<div class="app">
+          <button id="toggle3dBtn" style="position: absolute; top: 80px; right: 20px; z-index: 50;">Switch to 3D</button>
   <nav class="top-nav">
     <div class="nav-logo" onclick="location.reload();" style="cursor: pointer;">
       <div class="nav-logo-icon">
@@ -1207,7 +1225,10 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
-      <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="map-wrap">
+        <svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg>
+        <canvas id="globe-3d" width="1000" height="500" style="display:none;"></canvas>
+      </div>
       
       <!-- MODE BAR & LEFT PANEL -->
       <div class="panel-wrapper" id="panelWrapper">
