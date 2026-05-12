@@ -1,16 +1,11 @@
-// ============================================================
-// fetch-data.js — Run via GitHub Actions (manual trigger)
 // Fetches from Eurostat + World Bank + OECD APIs
 // Outputs data.json
-// ============================================================
 
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
 
-// ============================================================
 // HTTP HELPERS
-// ============================================================
 const MAX_RESPONSE_SIZE = 50 * 1024 * 1024;
 
 function httpGet(url, accept, maxRedirects) {
@@ -58,9 +53,7 @@ function httpGet(url, accept, maxRedirects) {
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-// ============================================================
 // COUNTRY CODE MAPPINGS (GLOBAL)
-// ============================================================
 var COUNTRIES = {
   AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',
   AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',
@@ -134,9 +127,7 @@ var WB_CODES = 'all';
 // OECD: Empty string in SDMX dimension fetches all countries
 var OECD_EUR = ''; 
 
-// ============================================================
 // WORLD BANK FETCHER
-// ============================================================
 async function fetchWorldBank(indicator) {
   console.log('  [WB] ' + indicator + '...');
   var countries = {};
@@ -176,9 +167,7 @@ async function fetchWorldBank(indicator) {
   return { countries: result, year: dataYear };
 }
 
-// ============================================================
 // EUROSTAT FETCHER — uses Accept: application/json
-// ============================================================
 async function fetchEurostat(datasetCode, filters) {
   if (!filters) filters = {};
   console.log('  [EU] ' + datasetCode + '...');
@@ -256,14 +245,12 @@ async function fetchEurostat(datasetCode, filters) {
   }
 }
 
-// ============================================================
 // SDMX-JSON PARSER — handles OECD's response format
-//
 // OECD returns:
 //   json.data.dataSets[0].observations  (flat, with dimensionAtObservation=AllDimensions)
 //   json.data.dataSets[0].series        (series-based, without that param)
 //   json.data.structures[0].dimensions  (note: "structures" plural!)
-// ============================================================
+
 function resolveCountryCode(code) {
   if (A3_TO_A2[code]) return A3_TO_A2[code];
   if (EURO_SET.has(code)) return code;
@@ -307,7 +294,6 @@ function parseSdmxJson(json, label) {
     if (json.data.dataSets && json.data.dataSets.length > 0) {
       dataSet = json.data.dataSets[0];
     }
-    // KEY FIX: structures (plural) not structure (singular)
     if (json.data.structures && json.data.structures.length > 0) {
       structure = json.data.structures[0];
     }
@@ -336,7 +322,7 @@ function parseSdmxJson(json, label) {
   var countryNames = ['REF_AREA', 'LOCATION', 'COU', 'COUNTRY', 'CNTRY'];
   var timeNames = ['TIME_PERIOD', 'TIME', 'PERIOD'];
 
-  // ---- CASE A: Flat observations (dimensionAtObservation=AllDimensions) ----
+  // CASE A: Flat observations (dimensionAtObservation=AllDimensions)
   if (dataSet.observations && Object.keys(dataSet.observations).length > 0) {
     var obsDims = dims.observation || [];
 
@@ -375,7 +361,7 @@ function parseSdmxJson(json, label) {
     }
   }
 
-  // ---- CASE B: Series-based observations ----
+  // CASE B: Series-based observations
   if (Object.keys(countries).length === 0 && dataSet.series && Object.keys(dataSet.series).length > 0) {
     var seriesDims = dims.series || [];
     var obsDimsB = dims.observation || [];
@@ -421,9 +407,7 @@ function parseSdmxJson(json, label) {
   return { countries: result, year: dataYear };
 }
 
-// ============================================================
 // OECD FETCHER — uses Accept: application/vnd.sdmx.data+json
-// ============================================================
 async function fetchOECD(agency, dataflow, version, filterKey, label) {
   if (!label) label = dataflow;
   console.log('  [OECD] ' + label + '...');
@@ -462,9 +446,7 @@ async function fetchOECD(agency, dataflow, version, filterKey, label) {
 }
 
 
-// ============================================================
 // ILO FETCHER — uses rplumber.ilo.org direct API (CSV)
-// ============================================================
 async function fetchILO(indicatorId, params, rowFilter) {
   console.log('  [ILO] ' + indicatorId + '...');
 
@@ -549,9 +531,7 @@ async function fetchILO(indicatorId, params, rowFilter) {
   return { countries: result, year: dataYear };
 }
 
-// ============================================================
 // WHO (World Health Organization) FETCHER
-// ============================================================
 async function fetchWHO(indicatorCode) {
   console.log('  [WHO] ' + indicatorCode + '...');
   var url = 'https://ghoapi.azureedge.net/api/' + indicatorCode;
@@ -593,9 +573,7 @@ async function fetchWHO(indicatorCode) {
 
 
 
-// ============================================================
 // FETCH ALL INDICATORS
-// ============================================================
 async function fetchAll() {
   console.log('=== DATA COMPARISON MAP — Data Fetch ===');
   console.log('Run at: ' + new Date().toISOString());
@@ -946,9 +924,7 @@ async function fetchAll() {
   };
   await sleep(1000);
 
-  // ============================================================
   // POST-PROCESS: Remove empty sources
-  // ============================================================
   Object.entries(data).forEach(function([key, dt]) {
     var cleanSources = {};
     Object.entries(dt.sources).forEach(function([sk, src]) {
@@ -961,9 +937,7 @@ async function fetchAll() {
     dt.sources = cleanSources;
   });
 
-  // ============================================================
   // OUTPUT
-  // ============================================================
   var output = {
     _meta: {
       lastUpdated: new Date().toISOString(),
@@ -982,9 +956,7 @@ async function fetchAll() {
 
   fs.writeFileSync('data.json', JSON.stringify(output, null, 2));
 
-  // ============================================================
   // SUMMARY
-  // ============================================================
   console.log('\n' + '='.repeat(70));
   console.log('SUMMARY REPORT');
   console.log('='.repeat(70));
