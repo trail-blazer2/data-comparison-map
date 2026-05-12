@@ -112,6 +112,9 @@
     max-width: 320px;
     width: 90%!important;
   }
+  .mode-bar {
+  margin-top: 75px;
+  }
 }
 
 .nav-links { display: flex; align-items: center; gap: 8px; }
