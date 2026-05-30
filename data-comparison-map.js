@@ -58,6 +58,7 @@ const NUMERIC_TO_ALPHA2 = {
   '804':'UA','807':'MK','818':'EG','826':'GB','834':'TZ','840':'US',
   '858':'UY','860':'UZ','862':'VE','887':'YE','894':'ZM'
 };
+
 const ALPHA2_TO_NAME = {
   AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',
   AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',
@@ -676,7 +677,9 @@ class DataComparisonMap extends HTMLElement {
     });
     svg.innerHTML = `<path class="chart-line" d="${pathD}" />${pointsHtml}`;
 
-    const txt = metricData.txt[year] || "Normal yearly progression. No major outliers recorded.";
+    const txtObj = metricData.txt[year];
+    const txt = txtObj ? (txtObj[this._lang] || txtObj.en) : (this._lang === 'cs' ? "Normální roční vývoj. Nezaznamenány žádné významné odchylky." : "Normal yearly progression. No major outliers recorded.");
+    
     const dt = this.DATA[this.currentDataType];
     const targetVal = metricData[year];
 
@@ -698,7 +701,7 @@ class DataComparisonMap extends HTMLElement {
       valContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     }
     this._lastHistVal = targetVal;
-    this.$('#histInfoTxt').innerHTML = `<strong>${year} ${this.t('context')}</strong><br/>${txt === "Normal yearly progression. No major outliers recorded." ? this.t('normProg') : txt}`;
+    this.$('#histInfoTxt').innerHTML = `<strong>${year} ${this.t('context')}</strong><br/>${txt}`;
   }
 
   buildFutureView(code) {
@@ -714,19 +717,20 @@ class DataComparisonMap extends HTMLElement {
       return;
     }
 
-    this.$('#futDesc').textContent = futData.desc;
+    // Pick the correct language for the description
+    this.$('#futDesc').textContent = futData.desc[this._lang] || futData.desc.en;
     
     futData.factors.forEach((f, i) => {
       const div = document.createElement('div'); div.className = 'factor-row';
       div.innerHTML = `
         <label class="factor-label">
           <input type="checkbox" class="factor-cb" data-id="${f.id}">
-          <span class="cb-custom"></span><span class="factor-title">${f.title}</span>
+          <span class="cb-custom"></span><span class="factor-title">${f.title[this._lang] || f.title.en}</span>
         </label>
         <div class="factor-info-btn">i
           <div class="factor-tooltip">
-            <strong>${this.t('context')}</strong> ${f.info}<br/><br/>
-            <span style="color:#27ae60">✔ ${f.yes}</span><br/><span style="color:#c0392b">✘ ${f.no}</span>
+            <strong>${this.t('context')}</strong> ${f.info[this._lang] || f.info.en}<br/><br/>
+            <span style="color:#27ae60">✔ ${f.yes[this._lang] || f.yes.en}</span><br/><span style="color:#c0392b">✘ ${f.no[this._lang] || f.no.en}</span>
           </div>
         </div>`;
       div.querySelector('.factor-cb').onchange = () => this.updateFutureChart(code, futData);
