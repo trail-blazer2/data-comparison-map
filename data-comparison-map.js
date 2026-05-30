@@ -92,37 +92,113 @@ const ALPHA2_TO_NAME = {
   VE:'Venezuela',VN:'Vietnam',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'
 };
 
+const CS_COUNTRIES = {
+  AF:'Afghánistán',AL:'Albánie',DZ:'Alžírsko',AO:'Angola',AM:'Arménie',
+  AR:'Argentina',AU:'Austrálie',AT:'Rakousko',AZ:'Ázerbájdžán',BD:'Bangladéš',
+  BE:'Belgie',BJ:'Benin',BT:'Bhútán',BO:'Bolívie',BA:'Bosna a Hercegovina',
+  BW:'Botswana',BR:'Brazílie',BN:'Brunej',BG:'Bulharsko',BI:'Burundi',
+  BY:'Bělorusko',KH:'Kambodža',CM:'Kamerun',CA:'Kanada',CF:'Středoafrická republika',
+  TD:'Čad',CL:'Chile',CN:'Čína',CO:'Kolumbie',CG:'Kongo',CD:'DR Kongo',
+  KM:'Komory',CR:'Kostarika',CI:"Pobřeží slonoviny",HR:'Chorvatsko',CU:'Kuba',
+  CY:'Kypr',CZ:'Česko',DK:'Dánsko',DJ:'Džibutsko',DO:'Dominikánská republika',
+  EC:'Ekvádor',EG:'Egypt',SV:'Salvador',GQ:'Rovníková Guinea',ER:'Eritrea',
+  EE:'Estonsko',ET:'Etiopie',FJ:'Fidži',FI:'Finsko',FR:'Francie',GA:'Gabon',
+  GM:'Gambie',GE:'Gruzie',DE:'Německo',GH:'Ghana',GR:'Řecko',GT:'Guatemala',
+  GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Maďarsko',IS:'Island',
+  IN:'Indie',ID:'Indonésie',IR:'Írán',IQ:'Irák',IE:'Irsko',IL:'Izrael',
+  IT:'Itálie',JM:'Jamajka',JP:'Japonsko',JO:'Jordánsko',KZ:'Kazachstán',KE:'Keňa',
+  KP:'Severní Korea',KR:'Jižní Korea',KW:'Kuvajt',KG:'Kyrgyzstán',LA:'Laos',
+  LB:'Libanon',LS:'Lesotho',LR:'Libérie',LY:'Libye',LT:'Litva',LU:'Lucembursko',
+  LV:'Lotyšsko',MG:'Madagaskar',MW:'Malawi',MY:'Malajsie',ML:'Mali',MT:'Malta',
+  MR:'Mauritánie',MU:'Mauricius',MX:'Mexiko',MD:'Moldavsko',ME:'Černá Hora',
+  MN:'Mongolsko',MA:'Maroko',MZ:'Mosambik',MM:'Myanmar',NA:'Namibie',
+  NP:'Nepál',NL:'Nizozemsko',NC:'Nová Kaledonie',NZ:'Nový Zéland',NI:'Nikaragua',
+  NE:'Niger',NG:'Nigérie',MK:'Severní Makedonie',NO:'Norsko',PK:'Pákistán',
+  PA:'Panama',PG:'Papua Nová Guinea',PY:'Paraguay',PE:'Peru',PH:'Filipíny',
+  PL:'Polsko',PT:'Portugalsko',QA:'Katar',RO:'Rumunsko',RU:'Rusko',RW:'Rwanda',
+  ST:'Svatý Tomáš a Princův ostrov',SA:'Saúdská Arábie',SN:'Senegal',RS:'Srbsko',
+  SL:'Sierra Leone',SK:'Slovensko',SI:'Slovinsko',SO:'Somálsko',ZA:'Jižní Afrika',
+  SS:'Jižní Súdán',ES:'Španělsko',LK:'Srí Lanka',SD:'Súdán',SR:'Surinam',
+  SZ:'Eswatini',SE:'Švédsko',CH:'Švýcarsko',SY:'Sýrie',TJ:'Tádžikistán',
+  TZ:'Tanzanie',TH:'Thajsko',TG:'Togo',TN:'Tunisko',TR:'Turecko',
+  TM:'Turkmenistán',UG:'Uganda',UA:'Ukrajina',AE:'Spojené arabské emiráty',
+  GB:'Velká Británie',US:'USA',UY:'Uruguay',UZ:'Uzbekistán',
+  VE:'Venezuela',VN:'Vietnam',YE:'Jemen',ZM:'Zambie',ZW:'Zimbabwe'
+};
+
+const I18N = {
+  en: {
+    about: "About", support: "Support us", loading: "Loading map & data…",
+    category: "Category", dataType: "Data Type", source: "Source",
+    history: "HISTORY", future: "FUTURE", country: "Country", metric: "Metric", desc: "Description",
+    updated: "Data updated via Eurostat & World Bank APIs",
+    updatedDate: "Data updated: ",
+    projected: "Projected 2029: ",
+    context: "Context:",
+    noProj: "Future projections not yet available for this metric/country combination.",
+    normProg: "Normal yearly progression. No major outliers recorded.",
+    noData: "No data",
+    noDataSrc: "No data available for any source",
+    "Economy": "Economy", "Demographics": "Demographics",
+    "Society": "Society", "Public Services": "Services", "other": "Other",
+    "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
+    "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
+    "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
+    "% gross enrollment": "% gross enrollment", "index (0-100)": "index (0-100)"
+  },
+  cs: {
+    about: "O nás", support: "Podpořte nás", loading: "Načítání mapy a dat…",
+    category: "Kategorie", dataType: "Typ dat", source: "Zdroj",
+    history: "HISTORIE", future: "BUDOUCNOST", country: "Země", metric: "Metrika", desc: "Popis",
+    updated: "Data aktualizována přes API Eurostatu a Světové banky",
+    updatedDate: "Data aktualizována: ",
+    projected: "Projekce 2029: ",
+    context: "Kontext:",
+    noProj: "Pro tuto kombinaci metriky a země zatím nejsou k dispozici budoucí projekce.",
+    normProg: "Normální roční vývoj. Nezaznamenány žádné významné odchylky.",
+    noData: "Žádná data",
+    noDataSrc: "Žádná data nejsou k dispozici pro žádný zdroj",
+    "Economy": "Ekonomika", "Demographics": "Demografie",
+    "Society": "Společnost", "Public Services": "Služby", "other": "Ostatní",
+    "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem",
+    "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
+    "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití",
+    "Immigration": "Imigrace", "Net migration": "Čistá migrace",
+    "Inflation": "Inflace", "Population": "Populace",
+    "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
+    "Government Debt": "Vládní dluh", "Healthcare spending": "Výdaje na zdravotnictví",
+    "Education spending": "Výdaje na vzdělávání", "Military spending": "Vojenské výdaje",
+    "R&D spending": "Výdaje na výzkum a vývoj", "Poverty rate": "Míra chudoby",
+    "Infant mortality": "Kojenecká úmrtnost", "Tertiary education": "Terciární vzdělávání",
+    "Foreign Direct Investment": "Přímé zahraniční investice", "GDP growth": "Růst HDP",
+    "GDP per capita (PPP)": "HDP na obyvatele (PPP)", "Gini coefficient": "Giniho koeficient",
+    "persons": "osob", "net persons": "osob (čisté)", "USD/capita": "USD/obyvatele",
+    "int. $": "int. $", "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu",
+    "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 births": "na 1 000 naroz.",
+    "% gross enrollment": "% hrubé zápisy", "index (0-100)": "index (0-100)"
+  }
+};
+
 const CATEGORY_META = {
-  economy: { label: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
-  demographics: { label: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
-  society: { label: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
-  public_services: { label: 'Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
+  economy: { labelKey: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
+  demographics: { labelKey: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
+  society: { labelKey: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
+  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
 };
 
 function getColor(t) {
   const c = [
-    [203,219,240],
-    [132,155,186],
-    [84,105,137],
-    [33,52,78],
-    [10,24,49]
+    [203,219,240], [132,155,186], [84,105,137], [33,52,78], [10,24,49]
   ];
-
   const n = c.length - 1;
   const i = Math.min(Math.floor(t * n), n - 1);
   const f = (t * n) - i;
-
-  return `rgb(${
-    Math.round(c[i][0] + (c[i+1][0] - c[i][0]) * f)
-  },${
-    Math.round(c[i][1] + (c[i+1][1] - c[i][1]) * f)
-  },${
-    Math.round(c[i][2] + (c[i+1][2] - c[i][2]) * f)
-  })`;
+  return `rgb(${Math.round(c[i][0] + (c[i+1][0] - c[i][0]) * f)},${Math.round(c[i][1] + (c[i+1][1] - c[i][1]) * f)},${Math.round(c[i][2] + (c[i+1][2] - c[i][2]) * f)})`;
 }
 
-function fmt(val, unit) {
-  if (val == null) return 'No data';
+function fmt(val, unit, tFn) {
+  const t = tFn || (k => k);
+  if (val == null) return t('noData');
   if (unit === 'persons' && Math.abs(val) >= 1e6) return (val/1e6).toFixed(1) + 'M';
   if (unit === 'persons') return val.toLocaleString();
   if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val > 0 ? '+' : '') + (val/1e6).toFixed(1) + 'M';
@@ -147,19 +223,19 @@ function loadScript(url) {
   });
 }
 
-function animateValue(el, startVal, endVal, unit, duration = 300) {
-  if (startVal === endVal) { el.textContent = fmt(endVal, unit); return; }
-  if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit); return; }
-  if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit); return; }
+function animateValue(el, startVal, endVal, unit, duration = 300, tFn = k=>k) {
+  if (startVal === endVal) { el.textContent = fmt(endVal, unit, tFn); return; }
+  if (endVal == null || isNaN(endVal)) { el.textContent = fmt(endVal, unit, tFn); return; }
+  if (startVal == null || isNaN(startVal)) { el.textContent = fmt(endVal, unit, tFn); return; }
   const startTime = performance.now();
   function tick(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
     const ease = 1 - Math.pow(1 - progress, 3);
     const current = startVal + (endVal - startVal) * ease;
-    el.textContent = fmt(current, unit);
+    el.textContent = fmt(current, unit, tFn);
     if (progress < 1) requestAnimationFrame(tick);
-    else el.textContent = fmt(endVal, unit);
+    else el.textContent = fmt(endVal, unit, tFn);
   }
   requestAnimationFrame(tick);
 }
@@ -169,6 +245,7 @@ class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._lang = 'en';
     this.DATA = {};
     this.categories = {};
     this.currentCategory = null;
@@ -197,7 +274,11 @@ class DataComparisonMap extends HTMLElement {
     this._globeRotation = [0, 0, 0];
     this._spinVelocity = 0;
     this._lastSpinTime = 0;
-    this._autoSpinning = true; // Slowly spin until interaction
+    this._autoSpinning = true; 
+  }
+
+  t(key) {
+    return (I18N[this._lang] && I18N[this._lang][key]) ? I18N[this._lang][key] : key;
   }
 
   connectedCallback() {
@@ -229,34 +310,36 @@ class DataComparisonMap extends HTMLElement {
     ]);
 
     Object.entries(dataRaw).forEach(([k, v]) => { if (k !== '_meta') this.DATA[k] = v; });
+    this.DATA._meta = dataRaw._meta || {};
     this.categories = {};
     Object.entries(this.DATA).forEach(([key, dt]) => {
+      if (key === '_meta') return;
       const cat = dt.category || 'other';
       if (!this.categories[cat]) this.categories[cat] = [];
       this.categories[cat].push(key);
     });
 
-    if (dataRaw._meta && dataRaw._meta.lastUpdated) {
-      const d = new Date(dataRaw._meta.lastUpdated);
-      this.$('#lastUpdated').textContent = 'Data updated: ' + d.toLocaleDateString();
+    const langSwitcher = this.$('#langSwitcher');
+    if (langSwitcher) {
+      langSwitcher.addEventListener('change', (e) => {
+        this._lang = e.target.value;
+        this.applyLanguage();
+      });
+    }
+
+    if (this.DATA._meta.lastUpdated) {
+      const d = new Date(this.DATA._meta.lastUpdated);
+      this.$('#lastUpdated').textContent = this.t('updatedDate') + d.toLocaleDateString(this._lang === 'cs' ? 'cs-CZ' : 'en-US');
     }
 
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
     const supportBtn = this.$('#supportBtn');
-    if (supportBtn) {
-      supportBtn.addEventListener('click', () => {
-        window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*');
-      });
-    }
-
+    if (supportBtn) supportBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*'); });
+    
     const aboutBtn = this.$('#aboutBtn');
-    if (aboutBtn) {
-      aboutBtn.addEventListener('click', () => {
-        window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*');
-      });
-    }
+    if (aboutBtn) aboutBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'); });
 
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
@@ -272,13 +355,57 @@ class DataComparisonMap extends HTMLElement {
     this.geoFeaturesHighRes = highResAll.features.filter(f => NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')]);
 
     this.drawMap();
-    this.buildCategoryButtons();
+    this.applyLanguage(); 
+
     const firstCat = Object.keys(this.categories)[0];
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
+  }
+
+  applyLanguage() {
+    this.$$('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (I18N[this._lang] && I18N[this._lang][key]) el.textContent = I18N[this._lang][key];
+    });
+
+    if (this.DATA && this.DATA._meta && this.DATA._meta.lastUpdated) {
+       const d = new Date(this.DATA._meta.lastUpdated);
+       this.$('#lastUpdated').textContent = this.t('updatedDate') + d.toLocaleDateString(this._lang === 'cs' ? 'cs-CZ' : 'en-US');
+    }
+
+    this.buildCategoryButtons();
+    if (this.currentCategory) {
+      this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === this.currentCategory));
+      this.buildDataTypeButtons(this.currentCategory);
+    }
+    if (this.currentDataType) {
+      this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === this.currentDataType));
+      this.buildSourceButtons(this.currentDataType);
+    }
+    if (this.currentSource) {
+      this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === this.currentSource); });
+      this.paint();
+    }
+
+    this.$$('.cp').forEach(p => {
+      p.dataset.name = this._lang === 'cs' ? (CS_COUNTRIES[p.dataset.code] || ALPHA2_TO_NAME[p.dataset.code]) : ALPHA2_TO_NAME[p.dataset.code];
+    });
+
+    if (this._selectedCountryCode) {
+      this.$('#panelCountry').textContent = this._lang === 'cs' ? (CS_COUNTRIES[this._selectedCountryCode] || ALPHA2_TO_NAME[this._selectedCountryCode]) : ALPHA2_TO_NAME[this._selectedCountryCode];
+      this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
+      const activeBtn = this.$('.mode-btn.active');
+      if (activeBtn) {
+          if (activeBtn.dataset.mode === 'history') {
+              this.updateHistoryView(this.$('#histSlider').value);
+          } else {
+              this.buildFutureView(this._selectedCountryCode);
+          }
+      }
+    }
   }
 
   _lonToX(lon) { return (lon + 180) * (WORLD_VIEWBOX.w / 360); }
@@ -292,7 +419,6 @@ class DataComparisonMap extends HTMLElement {
     pt.x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     pt.y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
     if (pt.x === 0 && pt.y === 0) return '50% 50%';
-    
     try {
       const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
       const bbox = pathEl.getBBox();
@@ -300,35 +426,26 @@ class DataComparisonMap extends HTMLElement {
       const px = ((svgP.x - bbox.x) / bbox.width) * 100;
       const py = ((svgP.y - bbox.y) / bbox.height) * 100;
       return `${Math.max(0, Math.min(100, px))}% ${Math.max(0, Math.min(100, py))}%`;
-    } catch(err) {
-      return '50% 50%';
-    }
+    } catch(err) { return '50% 50%'; }
   }
 
   drawMap() {
     const svg = this.$('#mapSvg');
     svg.innerHTML = '';
-    
     const isSpinning = this._is3D && (this._isPanning || Math.abs(this._spinVelocity) > 0.01 || this._autoSpinning);
     let cx, cy, scale;
 
-    // 3D Ocean Background
     if (this._is3D) {
       scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
       cx = WORLD_VIEWBOX.w / 2 + this._panX;
       cy = WORLD_VIEWBOX.h / 2 + this._panY;
-      
       const ocean = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      ocean.setAttribute('cx', cx);
-      ocean.setAttribute('cy', cy);
-      ocean.setAttribute('r', scale * this._zoom);
-      ocean.setAttribute('class', 'globe-ocean');
+      ocean.setAttribute('cx', cx); ocean.setAttribute('cy', cy);
+      ocean.setAttribute('r', scale * this._zoom); ocean.setAttribute('class', 'globe-ocean');
       svg.appendChild(ocean);
     }
     
     const proj = c => this._proj(c);
-    
-    // Always draw low-res
     svg.appendChild(this._buildResolutionGroup(this.geoFeaturesLowRes, 'euro-group low-res', proj, OVERVIEW_LAYER_DECIMAL_PLACES));
     
     if (!this._is3D || !isSpinning) {
@@ -337,19 +454,14 @@ class DataComparisonMap extends HTMLElement {
 
     if (this._is3D) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      defs.innerHTML = `
-        <radialGradient id="globeFog" cx="50%" cy="50%" r="50%">
-          <stop offset="85%" stop-color="rgba(224, 242, 254, 0)"/>
-          <stop offset="100%" stop-color="rgba(224, 242, 254, 0.4)"/>
+      defs.innerHTML = `<radialGradient id="globeFog" cx="50%" cy="50%" r="50%">
+          <stop offset="85%" stop-color="rgba(224, 242, 254, 0)"/><stop offset="100%" stop-color="rgba(224, 242, 254, 0.4)"/>
         </radialGradient>`;
       svg.appendChild(defs);
-
       const fog = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      fog.setAttribute('cx', cx);
-      fog.setAttribute('cy', cy);
-      fog.setAttribute('r', scale * this._zoom);
-      fog.setAttribute('fill', 'url(#globeFog)');
-      fog.setAttribute('pointer-events', 'none'); // Let clicks pass through to countries
+      fog.setAttribute('cx', cx); fog.setAttribute('cy', cy);
+      fog.setAttribute('r', scale * this._zoom); fog.setAttribute('fill', 'url(#globeFog)');
+      fog.setAttribute('pointer-events', 'none'); 
       svg.appendChild(fog);
     }
 
@@ -361,17 +473,13 @@ class DataComparisonMap extends HTMLElement {
     overlayG.style.pointerEvents = 'none';
     
     const sPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    sPath.setAttribute('id', 'selectOverlay');
-    sPath.setAttribute('class', 'overlay-selected');
+    sPath.setAttribute('id', 'selectOverlay'); sPath.setAttribute('class', 'overlay-selected');
     sPath.style.clipPath = 'circle(0% at 50% 50%)';
-    
     const hPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    hPath.setAttribute('id', 'hoverOverlay');
-    hPath.setAttribute('class', 'overlay-hovered');
+    hPath.setAttribute('id', 'hoverOverlay'); hPath.setAttribute('class', 'overlay-hovered');
     hPath.style.clipPath = 'circle(0% at 50% 50%)';
 
-    overlayG.appendChild(hPath);
-    overlayG.appendChild(sPath);
+    overlayG.appendChild(hPath); overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
     const self = this;
@@ -382,8 +490,7 @@ class DataComparisonMap extends HTMLElement {
     svg.addEventListener('touchstart', function(e) {
       if (!e.target.classList.contains('cp')) {
         self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
-        self.ttHide();
-        self.closeSidePanel();
+        self.ttHide(); self.closeSidePanel();
       }
     });
     
@@ -395,27 +502,19 @@ class DataComparisonMap extends HTMLElement {
         this.$$('.panel-view').forEach(v => v.classList.remove('active'));
         this.$(`#view${btn.dataset.mode === 'history' ? 'History' : 'Future'}`).classList.add('active');
         this.$('#leftPanel').classList.add('open');
-        
         const slider = this.$('#histSlider');
         slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
-        
-        if (btn.dataset.mode === 'history') {
-            this.updateHistoryView(slider.value);
-        } else {
-            this.buildFutureView(this._selectedCountryCode);
-        }
+        if (btn.dataset.mode === 'history') this.updateHistoryView(slider.value);
+        else this.buildFutureView(this._selectedCountryCode);
       };
     });
-    
     this.$('#closeLeftBtn').onclick = () => this.closeLeftPanelOnly();
-    
     if(this.currentSource) this.paint();
   }
 
   _buildResolutionGroup(features, className, proj, precision) {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     group.setAttribute('class', className);
-    
     let pathGenerator;
     if (this._is3D) {
       const scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
@@ -425,27 +524,18 @@ class DataComparisonMap extends HTMLElement {
         .rotate(this._globeRotation);
       pathGenerator = d3.geoPath().projection(projection);
     }
-
     features.forEach(f => {
       const a2 = NUMERIC_TO_ALPHA2[String(f.id).padStart(3, '0')];
       if (!a2) return;
-      
       let paths = [];
-      if (this._is3D) {
-        const d = pathGenerator(f);
-        if (d) paths = [d];
-      } else {
-        paths = this.geoPaths(f.geometry, proj, precision);
-      }
-
+      if (this._is3D) { const d = pathGenerator(f); if (d) paths = [d]; } 
+      else { paths = this.geoPaths(f.geometry, proj, precision); }
       paths.forEach(d => {
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.dataset.code = a2;
-        p.dataset.name = ALPHA2_TO_NAME[a2] || a2;
+        p.setAttribute('d', d); p.dataset.code = a2; 
+        p.dataset.name = this._lang === 'cs' ? (CS_COUNTRIES[a2] || ALPHA2_TO_NAME[a2]) : ALPHA2_TO_NAME[a2];
         p.classList.add('cp', 'no-data');
-        this._bindCountryInteractions(p);
-        group.appendChild(p);
+        this._bindCountryInteractions(p); group.appendChild(p);
       });
     });
     return group;
@@ -460,7 +550,6 @@ class DataComparisonMap extends HTMLElement {
         const allPaths = self.$$(`.cp[data-code="${code}"]`);
         let combinedD = '';
         allPaths.forEach(p => combinedD += p.getAttribute('d') + ' ');
-
         hOverlay.style.transition = 'none';
         hOverlay.setAttribute('d', combinedD.trim());
         const origin = self._getEventCenter(e, pathEl);
@@ -486,15 +575,10 @@ class DataComparisonMap extends HTMLElement {
     });
     pathEl.addEventListener('touchstart', function(e) {
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
-      
       const code = pathEl.dataset.code;
       const allPaths = self.$$(`.cp[data-code="${code}"]`);
       let combinedD = '';
-      allPaths.forEach(p => {
-        p.classList.add('touched');
-        combinedD += p.getAttribute('d') + ' ';
-      });
-
+      allPaths.forEach(p => { p.classList.add('touched'); combinedD += p.getAttribute('d') + ' '; });
       const hOverlay = self.$('#hoverOverlay');
       if(hOverlay) {
         hOverlay.style.transition = 'none';
@@ -518,9 +602,7 @@ class DataComparisonMap extends HTMLElement {
       if (sOverlay) {
         let combinedD = '';
         allPaths.forEach(p => combinedD += p.getAttribute('d') + ' ');
-
-        sOverlay.style.transition = 'none';
-        sOverlay.setAttribute('d', combinedD.trim());
+        sOverlay.style.transition = 'none'; sOverlay.setAttribute('d', combinedD.trim());
         const origin = this._getEventCenter(e, pathEl || allPaths[0]);
         sOverlay.style.clipPath = `circle(0% at ${origin})`;
         sOverlay.offsetHeight; 
@@ -530,30 +612,21 @@ class DataComparisonMap extends HTMLElement {
     }
 
     this.$('#panelCountry').textContent = name;
-    this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.DATA[this.currentDataType].label : '';
+    this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
 
     const hasData = window.HISTORY_DATA && window.HISTORY_DATA[this.currentDataType] && window.HISTORY_DATA[this.currentDataType][code];
-    
     if (!hasData) {
-      this.$$('.mode-btn').forEach(b => {
-        b.disabled = true;
-        b.classList.remove('active');
-      });
+      this.$$('.mode-btn').forEach(b => { b.disabled = true; b.classList.remove('active'); });
       this.closeLeftPanelOnly();
       return;
     }
-
     this.$$('.mode-btn').forEach(b => b.disabled = false);
     
     if (this.$('#leftPanel').classList.contains('open')) {
         const activeBtn = this.$('.mode-btn.active');
         if (activeBtn) {
-            const slider = this.$('#histSlider');
-            if (activeBtn.dataset.mode === 'history') {
-                this.updateHistoryView(slider.value);
-            } else {
-                this.buildFutureView(code);
-            }
+            if (activeBtn.dataset.mode === 'history') this.updateHistoryView(this.$('#histSlider').value);
+            else this.buildFutureView(code);
         }
     }
   }
@@ -564,13 +637,9 @@ class DataComparisonMap extends HTMLElement {
   }
 
   closeSidePanel() {
-    this._selectedCountryCode = null;
-    this._selectedCountryName = null;
-    this._activeHistoryCode = null;
-    
+    this._selectedCountryCode = null; this._selectedCountryName = null; this._activeHistoryCode = null;
     this.closeLeftPanelOnly();
     this.$$('.mode-btn').forEach(b => b.disabled = true);
-    
     this.$$('.cp').forEach(el => el.classList.remove('selected'));
     const sOverlay = this.$('#selectOverlay');
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
@@ -615,7 +684,7 @@ class DataComparisonMap extends HTMLElement {
     if (!valContainer) {
       this.$('#histText').innerHTML = `
         <div class="hist-value-box">
-          <div class="hist-value-number" id="histValNum">${fmt(targetVal, dt.unit)}</div>
+          <div class="hist-value-number" id="histValNum">${fmt(targetVal, dt.unit, k=>this.t(k))}</div>
         </div>
         <div class="hist-info-text" id="histInfoTxt"></div>
       `;
@@ -624,12 +693,12 @@ class DataComparisonMap extends HTMLElement {
     }
 
     if (this._lastHistVal !== undefined && !isNaN(this._lastHistVal) && !isNaN(targetVal)) {
-      animateValue(valContainer, this._lastHistVal, targetVal, dt.unit, 300);
+      animateValue(valContainer, this._lastHistVal, targetVal, dt.unit, 300, k=>this.t(k));
     } else {
-      valContainer.textContent = fmt(targetVal, dt.unit);
+      valContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     }
     this._lastHistVal = targetVal;
-    this.$('#histInfoTxt').innerHTML = `<strong>${year} Context:</strong><br/>${txt}`;
+    this.$('#histInfoTxt').innerHTML = `<strong>${year} ${this.t('context')}</strong><br/>${txt === "Normal yearly progression. No major outliers recorded." ? this.t('normProg') : txt}`;
   }
 
   buildFutureView(code) {
@@ -638,7 +707,7 @@ class DataComparisonMap extends HTMLElement {
     container.innerHTML = '';
     
     if (!futData) {
-      this.$('#futDesc').textContent = "Future projections not yet available for this metric/country combination.";
+      this.$('#futDesc').textContent = this.t('noProj');
       let svg = this.$('#futChart');
       if (svg) svg.innerHTML = '';
       this.$('#futResult').innerHTML = '';
@@ -648,22 +717,18 @@ class DataComparisonMap extends HTMLElement {
     this.$('#futDesc').textContent = futData.desc;
     
     futData.factors.forEach((f, i) => {
-      const div = document.createElement('div');
-      div.className = 'factor-row';
+      const div = document.createElement('div'); div.className = 'factor-row';
       div.innerHTML = `
         <label class="factor-label">
           <input type="checkbox" class="factor-cb" data-id="${f.id}">
-          <span class="cb-custom"></span>
-          <span class="factor-title">${f.title}</span>
+          <span class="cb-custom"></span><span class="factor-title">${f.title}</span>
         </label>
         <div class="factor-info-btn">i
           <div class="factor-tooltip">
-            <strong>Context:</strong> ${f.info}<br/><br/>
-            <span style="color:#27ae60">✔ ${f.yes}</span><br/>
-            <span style="color:#c0392b">✘ ${f.no}</span>
+            <strong>${this.t('context')}</strong> ${f.info}<br/><br/>
+            <span style="color:#27ae60">✔ ${f.yes}</span><br/><span style="color:#c0392b">✘ ${f.no}</span>
           </div>
-        </div>
-      `;
+        </div>`;
       div.querySelector('.factor-cb').onchange = () => this.updateFutureChart(code, futData);
       container.appendChild(div);
     });
@@ -684,40 +749,24 @@ class DataComparisonMap extends HTMLElement {
 
   updateFutureChart(code, futData, isInitial = false) {
     const baseVal = window.HISTORY_DATA[this.currentDataType][code][2024];
-    
-    let currentRates = [...futData.base_growth];
-    let minRates = [...futData.base_growth];
-    let maxRates = [...futData.base_growth];
+    let currentRates = [...futData.base_growth], minRates = [...futData.base_growth], maxRates = [...futData.base_growth];
     
     this.$$('.factor-cb').forEach(cb => {
       const factor = futData.factors.find(f => f.id === cb.dataset.id);
       if(!factor) return;
-      
       for(let i=0; i<5; i++) {
         if (cb.checked) currentRates[i] += factor.impact[i];
-        if (factor.impact[i] > 0) maxRates[i] += factor.impact[i];
-        else minRates[i] += factor.impact[i];
+        if (factor.impact[i] > 0) maxRates[i] += factor.impact[i]; else minRates[i] += factor.impact[i];
       }
     });
 
     const years = [2024, 2025, 2026, 2027, 2028, 2029];
-    
-    const calcValues = (rates) => {
-      const v = [baseVal];
-      for(let i=0; i<5; i++) v.push(v[i] * (1 + rates[i]));
-      return v;
-    };
-    
-    const minValues = calcValues(minRates);
-    const maxValues = calcValues(maxRates);
-    const currentValues = calcValues(currentRates);
-    
-    const minBound = Math.min(...minValues, ...maxValues, baseVal);
-    const maxBound = Math.max(...minValues, ...maxValues, baseVal);
+    const calcValues = (rates) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] * (1 + rates[i])); return v; };
+    const minValues = calcValues(minRates), maxValues = calcValues(maxRates), currentValues = calcValues(currentRates);
+    const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
     const range = maxBound === minBound ? 1 : maxBound - minBound;
 
-    const svg = this.$('#futChart');
-    if (!svg) return;
+    const svg = this.$('#futChart'); if (!svg) return;
     const w = 280, h = 120, pad = 12;
     if(isInitial) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     
@@ -729,89 +778,55 @@ class DataComparisonMap extends HTMLElement {
       const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
       pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
       
-      let pt = svg.querySelector(`#fp${i}`);
-      let lbl = svg.querySelector(`#fl${i}`);
+      let pt = svg.querySelector(`#fp${i}`); let lbl = svg.querySelector(`#fl${i}`);
       if (!pt) {
-        pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        pt.setAttribute('id', `fp${i}`);
-        pt.setAttribute('r', '4');
-        pt.setAttribute('class', 'chart-point fut-point');
-        svg.appendChild(pt);
-        
-        lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        lbl.setAttribute('id', `fl${i}`);
-        lbl.setAttribute('class', 'fut-label');
-        svg.appendChild(lbl);
+        pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `fp${i}`); pt.setAttribute('r', '4'); pt.setAttribute('class', 'chart-point fut-point'); svg.appendChild(pt);
+        lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text'); lbl.setAttribute('id', `fl${i}`); lbl.setAttribute('class', 'fut-label'); svg.appendChild(lbl);
       }
-      
-      pt.style.transform = `translate(${cx}px, ${cy}px)`;
-      lbl.style.transform = `translate(${cx}px, ${cy - 10}px)`;
+      pt.style.transform = `translate(${cx}px, ${cy}px)`; lbl.style.transform = `translate(${cx}px, ${cy - 10}px)`;
 
-      if (i === 0) {
-        lbl.textContent = fmt(currentValues[i], dt.unit);
-        lbl.setAttribute('text-anchor', 'start');
-      } else if (i === 5) {
+      if (i === 0) { lbl.textContent = fmt(currentValues[i], dt.unit, k=>this.t(k)); lbl.setAttribute('text-anchor', 'start'); } 
+      else if (i === 5) {
         lbl.setAttribute('text-anchor', 'end');
-        if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(currentValues[i])) {
-          animateValue(lbl, this._lastFutVal, currentValues[i], dt.unit, 300);
-        } else {
-          lbl.textContent = fmt(currentValues[i], dt.unit);
-        }
-      } else {
-        lbl.textContent = '';
-      }
+        if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(currentValues[i])) animateValue(lbl, this._lastFutVal, currentValues[i], dt.unit, 300, k=>this.t(k));
+        else lbl.textContent = fmt(currentValues[i], dt.unit, k=>this.t(k));
+      } else lbl.textContent = '';
     });
     
     const line = svg.querySelector('#futLine');
     if (line) {
-      const newD = pathD;
-      const oldD = line.getAttribute('d');
-      
+      const newD = pathD; const oldD = line.getAttribute('d');
       if (this._lineAnimFrame) cancelAnimationFrame(this._lineAnimFrame);
-      
       if (oldD && oldD !== newD && oldD.includes('M')) {
         const parseD = (dStr) => dStr.trim().split(/[ML\s]+/).filter(Boolean).map(s => s.split(',').map(Number));
-        const oldPts = parseD(oldD);
-        const newPts = parseD(newD);
-        
+        const oldPts = parseD(oldD); const newPts = parseD(newD);
         if (oldPts.length === newPts.length) {
           const startT = performance.now();
           const animD = (now) => {
-            const p = Math.min((now - startT) / 300, 1);
-            const ease = 1 - Math.pow(1 - p, 3); 
+            const p = Math.min((now - startT) / 300, 1); const ease = 1 - Math.pow(1 - p, 3); 
             let curD = "";
             for(let j = 0; j < oldPts.length; j++) {
-              const curX = oldPts[j][0] + (newPts[j][0] - oldPts[j][0]) * ease;
-              const curY = oldPts[j][1] + (newPts[j][1] - oldPts[j][1]) * ease;
+              const curX = oldPts[j][0] + (newPts[j][0] - oldPts[j][0]) * ease; const curY = oldPts[j][1] + (newPts[j][1] - oldPts[j][1]) * ease;
               curD += `${j === 0 ? 'M' : 'L'}${curX},${curY} `;
             }
             line.setAttribute('d', curD);
             if (p < 1) this._lineAnimFrame = requestAnimationFrame(animD);
           };
           this._lineAnimFrame = requestAnimationFrame(animD);
-        } else {
-          line.setAttribute('d', newD);
-        }
-      } else {
-        line.setAttribute('d', newD);
-      }
+        } else line.setAttribute('d', newD);
+      } else line.setAttribute('d', newD);
     }
 
     const targetVal = currentValues[5];
-    
     let resultContainer = this.$('#futResultVal');
     if (!resultContainer) {
-      this.$('#futResult').innerHTML = `Projected 2029: <strong id="futResultVal">${fmt(targetVal, dt.unit)}</strong>`;
+      this.$('#futResult').innerHTML = `${this.t('projected')}<strong id="futResultVal">${fmt(targetVal, dt.unit, k=>this.t(k))}</strong>`;
       resultContainer = this.$('#futResultVal');
       this._lastFutVal = targetVal;
     }
 
-    if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(targetVal)) {
-      animateValue(resultContainer, this._lastFutVal, targetVal, dt.unit, 300);
-    } else {
-      resultContainer.textContent = fmt(targetVal, dt.unit);
-    }
-    
+    if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(targetVal)) animateValue(resultContainer, this._lastFutVal, targetVal, dt.unit, 300, k=>this.t(k));
+    else resultContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     this._lastFutVal = targetVal;
   }
 
@@ -839,20 +854,16 @@ class DataComparisonMap extends HTMLElement {
       const scaleX = rect.width / vb.w;
       const scaleY = rect.height / vb.h;
       return (svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') 
-        ? Math.max(scaleX, scaleY) 
-        : Math.min(scaleX, scaleY);
+        ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
     };
 
     const animLoop = () => {
       let needsRedraw = false;
       if (this._is3D) {
         if (this._autoSpinning && !this._isPanning) {
-          this._globeRotation[0] += 0.15; // Slow ambient spin
-          needsRedraw = true;
+          this._globeRotation[0] += 0.15; needsRedraw = true;
         } else if (!this._isPanning && Math.abs(this._spinVelocity) > 0.01) {
-          this._globeRotation[0] += this._spinVelocity;
-          this._spinVelocity *= 0.95; // Momentum friction
-          needsRedraw = true;
+          this._globeRotation[0] += this._spinVelocity; this._spinVelocity *= 0.95; needsRedraw = true;
         } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
           this._spinVelocity = 0;
         }
@@ -863,8 +874,7 @@ class DataComparisonMap extends HTMLElement {
     requestAnimationFrame(animLoop);
 
     wrap.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      if (this._is3D) return; // Disable zoom in 3D mode
+      e.preventDefault(); if (this._is3D) return; 
       const delta = e.deltaY > 0 ? -0.12 : 0.12;
       const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
       const rect = svg.getBoundingClientRect();
@@ -878,14 +888,11 @@ class DataComparisonMap extends HTMLElement {
 
     wrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      this._isPanning = true; 
-      this._dragged = false; 
-      this._autoSpinning = false; // Stop auto-spin forever
+      this._isPanning = true; this._dragged = false; this._autoSpinning = false;
       this._panStartX = e.clientX; this._panStartY = e.clientY;
       this._panStartPanX = this._panX; this._panStartPanY = this._panY;
       this._panStartRotation = [...this._globeRotation];
-      this._spinVelocity = 0;
-      this._lastSpinTime = performance.now();
+      this._spinVelocity = 0; this._lastSpinTime = performance.now();
       wrap.style.cursor = 'grabbing'; e.preventDefault();
     });
     
@@ -894,10 +901,8 @@ class DataComparisonMap extends HTMLElement {
       if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
         this._dragged = true;
       }
-      
       const dx = (e.clientX - this._panStartX);
       const dy = (e.clientY - this._panStartY);
-      
       if (this._is3D) {
         const sensitivity = 0.25 / this._zoom;
         const now = performance.now();
@@ -919,25 +924,19 @@ class DataComparisonMap extends HTMLElement {
       if (!this._is3D) this._snapBack();
     });
     wrap.addEventListener('dblclick', (e) => { 
-      e.preventDefault(); 
-      if (this._is3D) return; // Disable double-click zoom in 3D mode
+      e.preventDefault(); if (this._is3D) return; 
       this._animateTo(1, 0, 0); 
     });
 
-    let initialDist = 0;
-    let initialMidX = 0;
-    let initialMidY = 0;
-    let startZoom = 1;
+    let initialDist = 0, initialMidX = 0, initialMidY = 0, startZoom = 1;
 
     wrap.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        this._isPanning = true; this._dragged = false; 
-        this._autoSpinning = false; // Stop auto-spin forever
+        this._isPanning = true; this._dragged = false; this._autoSpinning = false;
         this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
         this._panStartPanX = this._panX; this._panStartPanY = this._panY;
         this._panStartRotation = [...this._globeRotation];
-        this._spinVelocity = 0;
-        this._lastSpinTime = performance.now();
+        this._spinVelocity = 0; this._lastSpinTime = performance.now();
       } else if (e.touches.length === 2) {
         this._isPanning = false;
         const t1 = e.touches[0], t2 = e.touches[1];
@@ -953,7 +952,6 @@ class DataComparisonMap extends HTMLElement {
         const dx = e.touches[0].clientX - this._panStartX;
         const dy = e.touches[0].clientY - this._panStartY;
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
-        
         if (this._is3D) {
           const sensitivity = 0.35 / this._zoom;
           const now = performance.now();
@@ -970,18 +968,15 @@ class DataComparisonMap extends HTMLElement {
         }
       } else if (e.touches.length === 2) {
         this._dragged = true; e.preventDefault();
-        if (this._is3D) return; // Disable pinch zoom in 3D mode
-        
+        if (this._is3D) return; 
         const t1 = e.touches[0], t2 = e.touches[1];
         const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
         const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * (dist / initialDist)));
-        
         const rect = svg.getBoundingClientRect();
         const mx = (initialMidX - rect.left) / rect.width;
         const my = (initialMidY - rect.top) / rect.height;
         const oldW = this._origVB.w / startZoom, newW = this._origVB.w / newZoom;
         const oldH = this._origVB.h / startZoom, newH = this._origVB.h / newZoom;
-        
         this._panX = this._panStartPanX + (oldW - newW) * mx; 
         this._panY = this._panStartPanY + (oldH - newH) * my;
         this._zoom = newZoom; this._clampAndApply();
@@ -995,14 +990,14 @@ class DataComparisonMap extends HTMLElement {
 
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
-      if (this._is3D) return; // Disable button zoom in 3D mode
+      if (this._is3D) return;
       const nz = Math.min(this._maxZoom, this._zoom + 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
       this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
     });
     if (zoomOut) zoomOut.addEventListener('click', () => {
-      if (this._is3D) return; // Disable button zoom in 3D mode
+      if (this._is3D) return; 
       const nz = Math.max(this._minZoom, this._zoom - 0.3);
       const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
       const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
@@ -1017,7 +1012,6 @@ class DataComparisonMap extends HTMLElement {
     if (toggle3D) {
       toggle3D.addEventListener('click', () => {
         const wrap = this.$('.map-wrap'); 
-        
         wrap.style.transition = 'opacity 0.15s ease-out';
         wrap.style.opacity = '0';
         
@@ -1028,33 +1022,24 @@ class DataComparisonMap extends HTMLElement {
           if (this._is3D) {
             this._zoom = 1; this._panX = 0; this._panY = 0;
             this._applyTransform();
-            
             if (zoomIn) zoomIn.style.opacity = '0.4';
             if (zoomOut) zoomOut.style.opacity = '0.4';
             if (zoomReset) zoomReset.style.opacity = '0.4';
-            
             wrap.style.transform = 'scale(0.85)';
           } else {
             if (zoomIn) zoomIn.style.opacity = '1';
             if (zoomOut) zoomOut.style.opacity = '1';
             if (zoomReset) zoomReset.style.opacity = '1';
-            
             wrap.style.transform = 'scale(1.15)';
           }
-          
           this.drawMap();
-          
           void wrap.offsetHeight; 
           
           wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1)';
           wrap.style.opacity = '1';
           wrap.style.transform = 'scale(1)';
           
-          setTimeout(() => {
-            wrap.style.transition = '';
-            wrap.style.transform = '';
-          }, 450);
-          
+          setTimeout(() => { wrap.style.transition = ''; wrap.style.transform = ''; }, 450);
         }, 150);
       });
     }
@@ -1101,9 +1086,7 @@ class DataComparisonMap extends HTMLElement {
         vh = rect.height / scale;
       }
     }
-
     const cb = this._contentBBox;
-    
     const overX = isMobile ? (this._origVB.w * 0.7) : (vw * 0.05); 
     const overY = vh * 0.05; 
     
@@ -1115,7 +1098,7 @@ class DataComparisonMap extends HTMLElement {
     };
   }
   _clampPan() {
-    if(this._is3D) return; // Don't clamp pan bounds in 3D to allow free rotation centering
+    if(this._is3D) return; 
     const b = this._getPanBounds();
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
@@ -1164,7 +1147,6 @@ class DataComparisonMap extends HTMLElement {
   _ringToPath(ring, proj, precision) {
     if (!ring.length) return '';
     const path = [];
-    
     let currentLon = ring[0][0];
     const firstPoint = proj([currentLon, ring[0][1]]);
     this._appendPathPoint(path, 'M', firstPoint, precision);
@@ -1172,10 +1154,8 @@ class DataComparisonMap extends HTMLElement {
     for (let i = 1; i < ring.length; i += 1) {
       let lon = ring[i][0];
       let lat = ring[i][1];
-      
       if (lon - currentLon > 180) lon -= 360;
       else if (currentLon - lon > 180) lon += 360;
-      
       currentLon = lon;
       this._appendPathPoint(path, 'L', proj([lon, lat]), precision);
     }
@@ -1200,9 +1180,9 @@ class DataComparisonMap extends HTMLElement {
   buildCategoryButtons() {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', label: catKey };
+      const meta = CATEGORY_META[catKey] || { icon: '', labelKey: catKey };
       const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
-      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + meta.label + '</span>';
+      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + this.t(meta.labelKey) + '</span>';
       b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
     });
   }
@@ -1223,7 +1203,7 @@ class DataComparisonMap extends HTMLElement {
       const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
       const srcCount = Object.keys(dt.sources).length;
       const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
-      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + dt.label + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
+      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + this.t(dt.label) + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
       b.onclick = () => this.selectDataType(key); c.appendChild(b);
     });
   }
@@ -1235,7 +1215,7 @@ class DataComparisonMap extends HTMLElement {
     Object.entries(dt.sources).forEach(([key, src]) => {
       const count = Object.keys(src.countries).length; const isEmpty = count === 0;
       const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
-      if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">No data</span>';
+      if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
       else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
       c.appendChild(b);
     });
@@ -1252,8 +1232,8 @@ class DataComparisonMap extends HTMLElement {
     if (firstOk) {
       this.selectSource(firstOk[0]);
     } else {
-      this.currentSource = null; this.$('#mapTitle').textContent = dt.label;
-      this.$('#mapSub').textContent = 'No data available for any source';
+      this.currentSource = null; this.$('#mapTitle').textContent = this.t(dt.label);
+      this.$('#mapSub').textContent = this.t('noDataSrc');
       this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
       this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); });
     }
@@ -1274,12 +1254,12 @@ class DataComparisonMap extends HTMLElement {
   paint() {
     const dt = this.DATA[this.currentDataType]; if (!dt) return;
     const src = dt.sources[this.currentSource]; if (!src) return;
-    this.$('#mapTitle').textContent = dt.label;
-    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + dt.unit;
+    this.$('#mapTitle').textContent = this.t(dt.label);
+    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + this.t(dt.unit);
     const vals = Object.values(src.countries).filter(v => v != null);
     if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#dfe6e9'); }); return; }
     const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    this.$('#legMin').textContent = fmt(min, dt.unit); this.$('#legMax').textContent = fmt(max, dt.unit);
+    this.$('#legMin').textContent = fmt(min, dt.unit, key => this.t(key)); this.$('#legMax').textContent = fmt(max, dt.unit, key => this.t(key));
     this.$$('.cp').forEach(p => {
       const v = src.countries[p.dataset.code];
       if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
@@ -1293,12 +1273,12 @@ class DataComparisonMap extends HTMLElement {
     const code = e.target.dataset.code;
     const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
     this.$('#ttName').textContent = e.target.dataset.name;
-    this.$('#ttUnit').textContent = newVal != null ? dt.unit : '';
+    this.$('#ttUnit').textContent = newVal != null ? this.t(dt.unit) : '';
     this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
     const valEl = this.$('#ttVal');
     if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
-      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300);
-    else valEl.textContent = fmt(newVal, dt.unit);
+      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300, key => this.t(key));
+    else valEl.textContent = fmt(newVal, dt.unit, key => this.t(key));
     this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
     this.checkDiscrepancy(code);
     const marker = this.$('#legMarker');
@@ -1324,7 +1304,9 @@ class DataComparisonMap extends HTMLElement {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
       if (diff > 10) {
-        el.style.display = 'block'; el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + '% variance across ' + vals.length + ' sources'; return;
+        el.style.display = 'block'; 
+        el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + (this._lang === 'cs' ? '% rozptyl mezi ' : '% variance across ') + vals.length + (this._lang === 'cs' ? ' zdroji' : ' sources'); 
+        return;
       }
     }
     el.style.display = 'none';
@@ -1340,11 +1322,15 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     <div class="nav-links">
-      <button class="nav-link" id="aboutBtn">About</button>
-      <button class="nav-link primary" id="supportBtn">Support us</button>
+      <button class="nav-link" id="aboutBtn" data-i18n="about">About</button>
+      <button class="nav-link primary" id="supportBtn" data-i18n="support">Support us</button>
+      <select id="langSwitcher" class="lang-switch">
+        <option value="en">EN</option>
+        <option value="cs">CS</option>
+      </select>
     </div>
   </nav>
-  <div id="initLoader" class="init-loader"><div class="orbit"></div><span>Loading map & data\u2026</span></div>
+  <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel">
       <div class="title-row">
@@ -1359,22 +1345,20 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
-      <!-- MODE BAR & LEFT PANEL -->
       <div class="panel-wrapper" id="panelWrapper">
         
         <div class="mode-bar" id="modeBar">
-          <button class="mode-btn" data-mode="history" disabled>HISTORY</button>
-          <button class="mode-btn" data-mode="future" disabled>FUTURE</button>
+          <button class="mode-btn" data-mode="history" data-i18n="history" disabled>HISTORY</button>
+          <button class="mode-btn" data-mode="future" data-i18n="future" disabled>FUTURE</button>
         </div>
 
         <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
           <div>
-            <div class="history-header" id="panelCountry">Country</div>
-            <div class="history-sub" id="panelMetric">Metric</div>
+            <div class="history-header" id="panelCountry" data-i18n="country">Country</div>
+            <div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div>
           </div>
           
-          <!-- HISTORY VIEW -->
           <div id="viewHistory" class="panel-view">
             <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
             <div class="year-slider-wrap">
@@ -1386,13 +1370,11 @@ class DataComparisonMap extends HTMLElement {
             <div class="history-content" id="histText"></div>
           </div>
 
-          <!-- FUTURE VIEW -->
           <div id="viewFuture" class="panel-view">
-            <div class="future-desc" id="futDesc">Description</div>
+            <div class="future-desc" id="futDesc" data-i18n="desc">Description</div>
             <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
             <div class="future-factors" id="futFactors">
-              <!-- Checkboxes injected here -->
-            </div>
+              </div>
             <div class="future-result" id="futResult"></div>
           </div>
 
@@ -1402,12 +1384,12 @@ class DataComparisonMap extends HTMLElement {
     </div>
     
     <div class="controls glass">
-      <div><div class="sec-title">Category</div><div class="cat-tabs" id="catBtns"></div></div>
-      <div><div class="sec-title">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
-      <div><div class="sec-title">Source</div><div class="btn-group" id="srcBtns"></div></div>
+      <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+      <div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
+      <div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div>
     </div>
   </div>
-  <div class="footer" id="lastUpdated">Data updated via Eurostat & World Bank APIs</div>
+  <div class="footer" id="lastUpdated" data-i18n="updated">Data updated via Eurostat & World Bank APIs</div>
 </div>
 <div class="tooltip" id="tt">
   <div class="tt-name" id="ttName">\u2014</div>
