@@ -125,6 +125,24 @@
 .nav-link.primary { background: linear-gradient(135deg, #1e3a5f, #0a1628); color: #fff; font-weight: 600; box-shadow: 0 4px 16px rgba(10, 22, 40, 0.2); }
 .nav-link.primary:hover { box-shadow: 0 6px 24px rgba(10, 22, 40, 0.3); transform: translateY(-1px); }
 
+/* Language Switcher */
+.lang-switch {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(200, 214, 229, 0.6);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: #1e3a5f;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+.lang-switch:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
 /* ===== MAIN GRID ===== */
 .main {
   display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; position: relative; z-index: 1; transition: opacity 0.4s;
