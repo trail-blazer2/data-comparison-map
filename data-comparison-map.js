@@ -345,7 +345,6 @@ class DataComparisonMap extends HTMLElement {
         });
       });
 
-      // Close dropdown when clicking outside
       this.shadowRoot.addEventListener('click', (e) => {
         if (!langSwitchBtn.contains(e.target) && !langDropdown.contains(e.target)) {
           langDropdown.classList.remove('open');
@@ -1230,8 +1229,11 @@ class DataComparisonMap extends HTMLElement {
     (this.categories[catKey] || []).forEach(key => {
       const dt = this.DATA[key]; if (!dt) return;
       const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      const srcCount = Object.keys(dt.sources).length;
-      const okCount = Object.values(dt.sources).filter(s => Object.keys(s.countries).length > 0).length;
+      // Filter out WHO entirely from the count and UI calculation
+      const validSources = Object.entries(dt.sources).filter(([sk, s]) => sk !== 'who');
+      const srcCount = validSources.length;
+      const okCount = validSources.filter(([, s]) => Object.keys(s.countries).length > 0).length;
+      
       b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + this.t(dt.label) + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
       b.onclick = () => this.selectDataType(key); c.appendChild(b);
     });
@@ -1242,6 +1244,7 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
+      if (key === 'who') return; // Hide WHO
       const count = Object.keys(src.countries).length; const isEmpty = count === 0;
       const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
@@ -1257,7 +1260,8 @@ class DataComparisonMap extends HTMLElement {
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
     this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
     const dt = this.DATA[k]; if (!dt) return;
-    const firstOk = Object.entries(dt.sources).find(([, s]) => Object.keys(s.countries).length > 0);
+    // Do not select WHO as the default fallback
+    const firstOk = Object.entries(dt.sources).find(([sk, s]) => sk !== 'who' && Object.keys(s.countries).length > 0);
     if (firstOk) {
       this.selectSource(firstOk[0]);
     } else {
@@ -1320,12 +1324,14 @@ class DataComparisonMap extends HTMLElement {
   }
   ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
   ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
+  
   checkDiscrepancy(code) {
     const el = this.$('#ttDisc');
     const dt = this.DATA[this.currentDataType];
     if (!dt) return;
     const vals = [];
-    Object.values(dt.sources).forEach(s => {
+    Object.entries(dt.sources).forEach(([sk, s]) => {
+      if (sk === 'who') return; // Do not include WHO in the variance calculation
       if (s.countries[code] != null) vals.push(s.countries[code]);
     });
     if (vals.length >= 2) {
