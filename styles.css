@@ -125,22 +125,88 @@
 .nav-link.primary { background: linear-gradient(135deg, #1e3a5f, #0a1628); color: #fff; font-weight: 600; box-shadow: 0 4px 16px rgba(10, 22, 40, 0.2); }
 .nav-link.primary:hover { box-shadow: 0 6px 24px rgba(10, 22, 40, 0.3); transform: translateY(-1px); }
 
-/* Language Switcher */
-.lang-switch {
+/* Custom Language Switcher */
+.lang-switcher-wrap {
+  position: relative;
+  margin-left: 8px;
+}
+.lang-switch-btn {
   background: rgba(255, 255, 255, 0.4);
   border: 1.5px solid rgba(200, 214, 229, 0.6);
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 6px 10px 6px 12px;
   font-size: 0.8rem;
   color: #1e3a5f;
   font-weight: 600;
   cursor: pointer;
   outline: none;
-  transition: all 0.2s;
-  margin-left: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
 }
-.lang-switch:hover {
+.lang-switch-btn:hover, .lang-switch-btn.open {
   background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(30, 58, 95, 0.3);
+}
+.lang-switch-btn svg {
+  transition: transform 0.2s ease;
+}
+.lang-switch-btn.open svg {
+  transform: rotate(180deg);
+}
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+.lang-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.lang-option {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #576574;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.lang-option:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #1e3a5f;
+}
+.lang-option.active {
+  background: linear-gradient(135deg, #1e3a5f, #0a1628);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(10, 22, 40, 0.15);
+}
+
+/* Mobile adjustments for lang-switcher */
+@media (max-width: 960px) {
+  .lang-switcher-wrap { margin-left: 4px; }
+  .lang-switch-btn { padding: 4px 6px 4px 8px; font-size: min(2.93vw, 13px); }
+  .lang-switch-btn svg { width: 14px; height: 14px; }
+  .lang-dropdown { width: 50px; padding: 4px; }
+  .lang-option { padding: 6px; font-size: min(2.93vw, 13px); }
 }
 
 /* ===== MAIN GRID ===== */
