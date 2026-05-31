@@ -320,11 +320,37 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
 
-    const langSwitcher = this.$('#langSwitcher');
-    if (langSwitcher) {
-      langSwitcher.addEventListener('change', (e) => {
-        this._lang = e.target.value;
-        this.applyLanguage();
+    const langSwitchBtn = this.$('#langSwitchBtn');
+    const langDropdown = this.$('#langDropdown');
+    const currentLangLabel = this.$('#currentLangLabel');
+    const langOptions = this.$$('.lang-option');
+
+    if (langSwitchBtn && langDropdown) {
+      langSwitchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        langDropdown.classList.toggle('open');
+        langSwitchBtn.classList.toggle('open');
+      });
+
+      langOptions.forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._lang = opt.dataset.lang;
+          currentLangLabel.textContent = opt.textContent;
+          langOptions.forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          langDropdown.classList.remove('open');
+          langSwitchBtn.classList.remove('open');
+          this.applyLanguage();
+        });
+      });
+
+      // Close dropdown when clicking outside
+      this.shadowRoot.addEventListener('click', (e) => {
+        if (!langSwitchBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+          langDropdown.classList.remove('open');
+          langSwitchBtn.classList.remove('open');
+        }
       });
     }
 
@@ -717,7 +743,6 @@ class DataComparisonMap extends HTMLElement {
       return;
     }
 
-    // Pick the correct language for the description
     this.$('#futDesc').textContent = futData.desc[this._lang] || futData.desc.en;
     
     futData.factors.forEach((f, i) => {
@@ -1328,10 +1353,18 @@ class DataComparisonMap extends HTMLElement {
     <div class="nav-links">
       <button class="nav-link" id="aboutBtn" data-i18n="about">About</button>
       <button class="nav-link primary" id="supportBtn" data-i18n="support">Support us</button>
-      <select id="langSwitcher" class="lang-switch">
-        <option value="en">EN</option>
-        <option value="cs">CS</option>
-      </select>
+      
+      <div class="lang-switcher-wrap" id="langSwitcherWrap">
+        <button class="lang-switch-btn" id="langSwitchBtn">
+          <span id="currentLangLabel">EN</span>
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="lang-dropdown glass" id="langDropdown">
+          <button class="lang-option active" data-lang="en">EN</button>
+          <button class="lang-option" data-lang="cs">CS</button>
+        </div>
+      </div>
+      
     </div>
   </nav>
   <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data\u2026</span></div>
@@ -1349,6 +1382,7 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
+      <!-- MODE BAR & LEFT PANEL -->
       <div class="panel-wrapper" id="panelWrapper">
         
         <div class="mode-bar" id="modeBar">
@@ -1363,6 +1397,7 @@ class DataComparisonMap extends HTMLElement {
             <div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div>
           </div>
           
+          <!-- HISTORY VIEW -->
           <div id="viewHistory" class="panel-view">
             <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
             <div class="year-slider-wrap">
@@ -1374,11 +1409,13 @@ class DataComparisonMap extends HTMLElement {
             <div class="history-content" id="histText"></div>
           </div>
 
+          <!-- FUTURE VIEW -->
           <div id="viewFuture" class="panel-view">
             <div class="future-desc" id="futDesc" data-i18n="desc">Description</div>
             <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
             <div class="future-factors" id="futFactors">
-              </div>
+              <!-- Checkboxes injected here -->
+            </div>
             <div class="future-result" id="futResult"></div>
           </div>
 
