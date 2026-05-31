@@ -157,7 +157,7 @@
   transform: rotate(180deg);
 }
 .lang-dropdown {
-  position: absolute;
+  position: absolute!important;
   top: calc(100% + 8px);
   right: 0;
   width: 60px;
