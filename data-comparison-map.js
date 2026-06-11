@@ -387,29 +387,6 @@ class DataComparisonMap extends HTMLElement {
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
-        // ===== LAUNCH CONFETTI LOGIC =====
-    const confettiContainer = this.$('#confettiContainer');
-    if (confettiContainer) {
-      // Colors match your app's existing gradient palette
-      const colors = ['#34d399', '#a78bfa', '#1e3a5f', '#c8d6e5', '#8395a7']; 
-      for (let i = 0; i < 45; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.left = Math.random() * 100 + '%';
-        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        
-        // Randomize fall speed and delay so it looks natural
-        piece.style.animationDuration = (Math.random() * 2 + 2.5) + 's'; 
-        piece.style.animationDelay = (Math.random() * 2) + 's';
-        
-        // Make half of them circles, half rectangles
-        if (Math.random() > 0.5) piece.style.borderRadius = '50%';
-        
-        confettiContainer.appendChild(piece);
-      }
-    }
-    // =================================
-
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
   }
@@ -1396,8 +1373,6 @@ class DataComparisonMap extends HTMLElement {
       
     </div>
   </nav>
-
-  <div class="confetti-container" id="confettiContainer"></div>
 
 
   <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data\u2026</span></div>
