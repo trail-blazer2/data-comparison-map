@@ -1,6 +1,30 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// ============================================================
+// FIREBASE CONFIGURATION (Paste your config from Firebase here)
+// ============================================================
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAocOPQSgjuaQFkQy1RAypWrXbnhAWbKRE",
+  authDomain: "rwvtesting.firebaseapp.com",
+  projectId: "rwvtesting",
+  storageBucket: "rwvtesting.firebasestorage.app",
+  messagingSenderId: "473502983675",
+  appId: "1:473502983675:web:f3a9c602b6662c2180175e",
+  measurementId: "G-RW2W1N3DDS"
+};
+
+
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 // ============================================================
 // DATA COMPARISON MAP — Wix Custom Element
-// Styles in styles.css · Data in data.json · Algo in data-algo.js
 // ============================================================
 
 const LOW_RES_MAP_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json';
@@ -26,8 +50,6 @@ const WORLD_CONTENT_BBOX = {
   w: WORLD_VIEWBOX.w + (WORLD_CONTENT_PADDING_X * 2),
   h: PROJECTION_HEIGHT + (WORLD_CONTENT_PADDING_Y * 2)
 };
-
-const ANTIMERIDIAN_SPLIT_THRESHOLD = 90;
 
 const NUMERIC_TO_ALPHA2 = {
   '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR',
@@ -307,9 +329,11 @@ class DataComparisonMap extends HTMLElement {
     this._lastSpinTime = 0;
     this._autoSpinning = true; 
 
+    // Firebase Data State
     this._points = 0;
     this._completedTopics = [];
-    this._isLoggedIn = false;
+    this._answers = {};
+    this._user = null;
   }
 
   t(key) {
@@ -331,13 +355,30 @@ class DataComparisonMap extends HTMLElement {
     if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
 
-    // Load state from local storage (Phase 1 placeholder for Database)
-    const savedPoints = localStorage.getItem('datamap_points');
-    const savedTopics = localStorage.getItem('datamap_topics');
-    const savedAuth = localStorage.getItem('datamap_auth');
-    if (savedPoints) this._points = parseInt(savedPoints);
-    if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
-    if (savedAuth) this._isLoggedIn = true;
+    // Set up Firebase Auth Listener
+    onAuthStateChanged(auth, async (user) => {
+      this._user = user;
+      if (user) {
+        // Fetch user's points and answers from DB
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          this._points = data.points || 0;
+          this._completedTopics = data.completedTopics || [];
+          this._answers = data.answers || {};
+          this.updatePointsDisplay();
+        }
+      }
+    });
+
+    // Fallback: If not logged in, try loading local storage temporarily
+    if (!this._user) {
+      const savedPoints = localStorage.getItem('datamap_points');
+      const savedTopics = localStorage.getItem('datamap_topics');
+      if (savedPoints) this._points = parseInt(savedPoints);
+      if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
+    }
 
     const link = document.createElement('link');
     link.rel = 'stylesheet'; link.href = baseUrl + 'styles.css';
@@ -438,12 +479,37 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
-    this.$('#authForm').addEventListener('submit', (e) => {
+    // Handle Auth Submission
+    this.$('#authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      this._isLoggedIn = true;
-      localStorage.setItem('datamap_auth', 'true');
-      this.$('#authModal').classList.remove('active');
-      alert("Account created! In Phase 2, this will connect to Firebase.");
+      const email = this.$('#authEmail').value;
+      const pass = this.$('#authPass').value;
+      const btn = this.$('#authSubmitBtn');
+      
+      btn.textContent = "Creating Account...";
+      btn.disabled = true;
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        const user = userCredential.user;
+        
+        // Save the points they earned while not logged in
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          points: this._points,
+          completedTopics: this._completedTopics,
+          answers: this._answers,
+          createdAt: new Date().toISOString()
+        });
+
+        this.$('#authModal').classList.remove('active');
+        this.renderQuestionnaireMenu();
+      } catch (error) {
+        alert("Error creating account: " + error.message);
+      } finally {
+        btn.textContent = "Sign Up & Save Points";
+        btn.disabled = false;
+      }
     });
 
     this.$('#initLoader').style.display = 'none';
@@ -487,8 +553,7 @@ class DataComparisonMap extends HTMLElement {
     const container = this.$('#qList');
     container.innerHTML = `<h3 class="modal-title" style="font-size:1.2rem; margin-bottom:16px;">${topic.title}</h3>`;
     
-    // Store user answers temporarily
-    let answers = {};
+    let tempAnswers = {};
 
     topic.questions.forEach((q, index) => {
       const card = document.createElement('div');
@@ -507,35 +572,47 @@ class DataComparisonMap extends HTMLElement {
         btn.onclick = () => {
           btns.forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
-          answers[q.id] = btn.dataset.val;
+          tempAnswers[q.id] = btn.dataset.val;
 
           // Check if all questions are answered
-          if (Object.keys(answers).length === topic.questions.length) {
-            this.completeTopic(topic.id, answers);
+          if (Object.keys(tempAnswers).length === topic.questions.length) {
+            this.completeTopic(topic.id, tempAnswers);
           }
         };
       });
     });
   }
 
-  completeTopic(topicId, answers) {
-    setTimeout(() => {
-      // 1. Save data locally
+  async completeTopic(topicId, newAnswers) {
+    setTimeout(async () => {
+      // 1. Update local state
       this._completedTopics.push(topicId);
       this._points += 50;
+      this._answers = { ...this._answers, ...newAnswers };
+      
+      // Update local storage as a backup
       localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
       localStorage.setItem('datamap_points', this._points);
       
-      // 2. Update UI
       this.updatePointsDisplay();
       
-      // 3. Prompt Auth if not logged in
-      if (!this._isLoggedIn && this._completedTopics.length === 1) {
-        this.openModal('authModal');
+      // 2. If logged in, save to Firebase
+      if (this._user) {
+        try {
+          await setDoc(doc(db, "users", this._user.uid), {
+            points: this._points,
+            completedTopics: this._completedTopics,
+            answers: this._answers
+          }, { merge: true });
+          this.renderQuestionnaireMenu();
+        } catch (e) {
+          console.error("Error saving to db", e);
+        }
       } else {
-        this.renderQuestionnaireMenu();
+        // 3. Prompt Auth if not logged in
+        this.openModal('authModal');
       }
-    }, 400); // slight delay so they see the button turn colored
+    }, 400); 
   }
 
   applyLanguage() {
@@ -1639,9 +1716,9 @@ class DataComparisonMap extends HTMLElement {
     <h2 class="modal-title">Save Your Points!</h2>
     <p class="modal-desc">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
     <form id="authForm">
-      <input type="email" class="auth-input" placeholder="Email Address" required>
-      <input type="password" class="auth-input" placeholder="Create a Password" required>
-      <button type="submit" class="btn-submit">Sign Up & Save Points</button>
+      <input type="email" id="authEmail" class="auth-input" placeholder="Email Address" required>
+      <input type="password" id="authPass" class="auth-input" placeholder="Create a Password" required>
+      <button type="submit" id="authSubmitBtn" class="btn-submit">Sign Up & Save Points</button>
     </form>
   </div>
 </div>`;
