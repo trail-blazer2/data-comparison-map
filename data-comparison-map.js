@@ -1686,7 +1686,7 @@ class DataComparisonMap extends HTMLElement {
   <div class="modal-content">
     <button class="modal-close">✕</button>
     <span class="pro-badge">Coming Soon</span>
-    <h2 class="modal-title">DataMap Pro</h2>
+    <h2 class="modal-title">RealWorldView Pro</h2>
     <p class="modal-desc">Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.</p>
     <ul class="pro-features">
       <li><span class="pro-icon">🛰️</span> <span><strong>Satellite Imagery Analytics:</strong> Tracking factory outputs and shipping lane congestion in real-time.</span></li>
