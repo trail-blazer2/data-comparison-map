@@ -187,6 +187,36 @@ const CATEGORY_META = {
   public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
 };
 
+const QUESTIONNAIRE = [
+  {
+    id: 'ai_auto',
+    title: 'The AI & Automation Revolution',
+    questions: [
+      { id: 'q1', text: 'Will AI displace >20% of administrative/coding jobs by 2030 without replacing them with equal-paying roles?' },
+      { id: 'q2', text: 'Will Western economies successfully automate and reshore critical manufacturing in the next decade?' },
+      { id: 'q3', text: 'Will AI-driven drug discovery add 2+ years to average global life expectancy by 2035?' }
+    ]
+  },
+  {
+    id: 'geopolitics',
+    title: 'Geopolitics & The End of Free Trade',
+    questions: [
+      { id: 'q1', text: 'Will the US and China economically decouple into two completely separate tech ecosystems?' },
+      { id: 'q2', text: 'Will global defense spending permanently exceed 2.5% of GDP across NATO and allies?' },
+      { id: 'q3', text: 'Will blanket multi-national tariffs end the era of frictionless free trade?' }
+    ]
+  },
+  {
+    id: 'demographics',
+    title: 'The Demographic & Climate Tipping Point',
+    questions: [
+      { id: 'q1', text: 'Will advanced aging economies (Germany, Japan) avoid GDP stagnation via mass skilled immigration?' },
+      { id: 'q2', text: 'Will the transition to green energy cause a global energy price spike lasting more than 5 years?' },
+      { id: 'q3', text: 'Will climate events create over 50 million global climate refugees by 2030?' }
+    ]
+  }
+];
+
 function getColor(t) {
   const c = [
     [203,219,240], [132,155,186], [84,105,137], [33,52,78], [10,24,49]
@@ -276,6 +306,10 @@ class DataComparisonMap extends HTMLElement {
     this._spinVelocity = 0;
     this._lastSpinTime = 0;
     this._autoSpinning = true; 
+
+    this._points = 0;
+    this._completedTopics = [];
+    this._isLoggedIn = false;
   }
 
   t(key) {
@@ -296,6 +330,14 @@ class DataComparisonMap extends HTMLElement {
     let baseUrl = '';
     if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
+
+    // Load state from local storage (Phase 1 placeholder for Database)
+    const savedPoints = localStorage.getItem('datamap_points');
+    const savedTopics = localStorage.getItem('datamap_topics');
+    const savedAuth = localStorage.getItem('datamap_auth');
+    if (savedPoints) this._points = parseInt(savedPoints);
+    if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
+    if (savedAuth) this._isLoggedIn = true;
 
     const link = document.createElement('link');
     link.rel = 'stylesheet'; link.href = baseUrl + 'styles.css';
@@ -361,9 +403,6 @@ class DataComparisonMap extends HTMLElement {
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
 
-    const supportBtn = this.$('#supportBtn');
-    if (supportBtn) supportBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'openLightbox', lightboxName: 'Support Us' }, '*'); });
-    
     const aboutBtn = this.$('#aboutBtn');
     if (aboutBtn) aboutBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'); });
 
@@ -387,8 +426,116 @@ class DataComparisonMap extends HTMLElement {
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
+    // Modal Listeners
+    this.updatePointsDisplay();
+    
+    this.$('#btnUpgrade').addEventListener('click', () => this.openModal('proModal'));
+    this.$('#btnPoints').addEventListener('click', () => this.openQuestionnaireModal());
+    
+    this.$$('.modal-close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.modal-overlay').classList.remove('active');
+      });
+    });
+
+    this.$('#authForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this._isLoggedIn = true;
+      localStorage.setItem('datamap_auth', 'true');
+      this.$('#authModal').classList.remove('active');
+      alert("Account created! In Phase 2, this will connect to Firebase.");
+    });
+
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
+  }
+
+  openModal(id) {
+    this.$$('.modal-overlay').forEach(m => m.classList.remove('active'));
+    this.$('#' + id).classList.add('active');
+  }
+
+  updatePointsDisplay() {
+    this.$('#pointsCount').textContent = this._points + ' Pts';
+  }
+
+  openQuestionnaireModal() {
+    this.renderQuestionnaireMenu();
+    this.openModal('questionnaireModal');
+  }
+
+  renderQuestionnaireMenu() {
+    const container = this.$('#qList');
+    container.innerHTML = '';
+    
+    QUESTIONNAIRE.forEach(topic => {
+      const isCompleted = this._completedTopics.includes(topic.id);
+      const btn = document.createElement('button');
+      btn.className = `q-topic-btn ${isCompleted ? 'completed' : ''}`;
+      btn.innerHTML = `
+        <span class="q-topic-title">${topic.title}</span>
+        <span class="q-topic-reward">${isCompleted ? '✔ Done' : '+50 Pts'}</span>
+      `;
+      if (!isCompleted) {
+        btn.onclick = () => this.renderTopic(topic);
+      }
+      container.appendChild(btn);
+    });
+  }
+
+  renderTopic(topic) {
+    const container = this.$('#qList');
+    container.innerHTML = `<h3 class="modal-title" style="font-size:1.2rem; margin-bottom:16px;">${topic.title}</h3>`;
+    
+    // Store user answers temporarily
+    let answers = {};
+
+    topic.questions.forEach((q, index) => {
+      const card = document.createElement('div');
+      card.className = 'q-question-card';
+      card.innerHTML = `
+        <div class="q-text">${index + 1}. ${q.text}</div>
+        <div class="q-actions">
+          <button class="btn-vote yes" data-q="${q.id}" data-val="yes">Yes</button>
+          <button class="btn-vote no" data-q="${q.id}" data-val="no">No</button>
+        </div>
+      `;
+      container.appendChild(card);
+
+      const btns = card.querySelectorAll('.btn-vote');
+      btns.forEach(btn => {
+        btn.onclick = () => {
+          btns.forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          answers[q.id] = btn.dataset.val;
+
+          // Check if all questions are answered
+          if (Object.keys(answers).length === topic.questions.length) {
+            this.completeTopic(topic.id, answers);
+          }
+        };
+      });
+    });
+  }
+
+  completeTopic(topicId, answers) {
+    setTimeout(() => {
+      // 1. Save data locally
+      this._completedTopics.push(topicId);
+      this._points += 50;
+      localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
+      localStorage.setItem('datamap_points', this._points);
+      
+      // 2. Update UI
+      this.updatePointsDisplay();
+      
+      // 3. Prompt Auth if not logged in
+      if (!this._isLoggedIn && this._completedTopics.length === 1) {
+        this.openModal('authModal');
+      } else {
+        this.renderQuestionnaireMenu();
+      }
+    }, 400); // slight delay so they see the button turn colored
   }
 
   applyLanguage() {
@@ -1358,7 +1505,6 @@ class DataComparisonMap extends HTMLElement {
     </div>
     <div class="nav-links">
       <button class="nav-link" id="aboutBtn" data-i18n="about">About</button>
-      <button class="nav-link primary" id="supportBtn" data-i18n="support">Support us</button>
       
       <div class="lang-switcher-wrap" id="langSwitcherWrap">
         <button class="lang-switch-btn" id="langSwitchBtn">
@@ -1370,10 +1516,21 @@ class DataComparisonMap extends HTMLElement {
           <button class="lang-option" data-lang="cs">CS</button>
         </div>
       </div>
+
+      <!-- NEW: Points & Upgrade Actions -->
+      <div class="nav-actions">
+        <div class="points-badge" id="btnPoints" title="Earn Points">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
+          <span id="pointsCount">0 Pts</span>
+        </div>
+        <button class="btn-upgrade" id="btnUpgrade">
+          <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
+          <span>Upgrade</span>
+        </button>
+      </div>
       
     </div>
   </nav>
-
 
   <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data\u2026</span></div>
   <div class="main" id="mainContent" style="opacity:0">
@@ -1445,6 +1602,48 @@ class DataComparisonMap extends HTMLElement {
   <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
   <div class="tt-src" id="ttSrc"></div>
   <div class="tt-disc" id="ttDisc"></div>
+</div>
+
+<!-- PRO UPGRADE MODAL -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <span class="pro-badge">Coming Soon</span>
+    <h2 class="modal-title">DataMap Pro</h2>
+    <p class="modal-desc">Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.</p>
+    <ul class="pro-features">
+      <li><span class="pro-icon">🛰️</span> <span><strong>Satellite Imagery Analytics:</strong> Tracking factory outputs and shipping lane congestion in real-time.</span></li>
+      <li><span class="pro-icon">🌐</span> <span><strong>Social Sentiment & Scraping:</strong> Advanced web-scraping of corporate hiring trends and global announcements.</span></li>
+      <li><span class="pro-icon">🤖</span> <span><strong>Algorithmic Predictive Modeling:</strong> See exactly how macro-events alter GDP trajectories 5 years before they happen.</span></li>
+    </ul>
+    <p style="font-size: 0.85rem; color: #8395a7; font-style: italic;">*Use your earned Points to unlock early access when we launch.</p>
+  </div>
+</div>
+
+<!-- QUESTIONNAIRE MODAL -->
+<div class="modal-overlay" id="questionnaireModal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title">Help Predict the Future</h2>
+    <p class="modal-desc">Answer these expert polls. We use the "Wisdom of the Crowds" to fine-tune our future projection engine. Earn points for premium access.</p>
+    <div id="qList">
+      <!-- Topics injected via JS -->
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title">Save Your Points!</h2>
+    <p class="modal-desc">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
+    <form id="authForm">
+      <input type="email" class="auth-input" placeholder="Email Address" required>
+      <input type="password" class="auth-input" placeholder="Create a Password" required>
+      <button type="submit" class="btn-submit">Sign Up & Save Points</button>
+    </form>
+  </div>
 </div>`;
   }
 }
