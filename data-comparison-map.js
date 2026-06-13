@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // ============================================================
@@ -14,9 +14,6 @@ const firebaseConfig = {
   appId: "1:473502983675:web:f3a9c602b6662c2180175e",
   measurementId: "G-RW2W1N3DDS"
 };
-
-
-
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -73,14 +70,33 @@ const I18N = {
     wizTitle: "Help Predict the Future",
     wizDesc: "Share your prediction and get points. You are contributing to the best investment prediction tool in the world.",
     wizBtnStart: "Start Predicting",
-    wizBtnClaim: "Claim Points & Save",
+    wizBtnClaim: "Claim Points",
     accTitle: "Your Account",
     tierFree: "Free User",
     tierPro: "Pro Membership (Coming Soon)",
     btnSignOut: "Sign Out",
     btnAccount: "Account",
+    btnLogReg: "Log in / Register",
     btnPredict: "Predict & Earn",
     topicChoose: "Choose a topic to predict",
+    claimInfoMore: "Answer the others to get more points",
+    claimInfoAll: "Amazing! You completed all topics.",
+    proModalTitle: "DataMap Pro",
+    proModalDesc: "Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.",
+    proSat: "Satellite Imagery Analytics: Tracking factory outputs and shipping lane congestion in real-time.",
+    proSoc: "Social Sentiment & Scraping: Advanced web-scraping of corporate hiring trends and global announcements.",
+    proAlgo: "Algorithmic Predictive Modeling: See exactly how macro-events alter GDP trajectories 5 years before they happen.",
+    proNote: "*Use your earned Points to unlock early access when we launch.",
+    authTitleSave: "Save Your Points!",
+    authDescSave: "Create a free account to secure the points you just earned and track your prediction accuracy.",
+    authTitleLog: "Welcome Back",
+    authDescLog: "Log in to view your points and predictions.",
+    btnSignUp: "Sign Up & Save Points",
+    btnLogin: "Log In",
+    btnSwitchToLogin: "Already have an account? Log in",
+    btnSwitchToSignUp: "Need an account? Sign up",
+    emailPlaceholder: "Email Address",
+    passPlaceholder: "Password",
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
     "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
@@ -96,14 +112,33 @@ const I18N = {
     wizTitle: "Pomozte předpovědět budoucnost",
     wizDesc: "Sdílejte svou předpověď a získejte body. Přispíváte k nejlepšímu investičnímu predikčnímu nástroji na světě.",
     wizBtnStart: "Začít předpovídat",
-    wizBtnClaim: "Získat body a uložit",
+    wizBtnClaim: "Získat body",
     accTitle: "Váš účet",
     tierFree: "Bezplatný tarif",
     tierPro: "Pro Tarif (Brzy dostupné)",
     btnSignOut: "Odhlásit se",
     btnAccount: "Účet",
+    btnLogReg: "Přihlásit / Registrovat",
     btnPredict: "Předpovědět a získat",
     topicChoose: "Vyberte téma k předpovědi",
+    claimInfoMore: "Odpovězte i na ostatní a získejte více bodů",
+    claimInfoAll: "Skvělé! Dokončili jste všechna témata.",
+    proModalTitle: "DataMap Pro",
+    proModalDesc: "Připravte se na profesionální analytiku. Náš Pro tarif obchází zpoždění vládních dat tím, že integruje alternativní data v reálném čase pro naše prediktivní algoritmy.",
+    proSat: "Satelitní snímky: Sledování výkonu továren a vytížení lodních tras v reálném čase.",
+    proSoc: "Analýza sentimentu a dat: Pokročilé vytěžování trendů náboru firem a globálních oznámení.",
+    proAlgo: "Algoritmické prediktivní modelování: Podívejte se přesně, jak makro události změní trajektorie HDP 5 let dopředu.",
+    proNote: "*Využijte získané body k odemknutí předběžného přístupu při našem spuštění.",
+    authTitleSave: "Uložte si své body!",
+    authDescSave: "Vytvořte si bezplatný účet, abyste zabezpečili získané body a mohli sledovat přesnost svých předpovědí.",
+    authTitleLog: "Vítejte zpět",
+    authDescLog: "Přihlaste se pro zobrazení svých bodů a předpovědí.",
+    btnSignUp: "Registrovat se a uložit body",
+    btnLogin: "Přihlásit se",
+    btnSwitchToLogin: "Už máte účet? Přihlaste se",
+    btnSwitchToSignUp: "Nemáte účet? Registrujte se",
+    emailPlaceholder: "E-mailová adresa",
+    passPlaceholder: "Heslo",
     "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem", "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
     "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití", "Immigration": "Imigrace", "Net migration": "Čistá migrace",
     "Inflation": "Inflace", "Population": "Populace", "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
@@ -245,6 +280,7 @@ class DataComparisonMap extends HTMLElement {
     this._answers = {};
     this._user = null;
     this._wizardStep = 1;
+    this._isLoginMode = false;
   }
 
   t(key) {
@@ -266,7 +302,7 @@ class DataComparisonMap extends HTMLElement {
     if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
 
-    // Load Local Storage Fallbacks
+    // Load Local Storage Fallbacks (Guest data)
     const savedPoints = localStorage.getItem('datamap_points');
     const savedTopics = localStorage.getItem('datamap_topics');
     const savedAnswers = localStorage.getItem('datamap_answers');
@@ -282,13 +318,28 @@ class DataComparisonMap extends HTMLElement {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          this._points = data.points || 0;
-          this._completedTopics = data.completedTopics || [];
-          this._answers = data.answers || {};
-          
-          localStorage.setItem('datamap_points', this._points);
-          localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
-          localStorage.setItem('datamap_answers', JSON.stringify(this._answers));
+          // Smart Merge: If they played as guest and then logged in, add points and combine topics
+          const dbPoints = data.points || 0;
+          const dbTopics = data.completedTopics || [];
+          const dbAnswers = data.answers || {};
+
+          let mergedTopics = Array.from(new Set([...dbTopics, ...this._completedTopics]));
+          let mergedAnswers = { ...dbAnswers, ...this._answers };
+          let mergedPoints = mergedTopics.length * 50; // Recalculate accurately
+
+          this._points = mergedPoints;
+          this._completedTopics = mergedTopics;
+          this._answers = mergedAnswers;
+
+          // Save merged data back to DB to ensure consistency
+          setDoc(docRef, {
+            points: this._points, completedTopics: this._completedTopics, answers: this._answers
+          }, { merge: true });
+
+          // Clear local storage overrides
+          localStorage.removeItem('datamap_points');
+          localStorage.removeItem('datamap_topics');
+          localStorage.removeItem('datamap_answers');
         }
       }
       this.updateUserUI();
@@ -391,7 +442,9 @@ class DataComparisonMap extends HTMLElement {
     
     this.$('#btnAccount').addEventListener('click', () => {
       if (this._user) this.openModal('accountModal');
-      else this.openWizard(3);
+      else {
+        this.openModal('authModal');
+      }
     });
 
     this.$$('.modal-close').forEach(btn => {
@@ -401,33 +454,47 @@ class DataComparisonMap extends HTMLElement {
     // Wizard Step 1 -> 2
     this.$('#btnStartWizard').addEventListener('click', () => this.renderWizardStep(2));
 
-    // Wizard Auth Submit (Step 3)
+    // Auth Switcher (Login vs Sign Up)
+    this.$$('.switch-auth-mode').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._isLoginMode = !this._isLoginMode;
+        this.updateAuthUI();
+      });
+    });
+
+    // Auth Submit
     this.$('#authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = this.$('#authEmail').value;
       const pass = this.$('#authPass').value;
       const btn = this.$('#authSubmitBtn');
       
-      btn.textContent = "Creating Account..."; btn.disabled = true;
+      btn.textContent = "..."; btn.disabled = true;
 
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-        const user = userCredential.user;
-        
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email, points: this._points, completedTopics: this._completedTopics,
-          answers: this._answers, createdAt: new Date().toISOString()
-        });
-
+        if (this._isLoginMode) {
+          await signInWithEmailAndPassword(auth, email, pass);
+          // On login, the onAuthStateChanged listener handles merging data
+        } else {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+          const user = userCredential.user;
+          // New account, save their guest points
+          await setDoc(doc(db, "users", user.uid), {
+            email: user.email, points: this._points, completedTopics: this._completedTopics,
+            answers: this._answers, createdAt: new Date().toISOString()
+          });
+        }
         this.$('#wizardModal').classList.remove('active');
+        this.$('#authModal').classList.remove('active');
         this.openModal('accountModal');
       } catch (error) {
         alert("Error: " + error.message);
       } finally {
-        btn.textContent = "Sign Up & Save Points"; btn.disabled = false;
+        this.updateAuthUI(); btn.disabled = false;
       }
     });
 
+    // Sign out
     this.$('#btnSignOut').addEventListener('click', () => {
       signOut(auth).then(() => {
         this._points = 0; this._completedTopics = []; this._answers = {};
@@ -438,12 +505,28 @@ class DataComparisonMap extends HTMLElement {
     });
   }
 
+  updateAuthUI() {
+    if (this._isLoginMode) {
+      this.$('#authTitle').textContent = this.t('authTitleLog');
+      this.$('#authDesc').textContent = this.t('authDescLog');
+      this.$('#authSubmitBtn').textContent = this.t('btnLogin');
+      this.$('#switchAuthBtn').textContent = this.t('btnSwitchToSignUp');
+    } else {
+      this.$('#authTitle').textContent = this.t('authTitleSave');
+      this.$('#authDesc').textContent = this.t('authDescSave');
+      this.$('#authSubmitBtn').textContent = this.t('btnSignUp');
+      this.$('#switchAuthBtn').textContent = this.t('btnSwitchToLogin');
+    }
+  }
+
   updateUserUI() {
     this.$('#accPoints').textContent = this._points + ' Pts';
     this.$('#accPointsModal').textContent = this._points + ' Pts';
     if (this._user) {
+      this.$('#accLabel').textContent = this.t('btnAccount');
       this.$('#accEmail').textContent = this._user.email;
     } else {
+      this.$('#accLabel').textContent = this.t('btnLogReg');
       this.$('#accEmail').textContent = "Not logged in";
     }
   }
@@ -451,6 +534,7 @@ class DataComparisonMap extends HTMLElement {
   openModal(id) {
     this.$$('.modal-overlay').forEach(m => m.classList.remove('active'));
     this.$('#' + id).classList.add('active');
+    if (id === 'authModal') this.updateAuthUI();
   }
 
   openWizard(step) {
@@ -461,7 +545,6 @@ class DataComparisonMap extends HTMLElement {
   renderWizardStep(step) {
     this._wizardStep = step;
     
-    // Update Stepper UI
     this.$$('.step').forEach(s => {
       s.classList.remove('active', 'completed');
       if (parseInt(s.dataset.step) < step) s.classList.add('completed');
@@ -472,101 +555,170 @@ class DataComparisonMap extends HTMLElement {
       if (parseInt(l.dataset.line) < step) l.classList.add('active');
     });
 
-    // Toggle Views
     this.$$('.wiz-view').forEach(v => v.classList.remove('active'));
     this.$(`#wizStep${step}`).classList.add('active');
 
-    // Build Step 2 content if needed
     if (step === 2) {
-      this.renderQuestionnaireMenu();
-      const btnClaim = this.$('#btnClaimPoints');
-      if (this._completedTopics.length > 0) {
-        btnClaim.style.display = 'block';
-        btnClaim.onclick = () => this.renderWizardStep(3);
+      this.renderQuestionnaireAccordion();
+    }
+    if (step === 3) {
+      this._isLoginMode = false;
+      this.updateAuthUI();
+    }
+  }
+
+  renderQuestionnaireAccordion() {
+    const container = this.$('#qList');
+    container.innerHTML = `<h3 class="modal-title" style="font-size:1.1rem; margin-bottom:12px;" data-i18n="topicChoose">${this.t('topicChoose')}</h3>`;
+    
+    // Store temp answers per topic
+    const tempAnswers = {};
+
+    QUESTIONNAIRE.forEach(topic => {
+      tempAnswers[topic.id] = {};
+      const isCompleted = this._completedTopics.includes(topic.id);
+      
+      const wrap = document.createElement('div');
+      wrap.className = `q-topic-wrap ${isCompleted ? 'completed' : ''}`;
+      
+      // Header
+      const header = document.createElement('button');
+      header.className = 'q-topic-btn';
+      header.innerHTML = `
+        <span class="q-topic-title">${topic.title[this._lang] || topic.title.en}</span>
+        <span class="q-topic-reward">${isCompleted ? '✔ Done' : '+50 Pts'}</span>
+      `;
+      
+      // Body
+      const body = document.createElement('div');
+      body.className = 'q-topic-body';
+      
+      if (!isCompleted) {
+        topic.questions.forEach((q, index) => {
+          const card = document.createElement('div');
+          card.className = 'q-question-card';
+          card.innerHTML = `
+            <div class="q-text-wrap">
+              <div class="q-text">${index + 1}. ${q.text[this._lang] || q.text.en}</div>
+              <div class="factor-info-btn" style="position:relative; z-index:10;">i
+                <div class="factor-tooltip" style="bottom:auto; top:100%; margin-top:8px;">
+                  <strong>${this.t('context')}</strong> ${q.info[this._lang] || q.info.en}
+                </div>
+              </div>
+            </div>
+            <div class="q-actions">
+              <button class="btn-vote yes" data-q="${q.id}" data-val="yes">Yes</button>
+              <button class="btn-vote no" data-q="${q.id}" data-val="no">No</button>
+            </div>
+          `;
+          body.appendChild(card);
+
+          const btns = card.querySelectorAll('.btn-vote');
+          btns.forEach(btn => {
+            btn.onclick = () => {
+              btns.forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+              tempAnswers[topic.id][q.id] = btn.dataset.val;
+
+              // Check if topic complete
+              if (Object.keys(tempAnswers[topic.id]).length === topic.questions.length) {
+                this.completeTopic(topic.id, tempAnswers[topic.id], wrap);
+              }
+            };
+          });
+        });
+
+        // Accordion click
+        header.onclick = () => {
+          const isExpanded = wrap.classList.contains('expanded');
+          this.$$('.q-topic-wrap').forEach(w => w.classList.remove('expanded')); // close others
+          if (!isExpanded) wrap.classList.add('expanded');
+        };
+      }
+
+      wrap.appendChild(header);
+      wrap.appendChild(body);
+      container.appendChild(wrap);
+    });
+
+    // Claim Area
+    const claimWrap = document.createElement('div');
+    claimWrap.className = 'claim-wrap';
+    const claimBtn = document.createElement('button');
+    claimBtn.className = 'btn-primary-large';
+    claimBtn.id = 'btnClaimPoints';
+    claimBtn.setAttribute('data-i18n', 'wizBtnClaim');
+    claimBtn.textContent = this.t('wizBtnClaim');
+    claimBtn.onclick = () => {
+      if (this._user) {
+        this.$('#wizardModal').classList.remove('active');
+        this.openModal('accountModal');
       } else {
-        btnClaim.style.display = 'none';
+        this.renderWizardStep(3); // Go to Auth
+      }
+    };
+    
+    const claimInfo = document.createElement('span');
+    claimInfo.className = 'claim-info';
+    
+    claimWrap.appendChild(claimBtn);
+    claimWrap.appendChild(claimInfo);
+    container.appendChild(claimWrap);
+
+    this.updateClaimUI();
+  }
+
+  updateClaimUI() {
+    const claimWrap = this.$('.claim-wrap');
+    if (!claimWrap) return;
+    const claimInfo = claimWrap.querySelector('.claim-info');
+    
+    if (this._completedTopics.length === 0) {
+      claimWrap.style.display = 'none';
+    } else {
+      claimWrap.style.display = 'flex';
+      if (this._completedTopics.length < 3) {
+        claimInfo.textContent = this.t('claimInfoMore');
+        claimInfo.style.color = '#d97706';
+      } else {
+        claimInfo.textContent = this.t('claimInfoAll');
+        claimInfo.style.color = '#059669';
       }
     }
   }
 
-  renderQuestionnaireMenu() {
-    const container = this.$('#qList');
-    container.innerHTML = `<h3 class="modal-title" style="font-size:1.1rem; margin-bottom:12px;" data-i18n="topicChoose">${this.t('topicChoose')}</h3>`;
-    
-    QUESTIONNAIRE.forEach(topic => {
-      const isCompleted = this._completedTopics.includes(topic.id);
-      const btn = document.createElement('button');
-      btn.className = `q-topic-btn ${isCompleted ? 'completed' : ''}`;
-      btn.innerHTML = `
-        <span class="q-topic-title">${topic.title[this._lang] || topic.title.en}</span>
-        <span class="q-topic-reward">${isCompleted ? '✔ Done' : '+50 Pts'}</span>
-      `;
-      if (!isCompleted) btn.onclick = () => this.renderTopic(topic);
-      container.appendChild(btn);
-    });
-  }
+  async completeTopic(topicId, newAnswers, wrapperEl) {
+    // Close accordion & mark done visually immediately
+    wrapperEl.classList.remove('expanded');
+    wrapperEl.classList.add('completed');
+    wrapperEl.querySelector('.q-topic-reward').innerHTML = '✔ Done';
+    if(wrapperEl.querySelector('.q-topic-reward').classList.contains('q-topic-reward')) {
+      wrapperEl.querySelector('.q-topic-reward').style.color = '#059669';
+      wrapperEl.querySelector('.q-topic-reward').style.background = 'rgba(52,211,153,0.15)';
+    }
 
-  renderTopic(topic) {
-    const container = this.$('#qList');
-    container.innerHTML = `<h3 class="modal-title" style="font-size:1.1rem; margin-bottom:16px;">${topic.title[this._lang] || topic.title.en}</h3>`;
-    let tempAnswers = {};
-
-    topic.questions.forEach((q, index) => {
-      const card = document.createElement('div');
-      card.className = 'q-question-card';
-      card.innerHTML = `
-        <div class="q-text-wrap">
-          <div class="q-text">${index + 1}. ${q.text[this._lang] || q.text.en}</div>
-          <div class="factor-info-btn" style="position:relative; z-index:10;">i
-            <div class="factor-tooltip" style="bottom:auto; top:100%; margin-top:8px;">
-              <strong>${this.t('context')}</strong> ${q.info[this._lang] || q.info.en}
-            </div>
-          </div>
-        </div>
-        <div class="q-actions">
-          <button class="btn-vote yes" data-q="${q.id}" data-val="yes">Yes</button>
-          <button class="btn-vote no" data-q="${q.id}" data-val="no">No</button>
-        </div>
-      `;
-      container.appendChild(card);
-
-      const btns = card.querySelectorAll('.btn-vote');
-      btns.forEach(btn => {
-        btn.onclick = () => {
-          btns.forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-          tempAnswers[q.id] = btn.dataset.val;
-          if (Object.keys(tempAnswers).length === topic.questions.length) {
-            this.completeTopic(topic.id, tempAnswers);
-          }
-        };
-      });
-    });
-  }
-
-  async completeTopic(topicId, newAnswers) {
     setTimeout(async () => {
-      this._completedTopics.push(topicId);
-      this._points += 50;
-      this._answers = { ...this._answers, ...newAnswers };
-      
-      localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
-      localStorage.setItem('datamap_points', this._points);
-      localStorage.setItem('datamap_answers', JSON.stringify(this._answers));
-      
-      this.updateUserUI();
-      
-      if (this._user) {
-        try {
-          await setDoc(doc(db, "users", this._user.uid), {
-            points: this._points,
-            completedTopics: this._completedTopics,
-            answers: this._answers
-          }, { merge: true });
-        } catch (e) { console.error("Error saving to db", e); }
-        this.renderWizardStep(2); // Go back to topics list
-      } else {
-        this.renderWizardStep(3); // Prompt Auth
+      if (!this._completedTopics.includes(topicId)) {
+        this._completedTopics.push(topicId);
+        this._points += 50;
+        this._answers = { ...this._answers, ...newAnswers };
+        
+        localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
+        localStorage.setItem('datamap_points', this._points);
+        localStorage.setItem('datamap_answers', JSON.stringify(this._answers));
+        
+        this.updateUserUI();
+        this.updateClaimUI();
+        
+        if (this._user) {
+          try {
+            await setDoc(doc(db, "users", this._user.uid), {
+              points: this._points,
+              completedTopics: this._completedTopics,
+              answers: this._answers
+            }, { merge: true });
+          } catch (e) { console.error("Error saving to db", e); }
+        }
       }
     }, 400); 
   }
@@ -577,6 +729,13 @@ class DataComparisonMap extends HTMLElement {
       if (I18N[this._lang] && I18N[this._lang][key]) {
         if(el.tagName === 'INPUT' && el.type === 'button') el.value = I18N[this._lang][key];
         else el.textContent = I18N[this._lang][key];
+      }
+    });
+
+    this.$$('[data-i18n-placeholder]').forEach(el => {
+      const key = el.dataset.i18nPlaceholder;
+      if (I18N[this._lang] && I18N[this._lang][key]) {
+        el.placeholder = I18N[this._lang][key];
       }
     });
 
@@ -614,8 +773,12 @@ class DataComparisonMap extends HTMLElement {
     }
     
     // Update active modal strings if open
-    if (this.$('#wizardModal').classList.contains('active')) {
-      if (this._wizardStep === 2 && this._completedTopics.length < 3) this.renderWizardStep(2);
+    this.updateUserUI();
+    if (this.$('#authModal').classList.contains('active') || this.$('#wizardModal').classList.contains('active')) {
+      this.updateAuthUI();
+    }
+    if (this.$('#wizardModal').classList.contains('active') && this._wizardStep === 2) {
+      this.renderQuestionnaireAccordion(); // rebuild for language
     }
   }
 
@@ -1432,7 +1595,7 @@ class DataComparisonMap extends HTMLElement {
       const count = Object.keys(src.countries).length; const isEmpty = count === 0;
       const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
-      else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
+      else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' • ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
       c.appendChild(b);
     });
   }
@@ -1553,7 +1716,6 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
 
-      <!-- Actions -->
       <div class="nav-actions">
         <button class="btn-action btn-predict" id="btnPredict">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
@@ -1565,7 +1727,7 @@ class DataComparisonMap extends HTMLElement {
         </button>
         <button class="btn-action btn-account" id="btnAccount">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          <span id="accPoints">0 Pts</span>
+          <span id="accLabel" data-i18n="btnLogReg">Log in</span>
         </button>
       </div>
       
@@ -1587,7 +1749,6 @@ class DataComparisonMap extends HTMLElement {
       <div class="legend"><span id="legMin">\u2014</span><div class="legend-bar"><div class="legend-marker" id="legMarker"></div></div><span id="legMax">\u2014</span></div>
       <div class="map-wrap"><svg id="mapSvg" viewBox="${WORLD_VIEWBOX.x} ${WORLD_VIEWBOX.y} ${WORLD_VIEWBOX.w} ${WORLD_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet"></svg></div>
       
-      <!-- MODE BAR & LEFT PANEL -->
       <div class="panel-wrapper" id="panelWrapper">
         <div class="mode-bar" id="modeBar">
           <button class="mode-btn" data-mode="history" data-i18n="history" disabled>HISTORY</button>
@@ -1650,22 +1811,38 @@ class DataComparisonMap extends HTMLElement {
       <button class="btn-primary-large" id="btnStartWizard" data-i18n="wizBtnStart">Start Predicting</button>
     </div>
 
-    <!-- Step 2: Topics & Questions -->
+    <!-- Step 2: Topics (Accordion) -->
     <div class="wiz-view" id="wizStep2">
       <div id="qList"></div>
-      <button class="btn-primary-large" id="btnClaimPoints" style="display:none; margin-top:16px;" data-i18n="wizBtnClaim">Claim Points & Save</button>
     </div>
 
-    <!-- Step 3: Auth -->
+    <!-- Step 3: Auth inside Wizard -->
     <div class="wiz-view" id="wizStep3">
-      <h2 class="modal-title">Save Your Points!</h2>
-      <p class="modal-desc">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
-      <form id="authForm">
-        <input type="email" id="authEmail" class="auth-input" placeholder="Email Address" required>
-        <input type="password" id="authPass" class="auth-input" placeholder="Create a Password" required>
-        <button type="submit" id="authSubmitBtn" class="btn-primary-large">Sign Up & Save Points</button>
+      <!-- We reuse the auth logic/UI but show it inside the wizard -->
+      <h2 class="modal-title" data-i18n="authTitleSave">Save Your Points!</h2>
+      <p class="modal-desc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
+      <form id="authForm" style="margin-bottom:12px;">
+        <input type="email" id="authEmail" class="auth-input" data-i18n-placeholder="emailPlaceholder" placeholder="Email Address" required>
+        <input type="password" id="authPass" class="auth-input" data-i18n-placeholder="passPlaceholder" placeholder="Create a Password" required>
+        <button type="submit" id="authSubmitBtn" class="btn-primary-large" data-i18n="btnSignUp">Sign Up & Save Points</button>
       </form>
+      <button class="switch-auth-mode" id="switchAuthBtn" data-i18n="btnSwitchToLogin">Already have an account? Log in</button>
     </div>
+  </div>
+</div>
+
+<!-- STANDALONE AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title" id="authTitle" data-i18n="authTitleSave">Save Your Points!</h2>
+    <p class="modal-desc" id="authDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
+    <form id="standaloneAuthForm" style="margin-bottom:12px;">
+      <input type="email" id="standaloneAuthEmail" class="auth-input" data-i18n-placeholder="emailPlaceholder" placeholder="Email Address" required>
+      <input type="password" id="standaloneAuthPass" class="auth-input" data-i18n-placeholder="passPlaceholder" placeholder="Password" required>
+      <button type="submit" id="standaloneAuthSubmitBtn" class="btn-primary-large" data-i18n="btnSignUp">Sign Up & Save Points</button>
+    </form>
+    <button class="switch-auth-mode" id="standaloneSwitchAuthBtn" data-i18n="btnSwitchToLogin">Already have an account? Log in</button>
   </div>
 </div>
 
@@ -1698,14 +1875,14 @@ class DataComparisonMap extends HTMLElement {
   <div class="modal-content">
     <button class="modal-close">✕</button>
     <span class="pro-badge">Coming Soon</span>
-    <h2 class="modal-title">DataMap Pro</h2>
-    <p class="modal-desc">Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.</p>
+    <h2 class="modal-title" data-i18n="proModalTitle">DataMap Pro</h2>
+    <p class="modal-desc" data-i18n="proModalDesc">Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.</p>
     <ul class="pro-features">
-      <li><span class="pro-icon">🛰️</span> <span><strong>Satellite Imagery Analytics:</strong> Tracking factory outputs and shipping lane congestion in real-time.</span></li>
-      <li><span class="pro-icon">🌐</span> <span><strong>Social Sentiment & Scraping:</strong> Advanced web-scraping of corporate hiring trends and global announcements.</span></li>
-      <li><span class="pro-icon">🤖</span> <span><strong>Algorithmic Predictive Modeling:</strong> See exactly how macro-events alter GDP trajectories 5 years before they happen.</span></li>
+      <li><span class="pro-icon">🛰️</span> <span data-i18n="proSat"><strong>Satellite Imagery Analytics:</strong> Tracking factory outputs and shipping lane congestion in real-time.</span></li>
+      <li><span class="pro-icon">🌐</span> <span data-i18n="proSoc"><strong>Social Sentiment & Scraping:</strong> Advanced web-scraping of corporate hiring trends and global announcements.</span></li>
+      <li><span class="pro-icon">🤖</span> <span data-i18n="proAlgo"><strong>Algorithmic Predictive Modeling:</strong> See exactly how macro-events alter GDP trajectories 5 years before they happen.</span></li>
     </ul>
-    <p style="font-size: 0.85rem; color: #8395a7; font-style: italic;">*Use your earned Points to unlock early access when we launch.</p>
+    <p style="font-size: 0.85rem; color: #8395a7; font-style: italic;" data-i18n="proNote">*Use your earned Points to unlock early access when we launch.</p>
   </div>
 </div>`;
   }
