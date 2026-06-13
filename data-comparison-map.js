@@ -1,24 +1,19 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // ============================================================
-// FIREBASE CONFIGURATION (Paste your config from Firebase here)
+// FIREBASE CONFIGURATION
 // ============================================================
-
 const firebaseConfig = {
-  apiKey: "AIzaSyAocOPQSgjuaQFkQy1RAypWrXbnhAWbKRE",
-  authDomain: "rwvtesting.firebaseapp.com",
-  projectId: "rwvtesting",
-  storageBucket: "rwvtesting.firebasestorage.app",
-  messagingSenderId: "473502983675",
-  appId: "1:473502983675:web:f3a9c602b6662c2180175e",
-  measurementId: "G-RW2W1N3DDS"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
 };
 
-
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -52,152 +47,67 @@ const WORLD_CONTENT_BBOX = {
 };
 
 const NUMERIC_TO_ALPHA2 = {
-  '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR',
-  '036':'AU','040':'AT','050':'BD','051':'AM','056':'BE','064':'BT',
-  '068':'BO','070':'BA','072':'BW','076':'BR','096':'BN','100':'BG',
-  '104':'MM','108':'BI','112':'BY','116':'KH','120':'CM','124':'CA',
-  '140':'CF','144':'LK','148':'TD','152':'CL','156':'CN','170':'CO',
-  '174':'KM','178':'CG','180':'CD','188':'CR','191':'HR','192':'CU',
-  '196':'CY','203':'CZ','204':'BJ','208':'DK','214':'DO','218':'EC',
-  '222':'SV','226':'GQ','231':'ET','232':'ER','233':'EE','242':'FJ',
-  '246':'FI','250':'FR','262':'DJ','266':'GA','268':'GE','270':'GM',
-  '276':'DE','288':'GH','300':'GR','320':'GT','324':'GN','328':'GY',
-  '332':'HT','340':'HN','348':'HU','352':'IS','356':'IN','360':'ID',
-  '364':'IR','368':'IQ','372':'IE','376':'IL','380':'IT','384':'CI',
-  '388':'JM','392':'JP','398':'KZ','400':'JO','404':'KE','408':'KP',
-  '410':'KR','414':'KW','417':'KG','418':'LA','422':'LB','426':'LS',
-  '428':'LV','430':'LR','434':'LY','440':'LT','442':'LU','450':'MG',
-  '454':'MW','458':'MY','466':'ML','470':'MT','478':'MR','480':'MU',
-  '484':'MX','496':'MN','498':'MD','499':'ME','504':'MA','508':'MZ',
-  '516':'NA','524':'NP','528':'NL','540':'NC','554':'NZ','558':'NI',
-  '562':'NE','566':'NG','578':'NO','586':'PK','591':'PA','598':'PG',
-  '600':'PY','604':'PE','608':'PH','616':'PL','620':'PT','634':'QA',
-  '642':'RO','643':'RU','646':'RW','678':'ST','682':'SA','686':'SN',
-  '688':'RS','694':'SL','703':'SK','704':'VN','705':'SI','706':'SO',
-  '710':'ZA','716':'ZW','724':'ES','728':'SS','729':'SD','740':'SR',
-  '748':'SZ','752':'SE','756':'CH','760':'SY','762':'TJ','764':'TH',
-  '768':'TG','784':'AE','788':'TN','792':'TR','795':'TM','800':'UG',
-  '804':'UA','807':'MK','818':'EG','826':'GB','834':'TZ','840':'US',
-  '858':'UY','860':'UZ','862':'VE','887':'YE','894':'ZM'
+  '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR','036':'AU','040':'AT','050':'BD','051':'AM','056':'BE','064':'BT','068':'BO','070':'BA','072':'BW','076':'BR','096':'BN','100':'BG','104':'MM','108':'BI','112':'BY','116':'KH','120':'CM','124':'CA','140':'CF','144':'LK','148':'TD','152':'CL','156':'CN','170':'CO','174':'KM','178':'CG','180':'CD','188':'CR','191':'HR','192':'CU','196':'CY','203':'CZ','204':'BJ','208':'DK','214':'DO','218':'EC','222':'SV','226':'GQ','231':'ET','232':'ER','233':'EE','242':'FJ','246':'FI','250':'FR','262':'DJ','266':'GA','268':'GE','270':'GM','276':'DE','288':'GH','300':'GR','320':'GT','324':'GN','328':'GY','332':'HT','340':'HN','348':'HU','352':'IS','356':'IN','360':'ID','364':'IR','368':'IQ','372':'IE','376':'IL','380':'IT','384':'CI','388':'JM','392':'JP','398':'KZ','400':'JO','404':'KE','408':'KP','410':'KR','414':'KW','417':'KG','418':'LA','422':'LB','426':'LS','428':'LV','430':'LR','434':'LY','440':'LT','442':'LU','450':'MG','454':'MW','458':'MY','466':'ML','470':'MT','478':'MR','480':'MU','484':'MX','496':'MN','498':'MD','499':'ME','504':'MA','508':'MZ','516':'NA','524':'NP','528':'NL','540':'NC','554':'NZ','558':'NI','562':'NE','566':'NG','578':'NO','586':'PK','591':'PA','598':'PG','600':'PY','604':'PE','608':'PH','616':'PL','620':'PT','634':'QA','642':'RO','643':'RU','646':'RW','678':'ST','682':'SA','686':'SN','688':'RS','694':'SL','703':'SK','704':'VN','705':'SI','706':'SO','710':'ZA','716':'ZW','724':'ES','728':'SS','729':'SD','740':'SR','748':'SZ','752':'SE','756':'CH','760':'SY','762':'TJ','764':'TH','768':'TG','784':'AE','788':'TN','792':'TR','795':'TM','800':'UG','804':'UA','807':'MK','818':'EG','826':'GB','834':'TZ','840':'US','858':'UY','860':'UZ','862':'VE','887':'YE','894':'ZM'
 };
 
 const ALPHA2_TO_NAME = {
-  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',
-  AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',
-  BE:'Belgium',BJ:'Benin',BT:'Bhutan',BO:'Bolivia',BA:'Bosnia & Herzegovina',
-  BW:'Botswana',BR:'Brazil',BN:'Brunei',BG:'Bulgaria',BI:'Burundi',
-  BY:'Belarus',KH:'Cambodia',CM:'Cameroon',CA:'Canada',CF:'Central African Republic',
-  TD:'Chad',CL:'Chile',CN:'China',CO:'Colombia',CG:'Congo',CD:'DR Congo',
-  KM:'Comoros',CR:'Costa Rica',CI:"Côte d'Ivoire",HR:'Croatia',CU:'Cuba',
-  CY:'Cyprus',CZ:'Czechia',DK:'Denmark',DJ:'Djibouti',DO:'Dominican Republic',
-  EC:'Ecuador',EG:'Egypt',SV:'El Salvador',GQ:'Equatorial Guinea',ER:'Eritrea',
-  EE:'Estonia',ET:'Ethiopia',FJ:'Fiji',FI:'Finland',FR:'France',GA:'Gabon',
-  GM:'Gambia',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',
-  GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Hungary',IS:'Iceland',
-  IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',
-  IT:'Italy',JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',
-  KP:'North Korea',KR:'South Korea',KW:'Kuwait',KG:'Kyrgyzstan',LA:'Laos',
-  LB:'Lebanon',LS:'Lesotho',LR:'Liberia',LY:'Libya',LT:'Lithuania',LU:'Luxembourg',
-  LV:'Latvia',MG:'Madagascar',MW:'Malawi',MY:'Malaysia',ML:'Mali',MT:'Malta',
-  MR:'Mauritania',MU:'Mauritius',MX:'Mexico',MD:'Moldova',ME:'Montenegro',
-  MN:'Mongolia',MA:'Morocco',MZ:'Mozambique',MM:'Myanmar',NA:'Namibia',
-  NP:'Nepal',NL:'Netherlands',NC:'New Caledonia',NZ:'New Zealand',NI:'Nicaragua',
-  NE:'Niger',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',PK:'Pakistan',
-  PA:'Panama',PG:'Papua New Guinea',PY:'Paraguay',PE:'Peru',PH:'Philippines',
-  PL:'Poland',PT:'Portugal',QA:'Qatar',RO:'Romania',RU:'Russia',RW:'Rwanda',
-  ST:'São Tomé & Príncipe',SA:'Saudi Arabia',SN:'Senegal',RS:'Serbia',
-  SL:'Sierra Leone',SK:'Slovakia',SI:'Slovenia',SO:'Somalia',ZA:'South Africa',
-  SS:'South Sudan',ES:'Spain',LK:'Sri Lanka',SD:'Sudan',SR:'Suriname',
-  SZ:'Eswatini',SE:'Sweden',CH:'Switzerland',SY:'Syria',TJ:'Tajikistan',
-  TZ:'Tanzania',TH:'Thailand',TG:'Togo',TN:'Tunisia',TR:'Türkiye',
-  TM:'Turkmenistan',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',
-  GB:'United Kingdom',US:'United States',UY:'Uruguay',UZ:'Uzbekistan',
-  VE:'Venezuela',VN:'Vietnam',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'
+  AF:'Afghanistan',AL:'Albania',DZ:'Algeria',AO:'Angola',AM:'Armenia',AR:'Argentina',AU:'Australia',AT:'Austria',AZ:'Azerbaijan',BD:'Bangladesh',BE:'Belgium',BJ:'Benin',BT:'Bhutan',BO:'Bolivia',BA:'Bosnia & Herzegovina',BW:'Botswana',BR:'Brazil',BN:'Brunei',BG:'Bulgaria',BI:'Burundi',BY:'Belarus',KH:'Cambodia',CM:'Cameroon',CA:'Canada',CF:'Central African Republic',TD:'Chad',CL:'Chile',CN:'China',CO:'Colombia',CG:'Congo',CD:'DR Congo',KM:'Comoros',CR:'Costa Rica',CI:"Côte d'Ivoire",HR:'Croatia',CU:'Cuba',CY:'Cyprus',CZ:'Czechia',DK:'Denmark',DJ:'Djibouti',DO:'Dominican Republic',EC:'Ecuador',EG:'Egypt',SV:'El Salvador',GQ:'Equatorial Guinea',ER:'Eritrea',EE:'Estonia',ET:'Ethiopia',FJ:'Fiji',FI:'Finland',FR:'France',GA:'Gabon',GM:'Gambia',GE:'Georgia',DE:'Germany',GH:'Ghana',GR:'Greece',GT:'Guatemala',GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Hungary',IS:'Iceland',IN:'India',ID:'Indonesia',IR:'Iran',IQ:'Iraq',IE:'Ireland',IL:'Israel',IT:'Italy',JM:'Jamaica',JP:'Japan',JO:'Jordan',KZ:'Kazakhstan',KE:'Kenya',KP:'North Korea',KR:'South Korea',KW:'Kuwait',KG:'Kyrgyzstan',LA:'Laos',LB:'Lebanon',LS:'Lesotho',LR:'Liberia',LY:'Libya',LT:'Lithuania',LU:'Luxembourg',LV:'Latvia',MG:'Madagascar',MW:'Malawi',MY:'Malaysia',ML:'Mali',MT:'Malta',MR:'Mauritania',MU:'Mauritius',MX:'Mexico',MD:'Moldova',ME:'Montenegro',MN:'Mongolia',MA:'Morocco',MZ:'Mozambique',MM:'Myanmar',NA:'Namibia',NP:'Nepal',NL:'Netherlands',NC:'New Caledonia',NZ:'New Zealand',NI:'Nicaragua',NE:'Niger',NG:'Nigeria',MK:'North Macedonia',NO:'Norway',PK:'Pakistan',PA:'Panama',PG:'Papua New Guinea',PY:'Paraguay',PE:'Peru',PH:'Philippines',PL:'Poland',PT:'Portugal',QA:'Qatar',RO:'Romania',RU:'Russia',RW:'Rwanda',ST:'São Tomé & Príncipe',SA:'Saudi Arabia',SN:'Senegal',RS:'Serbia',SL:'Sierra Leone',SK:'Slovakia',SI:'Slovenia',SO:'Somalia',ZA:'South Africa',SS:'South Sudan',ES:'Spain',LK:'Sri Lanka',SD:'Sudan',SR:'Suriname',SZ:'Eswatini',SE:'Sweden',CH:'Switzerland',SY:'Syria',TJ:'Tajikistan',TZ:'Tanzania',TH:'Thailand',TG:'Togo',TN:'Tunisia',TR:'Türkiye',TM:'Turkmenistan',UG:'Uganda',UA:'Ukraine',AE:'United Arab Emirates',GB:'United Kingdom',US:'United States',UY:'Uruguay',UZ:'Uzbekistan',VE:'Venezuela',VN:'Vietnam',YE:'Yemen',ZM:'Zambia',ZW:'Zimbabwe'
 };
 
 const CS_COUNTRIES = {
-  AF:'Afghánistán',AL:'Albánie',DZ:'Alžírsko',AO:'Angola',AM:'Arménie',
-  AR:'Argentina',AU:'Austrálie',AT:'Rakousko',AZ:'Ázerbájdžán',BD:'Bangladéš',
-  BE:'Belgie',BJ:'Benin',BT:'Bhútán',BO:'Bolívie',BA:'Bosna a Hercegovina',
-  BW:'Botswana',BR:'Brazílie',BN:'Brunej',BG:'Bulharsko',BI:'Burundi',
-  BY:'Bělorusko',KH:'Kambodža',CM:'Kamerun',CA:'Kanada',CF:'Středoafrická republika',
-  TD:'Čad',CL:'Chile',CN:'Čína',CO:'Kolumbie',CG:'Kongo',CD:'DR Kongo',
-  KM:'Komory',CR:'Kostarika',CI:"Pobřeží slonoviny",HR:'Chorvatsko',CU:'Kuba',
-  CY:'Kypr',CZ:'Česko',DK:'Dánsko',DJ:'Džibutsko',DO:'Dominikánská republika',
-  EC:'Ekvádor',EG:'Egypt',SV:'Salvador',GQ:'Rovníková Guinea',ER:'Eritrea',
-  EE:'Estonsko',ET:'Etiopie',FJ:'Fidži',FI:'Finsko',FR:'Francie',GA:'Gabon',
-  GM:'Gambie',GE:'Gruzie',DE:'Německo',GH:'Ghana',GR:'Řecko',GT:'Guatemala',
-  GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Maďarsko',IS:'Island',
-  IN:'Indie',ID:'Indonésie',IR:'Írán',IQ:'Irák',IE:'Irsko',IL:'Izrael',
-  IT:'Itálie',JM:'Jamajka',JP:'Japonsko',JO:'Jordánsko',KZ:'Kazachstán',KE:'Keňa',
-  KP:'Severní Korea',KR:'Jižní Korea',KW:'Kuvajt',KG:'Kyrgyzstán',LA:'Laos',
-  LB:'Libanon',LS:'Lesotho',LR:'Libérie',LY:'Libye',LT:'Litva',LU:'Lucembursko',
-  LV:'Lotyšsko',MG:'Madagaskar',MW:'Malawi',MY:'Malajsie',ML:'Mali',MT:'Malta',
-  MR:'Mauritánie',MU:'Mauricius',MX:'Mexiko',MD:'Moldavsko',ME:'Černá Hora',
-  MN:'Mongolsko',MA:'Maroko',MZ:'Mosambik',MM:'Myanmar',NA:'Namibie',
-  NP:'Nepál',NL:'Nizozemsko',NC:'Nová Kaledonie',NZ:'Nový Zéland',NI:'Nikaragua',
-  NE:'Niger',NG:'Nigérie',MK:'Severní Makedonie',NO:'Norsko',PK:'Pákistán',
-  PA:'Panama',PG:'Papua Nová Guinea',PY:'Paraguay',PE:'Peru',PH:'Filipíny',
-  PL:'Polsko',PT:'Portugalsko',QA:'Katar',RO:'Rumunsko',RU:'Rusko',RW:'Rwanda',
-  ST:'Svatý Tomáš a Princův ostrov',SA:'Saúdská Arábie',SN:'Senegal',RS:'Srbsko',
-  SL:'Sierra Leone',SK:'Slovensko',SI:'Slovinsko',SO:'Somálsko',ZA:'Jižní Afrika',
-  SS:'Jižní Súdán',ES:'Španělsko',LK:'Srí Lanka',SD:'Súdán',SR:'Surinam',
-  SZ:'Eswatini',SE:'Švédsko',CH:'Švýcarsko',SY:'Sýrie',TJ:'Tádžikistán',
-  TZ:'Tanzanie',TH:'Thajsko',TG:'Togo',TN:'Tunisko',TR:'Turecko',
-  TM:'Turkmenistán',UG:'Uganda',UA:'Ukrajina',AE:'Spojené arabské emiráty',
-  GB:'Velká Británie',US:'USA',UY:'Uruguay',UZ:'Uzbekistán',
-  VE:'Venezuela',VN:'Vietnam',YE:'Jemen',ZM:'Zambie',ZW:'Zimbabwe'
+  AF:'Afghánistán',AL:'Albánie',DZ:'Alžírsko',AO:'Angola',AM:'Arménie',AR:'Argentina',AU:'Austrálie',AT:'Rakousko',AZ:'Ázerbájdžán',BD:'Bangladéš',BE:'Belgie',BJ:'Benin',BT:'Bhútán',BO:'Bolívie',BA:'Bosna a Hercegovina',BW:'Botswana',BR:'Brazílie',BN:'Brunej',BG:'Bulharsko',BI:'Burundi',BY:'Bělorusko',KH:'Kambodža',CM:'Kamerun',CA:'Kanada',CF:'Středoafrická republika',TD:'Čad',CL:'Chile',CN:'Čína',CO:'Kolumbie',CG:'Kongo',CD:'DR Kongo',KM:'Komory',CR:'Kostarika',CI:"Pobřeží slonoviny",HR:'Chorvatsko',CU:'Kuba',CY:'Kypr',CZ:'Česko',DK:'Dánsko',DJ:'Džibutsko',DO:'Dominikánská republika',EC:'Ekvádor',EG:'Egypt',SV:'Salvador',GQ:'Rovníková Guinea',ER:'Eritrea',EE:'Estonsko',ET:'Etiopie',FJ:'Fidži',FI:'Finsko',FR:'Francie',GA:'Gabon',GM:'Gambie',GE:'Gruzie',DE:'Německo',GH:'Ghana',GR:'Řecko',GT:'Guatemala',GN:'Guinea',GY:'Guyana',HT:'Haiti',HN:'Honduras',HU:'Maďarsko',IS:'Island',IN:'Indie',ID:'Indonésie',IR:'Írán',IQ:'Irák',IE:'Irsko',IL:'Izrael',IT:'Itálie',JM:'Jamajka',JP:'Japonsko',JO:'Jordánsko',KZ:'Kazachstán',KE:'Keňa',KP:'Severní Korea',KR:'Jižní Korea',KW:'Kuvajt',KG:'Kyrgyzstán',LA:'Laos',LB:'Libanon',LS:'Lesotho',LR:'Libérie',LY:'Libye',LT:'Litva',LU:'Lucembursko',LV:'Lotyšsko',MG:'Madagaskar',MW:'Malawi',MY:'Malajsie',ML:'Mali',MT:'Malta',MR:'Mauritánie',MU:'Mauricius',MX:'Mexiko',MD:'Moldavsko',ME:'Černá Hora',MN:'Mongolsko',MA:'Maroko',MZ:'Mosambik',MM:'Myanmar',NA:'Namibie',NP:'Nepál',NL:'Nizozemsko',NC:'Nová Kaledonie',NZ:'Nový Zéland',NI:'Nikaragua',NE:'Niger',NG:'Nigérie',MK:'Severní Makedonie',NO:'Norsko',PK:'Pákistán',PA:'Panama',PG:'Papua Nová Guinea',PY:'Paraguay',PE:'Peru',PH:'Filipíny',PL:'Polsko',PT:'Portugalsko',QA:'Katar',RO:'Rumunsko',RU:'Rusko',RW:'Rwanda',ST:'Svatý Tomáš a Princův ostrov',SA:'Saúdská Arábie',SN:'Senegal',RS:'Srbsko',SL:'Sierra Leone',SK:'Slovensko',SI:'Slovinsko',SO:'Somálsko',ZA:'Jižní Afrika',SS:'Jižní Súdán',ES:'Španělsko',LK:'Srí Lanka',SD:'Súdán',SR:'Surinam',SZ:'Eswatini',SE:'Švédsko',CH:'Švýcarsko',SY:'Sýrie',TJ:'Tádžikistán',TZ:'Tanzanie',TH:'Thajsko',TG:'Togo',TN:'Tunisko',TR:'Turecko',TM:'Turkmenistán',UG:'Uganda',UA:'Ukrajina',AE:'Spojené arabské emiráty',GB:'Velká Británie',US:'USA',UY:'Uruguay',UZ:'Uzbekistán',VE:'Venezuela',VN:'Vietnam',YE:'Jemen',ZM:'Zambie',ZW:'Zimbabwe'
 };
 
 const I18N = {
   en: {
-    about: "About", support: "Support us", loading: "Loading map & data…",
-    category: "Category", dataType: "Data Type", source: "Source",
+    about: "About", loading: "Loading map & data…", category: "Category", dataType: "Data Type", source: "Source",
     history: "HISTORY", future: "FUTURE", country: "Country", metric: "Metric", desc: "Description",
-    updated: "Data updated via Eurostat & World Bank APIs",
-    updatedDate: "Data updated: ",
-    projected: "Projected 2029: ",
-    context: "Context:",
+    updatedDate: "Data updated: ", projected: "Projected 2029: ", context: "Context:",
     noProj: "Future projections not yet available for this metric/country combination.",
-    normProg: "Normal yearly progression. No major outliers recorded.",
-    noData: "No data",
-    noDataSrc: "No data available for any source",
-    "Economy": "Economy", "Demographics": "Demographics",
-    "Society": "Society", "Public Services": "Services", "other": "Other",
+    normProg: "Normal yearly progression. No major outliers recorded.", noData: "No data", noDataSrc: "No data available",
+    "Economy": "Economy", "Demographics": "Demographics", "Society": "Society", "Public Services": "Services", "other": "Other",
+    wizTitle: "Help Predict the Future",
+    wizDesc: "Share your prediction and get points. You are contributing to the best investment prediction tool in the world.",
+    wizBtnStart: "Start Predicting",
+    wizBtnClaim: "Claim Points & Save",
+    accTitle: "Your Account",
+    tierFree: "Free User",
+    tierPro: "Pro Membership (Coming Soon)",
+    btnSignOut: "Sign Out",
+    btnAccount: "Account",
+    btnPredict: "Predict & Earn",
+    topicChoose: "Choose a topic to predict",
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
     "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
     "% gross enrollment": "% gross enrollment", "index (0-100)": "index (0-100)"
   },
   cs: {
-    about: "O nás", support: "Podpořte nás", loading: "Načítání mapy a dat…",
-    category: "Kategorie", dataType: "Typ dat", source: "Zdroj",
+    about: "O nás", loading: "Načítání mapy a dat…", category: "Kategorie", dataType: "Typ dat", source: "Zdroj",
     history: "HISTORIE", future: "BUDOUCNOST", country: "Země", metric: "Metrika", desc: "Popis",
-    updated: "Data aktualizována přes API Eurostatu a Světové banky",
-    updatedDate: "Data aktualizována: ",
-    projected: "Projekce 2029: ",
-    context: "Kontext:",
+    updatedDate: "Data aktualizována: ", projected: "Projekce 2029: ", context: "Kontext:",
     noProj: "Pro tuto kombinaci metriky a země zatím nejsou k dispozici budoucí projekce.",
-    normProg: "Normální roční vývoj. Nezaznamenány žádné významné odchylky.",
-    noData: "Žádná data",
-    noDataSrc: "Žádná data nejsou k dispozici pro žádný zdroj",
-    "Economy": "Ekonomika", "Demographics": "Demografie",
-    "Society": "Společnost", "Public Services": "Služby", "other": "Ostatní",
-    "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem",
-    "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
-    "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití",
-    "Immigration": "Imigrace", "Net migration": "Čistá migrace",
-    "Inflation": "Inflace", "Population": "Populace",
-    "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
-    "Government Debt": "Vládní dluh", "Healthcare spending": "Výdaje na zdravotnictví",
-    "Education spending": "Výdaje na vzdělávání", "Military spending": "Vojenské výdaje",
-    "R&D spending": "Výdaje na výzkum a vývoj", "Poverty rate": "Míra chudoby",
-    "Infant mortality": "Kojenecká úmrtnost", "Tertiary education": "Terciární vzdělávání",
-    "Foreign Direct Investment": "Přímé zahraniční investice", "GDP growth": "Růst HDP",
-    "GDP per capita (PPP)": "HDP na obyvatele (PPP)", "Gini coefficient": "Giniho koeficient",
-    "persons": "osob", "net persons": "osob (čisté)", "USD/capita": "USD/obyvatele",
-    "int. $": "int. $", "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu",
-    "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 births": "na 1 000 naroz.",
+    normProg: "Normální roční vývoj. Nezaznamenány žádné významné odchylky.", noData: "Žádná data", noDataSrc: "Žádná data",
+    "Economy": "Ekonomika", "Demographics": "Demografie", "Society": "Společnost", "Public Services": "Služby", "other": "Ostatní",
+    wizTitle: "Pomozte předpovědět budoucnost",
+    wizDesc: "Sdílejte svou předpověď a získejte body. Přispíváte k nejlepšímu investičnímu predikčnímu nástroji na světě.",
+    wizBtnStart: "Začít předpovídat",
+    wizBtnClaim: "Získat body a uložit",
+    accTitle: "Váš účet",
+    tierFree: "Bezplatný tarif",
+    tierPro: "Pro Tarif (Brzy dostupné)",
+    btnSignOut: "Odhlásit se",
+    btnAccount: "Účet",
+    btnPredict: "Předpovědět a získat",
+    topicChoose: "Vyberte téma k předpovědi",
+    "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem", "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
+    "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití", "Immigration": "Imigrace", "Net migration": "Čistá migrace",
+    "Inflation": "Inflace", "Population": "Populace", "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
+    "Government Debt": "Vládní dluh", "Healthcare spending": "Výdaje na zdravotnictví", "Education spending": "Výdaje na vzdělávání", "Military spending": "Vojenské výdaje",
+    "R&D spending": "Výdaje na výzkum a vývoj", "Poverty rate": "Míra chudoby", "Infant mortality": "Kojenecká úmrtnost", "Tertiary education": "Terciární vzdělávání",
+    "Foreign Direct Investment": "Přímé zahraniční investice", "GDP growth": "Růst HDP", "GDP per capita (PPP)": "HDP na obyvatele (PPP)", "Gini coefficient": "Giniho koeficient",
+    "persons": "osob", "net persons": "osob (čisté)", "USD/capita": "USD/obyvatele", "int. $": "int. $",
+    "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu", "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 births": "na 1 000 naroz.",
     "% gross enrollment": "% hrubé zápisy", "index (0-100)": "index (0-100)"
   }
 };
@@ -212,40 +122,36 @@ const CATEGORY_META = {
 const QUESTIONNAIRE = [
   {
     id: 'ai_auto',
-    title: 'The AI & Automation Revolution',
+    title: { en: 'The AI & Automation Revolution', cs: 'Revoluce AI a automatizace' },
     questions: [
-      { id: 'q1', text: 'Will AI displace >20% of administrative/coding jobs by 2030 without replacing them with equal-paying roles?' },
-      { id: 'q2', text: 'Will Western economies successfully automate and reshore critical manufacturing in the next decade?' },
-      { id: 'q3', text: 'Will AI-driven drug discovery add 2+ years to average global life expectancy by 2035?' }
+      { id: 'ai_q1', text: { en: 'Will AI displace >20% of administrative/coding jobs by 2030 without replacing them with equal-paying roles?', cs: 'Nahradí AI do roku 2030 více než 20 % administrativních a programátorských míst, aniž by vytvořila stejně placené alternativy?' }, info: { en: 'Look at the rapid adoption of LLMs in clerical tasks. Does it create more jobs than it destroys?', cs: 'Podívejte se na rychlé zavádění LLM v administrativě. Vytvoří více pracovních míst, než jich zničí?' } },
+      { id: 'ai_q2', text: { en: 'Will Western economies successfully automate and reshore critical manufacturing in the next decade?', cs: 'Dokážou západní ekonomiky úspěšně automatizovat a vrátit kritickou výrobu zpět domů v příštím desetiletí?' }, info: { en: 'Consider the CHIPS Act and European equivalents. Can they overcome high domestic labor costs?', cs: 'Zvažte americký CHIPS Act a evropské ekvivalenty. Dokážou překonat vysoké domácí náklady na práci?' } },
+      { id: 'ai_q3', text: { en: 'Will AI-driven drug discovery add 2+ years to average global life expectancy by 2035?', cs: 'Prodlouží objevy léků pomocí AI průměrnou celosvětovou naději dožití o 2+ roky do roku 2035?' }, info: { en: 'AI folds proteins and simulates trials millions of times faster. Will this translate to actual lifespan extension?', cs: 'AI modeluje proteiny a simuluje testy milionkrát rychleji. Projeví se to na skutečném prodloužení života?' } }
     ]
   },
   {
     id: 'geopolitics',
-    title: 'Geopolitics & The End of Free Trade',
+    title: { en: 'Geopolitics & The End of Free Trade', cs: 'Geopolitika a konec volného obchodu' },
     questions: [
-      { id: 'q1', text: 'Will the US and China economically decouple into two completely separate tech ecosystems?' },
-      { id: 'q2', text: 'Will global defense spending permanently exceed 2.5% of GDP across NATO and allies?' },
-      { id: 'q3', text: 'Will blanket multi-national tariffs end the era of frictionless free trade?' }
+      { id: 'geo_q1', text: { en: 'Will the US and China economically decouple into two completely separate tech ecosystems?', cs: 'Rozdělí se USA a Čína ekonomicky na dva zcela oddělené technologické ekosystémy?' }, info: { en: 'Will we see a splinternet where Western and Chinese hardware/software are completely isolated?', cs: 'Uvidíme rozštěpený internet, kde budou západní a čínský hardware a software zcela izolovány?' } },
+      { id: 'geo_q2', text: { en: 'Will global defense spending permanently exceed 2.5% of GDP across NATO and allies?', cs: 'Překročí globální výdaje na obranu trvale 2,5 % HDP napříč státy NATO a spojenci?' }, info: { en: 'NATO historical target is 2%. Will prolonged tension make 2.5%+ the new permanent baseline?', cs: 'Historický cíl NATO je 2 %. Udělá prodloužené napětí z hranice 2,5 %+ nový standard?' } },
+      { id: 'geo_q3', text: { en: 'Will blanket multi-national tariffs end the era of frictionless free trade?', cs: 'Ukončí plošná mezinárodní cla éru bezproblémového volného obchodu?' }, info: { en: 'Is the era of WTO-led free trade over? Will most nations adopt protectionist policies?', cs: 'Skončila éra volného obchodu vedená WTO? Přijme většina zemí protekcionistické politiky?' } }
     ]
   },
   {
     id: 'demographics',
-    title: 'The Demographic & Climate Tipping Point',
+    title: { en: 'The Demographic & Climate Tipping Point', cs: 'Demografický a klimatický zlom' },
     questions: [
-      { id: 'q1', text: 'Will advanced aging economies (Germany, Japan) avoid GDP stagnation via mass skilled immigration?' },
-      { id: 'q2', text: 'Will the transition to green energy cause a global energy price spike lasting more than 5 years?' },
-      { id: 'q3', text: 'Will climate events create over 50 million global climate refugees by 2030?' }
+      { id: 'dem_q1', text: { en: 'Will advanced aging economies (Germany, Japan) avoid GDP stagnation via mass skilled immigration?', cs: 'Vyhnou se vyspělé stárnoucí ekonomiky (Německo, Japonsko) stagnaci HDP díky masivní kvalifikované imigraci?' }, info: { en: 'Can nations with shrinking birth rates sustain their economies solely by importing millions of workers?', cs: 'Mohou národy s klesající porodností udržet své ekonomiky pouze importem milionů pracovníků?' } },
+      { id: 'dem_q2', text: { en: 'Will the transition to green energy cause a global energy price spike lasting more than 5 years?', cs: 'Způsobí přechod na zelenou energii celosvětový skok cen energií trvající déle než 5 let?' }, info: { en: 'Will moving away from cheap fossil fuels before renewables are fully scaled cause a structural energy crisis?', cs: 'Způsobí odklon od levných fosilních paliv dříve, než se obnovitelné zdroje plně rozšíří, strukturální energetickou krizi?' } },
+      { id: 'dem_q3', text: { en: 'Will climate events create over 50 million global climate refugees by 2030?', cs: 'Vytvoří klimatické události do roku 2030 více než 50 milionů globálních klimatických uprchlíků?' }, info: { en: 'Will rising sea levels and extreme heat force unprecedented mass migrations by 2030?', cs: 'Donutí stoupající hladiny moří a extrémní vedra k bezprecedentní masové migraci do roku 2030?' } }
     ]
   }
 ];
 
 function getColor(t) {
-  const c = [
-    [203,219,240], [132,155,186], [84,105,137], [33,52,78], [10,24,49]
-  ];
-  const n = c.length - 1;
-  const i = Math.min(Math.floor(t * n), n - 1);
-  const f = (t * n) - i;
+  const c = [ [203,219,240], [132,155,186], [84,105,137], [33,52,78], [10,24,49] ];
+  const n = c.length - 1; const i = Math.min(Math.floor(t * n), n - 1); const f = (t * n) - i;
   return `rgb(${Math.round(c[i][0] + (c[i+1][0] - c[i][0]) * f)},${Math.round(c[i][1] + (c[i+1][1] - c[i][1]) * f)},${Math.round(c[i][2] + (c[i+1][2] - c[i][2]) * f)})`;
 }
 
@@ -329,11 +235,12 @@ class DataComparisonMap extends HTMLElement {
     this._lastSpinTime = 0;
     this._autoSpinning = true; 
 
-    // Firebase Data State
+    // Firebase & User State
     this._points = 0;
     this._completedTopics = [];
     this._answers = {};
     this._user = null;
+    this._wizardStep = 1;
   }
 
   t(key) {
@@ -355,11 +262,18 @@ class DataComparisonMap extends HTMLElement {
     if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
 
+    // Load Local Storage Fallbacks
+    const savedPoints = localStorage.getItem('datamap_points');
+    const savedTopics = localStorage.getItem('datamap_topics');
+    const savedAnswers = localStorage.getItem('datamap_answers');
+    if (savedPoints) this._points = parseInt(savedPoints);
+    if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
+    if (savedAnswers) this._answers = JSON.parse(savedAnswers);
+
     // Set up Firebase Auth Listener
     onAuthStateChanged(auth, async (user) => {
       this._user = user;
       if (user) {
-        // Fetch user's points and answers from DB
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -367,18 +281,14 @@ class DataComparisonMap extends HTMLElement {
           this._points = data.points || 0;
           this._completedTopics = data.completedTopics || [];
           this._answers = data.answers || {};
-          this.updatePointsDisplay();
+          
+          localStorage.setItem('datamap_points', this._points);
+          localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
+          localStorage.setItem('datamap_answers', JSON.stringify(this._answers));
         }
       }
+      this.updateUserUI();
     });
-
-    // Fallback: If not logged in, try loading local storage temporarily
-    if (!this._user) {
-      const savedPoints = localStorage.getItem('datamap_points');
-      const savedTopics = localStorage.getItem('datamap_topics');
-      if (savedPoints) this._points = parseInt(savedPoints);
-      if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
-    }
 
     const link = document.createElement('link');
     link.rel = 'stylesheet'; link.href = baseUrl + 'styles.css';
@@ -403,38 +313,7 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
 
-    const langSwitchBtn = this.$('#langSwitchBtn');
-    const langDropdown = this.$('#langDropdown');
-    const currentLangLabel = this.$('#currentLangLabel');
-    const langOptions = this.$$('.lang-option');
-
-    if (langSwitchBtn && langDropdown) {
-      langSwitchBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        langDropdown.classList.toggle('open');
-        langSwitchBtn.classList.toggle('open');
-      });
-
-      langOptions.forEach(opt => {
-        opt.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this._lang = opt.dataset.lang;
-          currentLangLabel.textContent = opt.textContent;
-          langOptions.forEach(o => o.classList.remove('active'));
-          opt.classList.add('active');
-          langDropdown.classList.remove('open');
-          langSwitchBtn.classList.remove('open');
-          this.applyLanguage();
-        });
-      });
-
-      this.shadowRoot.addEventListener('click', (e) => {
-        if (!langSwitchBtn.contains(e.target) && !langDropdown.contains(e.target)) {
-          langDropdown.classList.remove('open');
-          langSwitchBtn.classList.remove('open');
-        }
-      });
-    }
+    this.setupModalsAndNav();
 
     if (this.DATA._meta.lastUpdated) {
       const d = new Date(this.DATA._meta.lastUpdated);
@@ -443,7 +322,6 @@ class DataComparisonMap extends HTMLElement {
 
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
-
     const aboutBtn = this.$('#aboutBtn');
     if (aboutBtn) aboutBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'); });
 
@@ -467,53 +345,103 @@ class DataComparisonMap extends HTMLElement {
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
-    // Modal Listeners
-    this.updatePointsDisplay();
-    
-    this.$('#btnUpgrade').addEventListener('click', () => this.openModal('proModal'));
-    this.$('#btnPoints').addEventListener('click', () => this.openQuestionnaireModal());
-    
-    this.$$('.modal-close').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.target.closest('.modal-overlay').classList.remove('active');
+    this.$('#initLoader').style.display = 'none';
+    this.$('#mainContent').style.opacity = '1';
+
+    // Auto-open Promo Wizard if URL parameter is present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('promo') === 'true') {
+      setTimeout(() => this.openWizard(1), 500);
+    }
+  }
+
+  setupModalsAndNav() {
+    const langSwitchBtn = this.$('#langSwitchBtn');
+    const langDropdown = this.$('#langDropdown');
+    const currentLangLabel = this.$('#currentLangLabel');
+    const langOptions = this.$$('.lang-option');
+
+    if (langSwitchBtn && langDropdown) {
+      langSwitchBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); langDropdown.classList.toggle('open'); langSwitchBtn.classList.toggle('open');
       });
+      langOptions.forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation(); this._lang = opt.dataset.lang; currentLangLabel.textContent = opt.textContent;
+          langOptions.forEach(o => o.classList.remove('active')); opt.classList.add('active');
+          langDropdown.classList.remove('open'); langSwitchBtn.classList.remove('open');
+          this.applyLanguage();
+        });
+      });
+      this.shadowRoot.addEventListener('click', (e) => {
+        if (!langSwitchBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+          langDropdown.classList.remove('open'); langSwitchBtn.classList.remove('open');
+        }
+      });
+    }
+
+    this.updateUserUI();
+    
+    this.$('#btnPredict').addEventListener('click', () => this.openWizard(this._completedTopics.length > 0 ? 2 : 1));
+    this.$('#btnUpgrade').addEventListener('click', () => this.openModal('proModal'));
+    
+    this.$('#btnAccount').addEventListener('click', () => {
+      if (this._user) this.openModal('accountModal');
+      else this.openWizard(3);
     });
 
-    // Handle Auth Submission
+    this.$$('.modal-close').forEach(btn => {
+      btn.addEventListener('click', (e) => e.target.closest('.modal-overlay').classList.remove('active'));
+    });
+
+    // Wizard Step 1 -> 2
+    this.$('#btnStartWizard').addEventListener('click', () => this.renderWizardStep(2));
+
+    // Wizard Auth Submit (Step 3)
     this.$('#authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = this.$('#authEmail').value;
       const pass = this.$('#authPass').value;
       const btn = this.$('#authSubmitBtn');
       
-      btn.textContent = "Creating Account...";
-      btn.disabled = true;
+      btn.textContent = "Creating Account..."; btn.disabled = true;
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
         
-        // Save the points they earned while not logged in
         await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          points: this._points,
-          completedTopics: this._completedTopics,
-          answers: this._answers,
-          createdAt: new Date().toISOString()
+          email: user.email, points: this._points, completedTopics: this._completedTopics,
+          answers: this._answers, createdAt: new Date().toISOString()
         });
 
-        this.$('#authModal').classList.remove('active');
-        this.renderQuestionnaireMenu();
+        this.$('#wizardModal').classList.remove('active');
+        this.openModal('accountModal');
       } catch (error) {
-        alert("Error creating account: " + error.message);
+        alert("Error: " + error.message);
       } finally {
-        btn.textContent = "Sign Up & Save Points";
-        btn.disabled = false;
+        btn.textContent = "Sign Up & Save Points"; btn.disabled = false;
       }
     });
 
-    this.$('#initLoader').style.display = 'none';
-    this.$('#mainContent').style.opacity = '1';
+    this.$('#btnSignOut').addEventListener('click', () => {
+      signOut(auth).then(() => {
+        this._points = 0; this._completedTopics = []; this._answers = {};
+        localStorage.removeItem('datamap_points'); localStorage.removeItem('datamap_topics'); localStorage.removeItem('datamap_answers');
+        this.$('#accountModal').classList.remove('active');
+        this.updateUserUI();
+      });
+    });
+  }
+
+  updateUserUI() {
+    this.$('#accPoints').textContent = this._points + ' Pts';
+    this.$('#accPointsModal').textContent = this._points + ' Pts';
+    if (this._user) {
+      this.$('#accEmail').textContent = this._user.email;
+    } else {
+      this.$('#accEmail').textContent = "Not logged in";
+    }
   }
 
   openModal(id) {
@@ -521,45 +449,76 @@ class DataComparisonMap extends HTMLElement {
     this.$('#' + id).classList.add('active');
   }
 
-  updatePointsDisplay() {
-    this.$('#pointsCount').textContent = this._points + ' Pts';
+  openWizard(step) {
+    this.renderWizardStep(step);
+    this.openModal('wizardModal');
   }
 
-  openQuestionnaireModal() {
-    this.renderQuestionnaireMenu();
-    this.openModal('questionnaireModal');
+  renderWizardStep(step) {
+    this._wizardStep = step;
+    
+    // Update Stepper UI
+    this.$$('.step').forEach(s => {
+      s.classList.remove('active', 'completed');
+      if (parseInt(s.dataset.step) < step) s.classList.add('completed');
+      if (parseInt(s.dataset.step) === step) s.classList.add('active');
+    });
+    this.$$('.step-line').forEach(l => {
+      l.classList.remove('active');
+      if (parseInt(l.dataset.line) < step) l.classList.add('active');
+    });
+
+    // Toggle Views
+    this.$$('.wiz-view').forEach(v => v.classList.remove('active'));
+    this.$(`#wizStep${step}`).classList.add('active');
+
+    // Build Step 2 content if needed
+    if (step === 2) {
+      this.renderQuestionnaireMenu();
+      const btnClaim = this.$('#btnClaimPoints');
+      if (this._completedTopics.length > 0) {
+        btnClaim.style.display = 'block';
+        btnClaim.onclick = () => this.renderWizardStep(3);
+      } else {
+        btnClaim.style.display = 'none';
+      }
+    }
   }
 
   renderQuestionnaireMenu() {
     const container = this.$('#qList');
-    container.innerHTML = '';
+    container.innerHTML = `<h3 class="modal-title" style="font-size:1.1rem; margin-bottom:12px;" data-i18n="topicChoose">${this.t('topicChoose')}</h3>`;
     
     QUESTIONNAIRE.forEach(topic => {
       const isCompleted = this._completedTopics.includes(topic.id);
       const btn = document.createElement('button');
       btn.className = `q-topic-btn ${isCompleted ? 'completed' : ''}`;
       btn.innerHTML = `
-        <span class="q-topic-title">${topic.title}</span>
+        <span class="q-topic-title">${topic.title[this._lang] || topic.title.en}</span>
         <span class="q-topic-reward">${isCompleted ? '✔ Done' : '+50 Pts'}</span>
       `;
-      if (!isCompleted) {
-        btn.onclick = () => this.renderTopic(topic);
-      }
+      if (!isCompleted) btn.onclick = () => this.renderTopic(topic);
       container.appendChild(btn);
     });
   }
 
   renderTopic(topic) {
     const container = this.$('#qList');
-    container.innerHTML = `<h3 class="modal-title" style="font-size:1.2rem; margin-bottom:16px;">${topic.title}</h3>`;
-    
+    container.innerHTML = `<h3 class="modal-title" style="font-size:1.1rem; margin-bottom:16px;">${topic.title[this._lang] || topic.title.en}</h3>`;
     let tempAnswers = {};
 
     topic.questions.forEach((q, index) => {
       const card = document.createElement('div');
       card.className = 'q-question-card';
       card.innerHTML = `
-        <div class="q-text">${index + 1}. ${q.text}</div>
+        <div class="q-text-wrap">
+          <div class="q-text">${index + 1}. ${q.text[this._lang] || q.text.en}</div>
+          <div class="factor-info-btn" style="position:relative; z-index:10;">i
+            <div class="factor-tooltip" style="bottom:auto; top:100%; margin-top:8px;">
+              <strong>${this.t('context')}</strong> ${q.info[this._lang] || q.info.en}
+            </div>
+          </div>
+        </div>
         <div class="q-actions">
           <button class="btn-vote yes" data-q="${q.id}" data-val="yes">Yes</button>
           <button class="btn-vote no" data-q="${q.id}" data-val="no">No</button>
@@ -573,8 +532,6 @@ class DataComparisonMap extends HTMLElement {
           btns.forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           tempAnswers[q.id] = btn.dataset.val;
-
-          // Check if all questions are answered
           if (Object.keys(tempAnswers).length === topic.questions.length) {
             this.completeTopic(topic.id, tempAnswers);
           }
@@ -585,18 +542,16 @@ class DataComparisonMap extends HTMLElement {
 
   async completeTopic(topicId, newAnswers) {
     setTimeout(async () => {
-      // 1. Update local state
       this._completedTopics.push(topicId);
       this._points += 50;
       this._answers = { ...this._answers, ...newAnswers };
       
-      // Update local storage as a backup
       localStorage.setItem('datamap_topics', JSON.stringify(this._completedTopics));
       localStorage.setItem('datamap_points', this._points);
+      localStorage.setItem('datamap_answers', JSON.stringify(this._answers));
       
-      this.updatePointsDisplay();
+      this.updateUserUI();
       
-      // 2. If logged in, save to Firebase
       if (this._user) {
         try {
           await setDoc(doc(db, "users", this._user.uid), {
@@ -604,13 +559,10 @@ class DataComparisonMap extends HTMLElement {
             completedTopics: this._completedTopics,
             answers: this._answers
           }, { merge: true });
-          this.renderQuestionnaireMenu();
-        } catch (e) {
-          console.error("Error saving to db", e);
-        }
+        } catch (e) { console.error("Error saving to db", e); }
+        this.renderWizardStep(2); // Go back to topics list
       } else {
-        // 3. Prompt Auth if not logged in
-        this.openModal('authModal');
+        this.renderWizardStep(3); // Prompt Auth
       }
     }, 400); 
   }
@@ -618,7 +570,10 @@ class DataComparisonMap extends HTMLElement {
   applyLanguage() {
     this.$$('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
-      if (I18N[this._lang] && I18N[this._lang][key]) el.textContent = I18N[this._lang][key];
+      if (I18N[this._lang] && I18N[this._lang][key]) {
+        if(el.tagName === 'INPUT' && el.type === 'button') el.value = I18N[this._lang][key];
+        else el.textContent = I18N[this._lang][key];
+      }
     });
 
     if (this.DATA && this.DATA._meta && this.DATA._meta.lastUpdated) {
@@ -649,12 +604,14 @@ class DataComparisonMap extends HTMLElement {
       this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
       const activeBtn = this.$('.mode-btn.active');
       if (activeBtn) {
-          if (activeBtn.dataset.mode === 'history') {
-              this.updateHistoryView(this.$('#histSlider').value);
-          } else {
-              this.buildFutureView(this._selectedCountryCode);
-          }
+          if (activeBtn.dataset.mode === 'history') this.updateHistoryView(this.$('#histSlider').value);
+          else this.buildFutureView(this._selectedCountryCode);
       }
+    }
+    
+    // Update active modal strings if open
+    if (this.$('#wizardModal').classList.contains('active')) {
+      if (this._wizardStep === 2 && this._completedTopics.length < 3) this.renderWizardStep(2);
     }
   }
 
@@ -1453,7 +1410,6 @@ class DataComparisonMap extends HTMLElement {
     (this.categories[catKey] || []).forEach(key => {
       const dt = this.DATA[key]; if (!dt) return;
       const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      // Filter out WHO entirely from the count and UI calculation
       const validSources = Object.entries(dt.sources).filter(([sk, s]) => sk !== 'who');
       const srcCount = validSources.length;
       const okCount = validSources.filter(([, s]) => Object.keys(s.countries).length > 0).length;
@@ -1468,7 +1424,7 @@ class DataComparisonMap extends HTMLElement {
     const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
     const dt = this.DATA[dtKey]; if (!dt) return;
     Object.entries(dt.sources).forEach(([key, src]) => {
-      if (key === 'who') return; // Hide WHO
+      if (key === 'who') return; 
       const count = Object.keys(src.countries).length; const isEmpty = count === 0;
       const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
       if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
@@ -1484,7 +1440,6 @@ class DataComparisonMap extends HTMLElement {
     requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
     this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
     const dt = this.DATA[k]; if (!dt) return;
-    // Do not select WHO as the default fallback
     const firstOk = Object.entries(dt.sources).find(([sk, s]) => sk !== 'who' && Object.keys(s.countries).length > 0);
     if (firstOk) {
       this.selectSource(firstOk[0]);
@@ -1555,7 +1510,7 @@ class DataComparisonMap extends HTMLElement {
     if (!dt) return;
     const vals = [];
     Object.entries(dt.sources).forEach(([sk, s]) => {
-      if (sk === 'who') return; // Do not include WHO in the variance calculation
+      if (sk === 'who') return; 
       if (s.countries[code] != null) vals.push(s.countries[code]);
     });
     if (vals.length >= 2) {
@@ -1594,22 +1549,26 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
 
-      <!-- NEW: Points & Upgrade Actions -->
+      <!-- Actions -->
       <div class="nav-actions">
-        <div class="points-badge" id="btnPoints" title="Earn Points">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
-          <span id="pointsCount">0 Pts</span>
-        </div>
-        <button class="btn-upgrade" id="btnUpgrade">
+        <button class="btn-action btn-predict" id="btnPredict">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
+          <span data-i18n="btnPredict">Predict & Earn</span>
+        </button>
+        <button class="btn-action btn-upgrade" id="btnUpgrade">
           <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
           <span>Upgrade</span>
+        </button>
+        <button class="btn-action btn-account" id="btnAccount">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span id="accPoints">0 Pts</span>
         </button>
       </div>
       
     </div>
   </nav>
 
-  <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data\u2026</span></div>
+  <div id="initLoader" class="init-loader"><div class="orbit"></div><span data-i18n="loading">Loading map & data…</span></div>
   <div class="main" id="mainContent" style="opacity:0">
     <div class="map-panel">
       <div class="title-row">
@@ -1626,20 +1585,14 @@ class DataComparisonMap extends HTMLElement {
       
       <!-- MODE BAR & LEFT PANEL -->
       <div class="panel-wrapper" id="panelWrapper">
-        
         <div class="mode-bar" id="modeBar">
           <button class="mode-btn" data-mode="history" data-i18n="history" disabled>HISTORY</button>
           <button class="mode-btn" data-mode="future" data-i18n="future" disabled>FUTURE</button>
         </div>
-
         <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
-          <div>
-            <div class="history-header" id="panelCountry" data-i18n="country">Country</div>
-            <div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div>
-          </div>
+          <div><div class="history-header" id="panelCountry" data-i18n="country">Country</div><div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div></div>
           
-          <!-- HISTORY VIEW -->
           <div id="viewHistory" class="panel-view">
             <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
             <div class="year-slider-wrap">
@@ -1651,19 +1604,14 @@ class DataComparisonMap extends HTMLElement {
             <div class="history-content" id="histText"></div>
           </div>
 
-          <!-- FUTURE VIEW -->
           <div id="viewFuture" class="panel-view">
             <div class="future-desc" id="futDesc" data-i18n="desc">Description</div>
             <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
-            <div class="future-factors" id="futFactors">
-              <!-- Checkboxes injected here -->
-            </div>
+            <div class="future-factors" id="futFactors"></div>
             <div class="future-result" id="futResult"></div>
           </div>
-
         </div>
       </div>
-
     </div>
     
     <div class="controls glass">
@@ -1681,12 +1629,72 @@ class DataComparisonMap extends HTMLElement {
   <div class="tt-disc" id="ttDisc"></div>
 </div>
 
+<!-- WIZARD MODAL (Predict & Earn) -->
+<div class="modal-overlay" id="wizardModal">
+  <div class="modal-content">
+    <button class="modal-close">✕</button>
+    <div class="stepper">
+      <div class="step" data-step="1">1</div><div class="step-line" data-line="1"></div>
+      <div class="step" data-step="2">2</div><div class="step-line" data-line="2"></div>
+      <div class="step" data-step="3">3</div>
+    </div>
+    
+    <!-- Step 1: Intro -->
+    <div class="wiz-view" id="wizStep1">
+      <h2 class="modal-title" data-i18n="wizTitle">Help Predict the Future</h2>
+      <p class="modal-desc" data-i18n="wizDesc">Share your prediction and get points. You are contributing to the best investment prediction tool in the world.</p>
+      <button class="btn-primary-large" id="btnStartWizard" data-i18n="wizBtnStart">Start Predicting</button>
+    </div>
+
+    <!-- Step 2: Topics & Questions -->
+    <div class="wiz-view" id="wizStep2">
+      <div id="qList"></div>
+      <button class="btn-primary-large" id="btnClaimPoints" style="display:none; margin-top:16px;" data-i18n="wizBtnClaim">Claim Points & Save</button>
+    </div>
+
+    <!-- Step 3: Auth -->
+    <div class="wiz-view" id="wizStep3">
+      <h2 class="modal-title">Save Your Points!</h2>
+      <p class="modal-desc">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
+      <form id="authForm">
+        <input type="email" id="authEmail" class="auth-input" placeholder="Email Address" required>
+        <input type="password" id="authPass" class="auth-input" placeholder="Create a Password" required>
+        <button type="submit" id="authSubmitBtn" class="btn-primary-large">Sign Up & Save Points</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal-content" style="max-width: 400px;">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title" data-i18n="accTitle">Your Account</h2>
+    
+    <div class="acc-box">
+      <div class="acc-email" id="accEmail">loading...</div>
+      <div class="acc-pts" id="accPointsModal">0 Pts</div>
+    </div>
+
+    <div class="tier-box active">
+      <span class="tier-name" data-i18n="tierFree">Free User</span>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="#1e3a5f"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    </div>
+    <div class="tier-box locked">
+      <span class="tier-name" data-i18n="tierPro">Pro Membership (Coming Soon)</span>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="#8395a7"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+    </div>
+
+    <button class="btn-text" id="btnSignOut" style="margin-top:8px;" data-i18n="btnSignOut">Sign Out</button>
+  </div>
+</div>
+
 <!-- PRO UPGRADE MODAL -->
 <div class="modal-overlay" id="proModal">
   <div class="modal-content">
     <button class="modal-close">✕</button>
     <span class="pro-badge">Coming Soon</span>
-    <h2 class="modal-title">RealWorldView Pro</h2>
+    <h2 class="modal-title">DataMap Pro</h2>
     <p class="modal-desc">Get ready for institutional-grade intelligence. Our Pro tier bypasses standard government data lag by integrating real-time alternative data to power our predictive algorithms.</p>
     <ul class="pro-features">
       <li><span class="pro-icon">🛰️</span> <span><strong>Satellite Imagery Analytics:</strong> Tracking factory outputs and shipping lane congestion in real-time.</span></li>
@@ -1694,32 +1702,6 @@ class DataComparisonMap extends HTMLElement {
       <li><span class="pro-icon">🤖</span> <span><strong>Algorithmic Predictive Modeling:</strong> See exactly how macro-events alter GDP trajectories 5 years before they happen.</span></li>
     </ul>
     <p style="font-size: 0.85rem; color: #8395a7; font-style: italic;">*Use your earned Points to unlock early access when we launch.</p>
-  </div>
-</div>
-
-<!-- QUESTIONNAIRE MODAL -->
-<div class="modal-overlay" id="questionnaireModal">
-  <div class="modal-content">
-    <button class="modal-close">✕</button>
-    <h2 class="modal-title">Help Predict the Future</h2>
-    <p class="modal-desc">Answer these expert polls. We use the "Wisdom of the Crowds" to fine-tune our future projection engine. Earn points for premium access.</p>
-    <div id="qList">
-      <!-- Topics injected via JS -->
-    </div>
-  </div>
-</div>
-
-<!-- AUTH MODAL -->
-<div class="modal-overlay" id="authModal">
-  <div class="modal-content">
-    <button class="modal-close">✕</button>
-    <h2 class="modal-title">Save Your Points!</h2>
-    <p class="modal-desc">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
-    <form id="authForm">
-      <input type="email" id="authEmail" class="auth-input" placeholder="Email Address" required>
-      <input type="password" id="authPass" class="auth-input" placeholder="Create a Password" required>
-      <button type="submit" id="authSubmitBtn" class="btn-submit">Sign Up & Save Points</button>
-    </form>
   </div>
 </div>`;
   }
