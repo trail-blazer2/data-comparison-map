@@ -6,12 +6,13 @@ import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/fireb
 // FIREBASE CONFIGURATION
 // ============================================================
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyAocOPQSgjuaQFkQy1RAypWrXbnhAWbKRE",
+  authDomain: "rwvtesting.firebaseapp.com",
+  projectId: "rwvtesting",
+  storageBucket: "rwvtesting.firebasestorage.app",
+  messagingSenderId: "473502983675",
+  appId: "1:473502983675:web:f3a9c602b6662c2180175e",
+  measurementId: "G-RW2W1N3DDS"
 };
 
 const app = initializeApp(firebaseConfig);
