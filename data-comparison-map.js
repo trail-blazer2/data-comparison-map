@@ -557,8 +557,8 @@ class DataComparisonMap extends HTMLElement {
     const wizImg = this.$('#wizAuthImg');
     const stdImg = this.$('#stdAuthImg');
     // Replace with your actual URLs!
-    const loginImgSrc = "YOUR_IMG_LOGIN.jpg"; 
-    const signupImgSrc = "YOUR_IMG_SIGNUP.jpg";
+    const loginImgSrc = "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/66/93/04/caption.jpg"; 
+    const signupImgSrc = "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/66/93/04/caption.jpg";
 
     if (this._isLoginMode) {
       setTitle('wizAuthTitle', 'authTitleLog'); setTitle('wizAuthDesc', 'authDescLog');
@@ -1878,7 +1878,7 @@ class DataComparisonMap extends HTMLElement {
     </div>
     
     <div class="wiz-view" id="wizStep1">
-      <img src="YOUR_IMG_STEP_1.jpg" class="wiz-img" alt="">
+      <img src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/66/93/04/caption.jpg" class="wiz-img" alt="">
       <h2 class="modal-title" data-i18n="wizTitle">Help Predict the Future</h2>
       <p class="modal-desc" data-i18n="wizDesc">Share your prediction and get points. You are contributing to the best investment prediction tool in the world.</p>
       <button class="btn-primary-large" id="btnStartWizard" data-i18n="wizBtnStart">Start Predicting</button>
@@ -1889,7 +1889,7 @@ class DataComparisonMap extends HTMLElement {
     </div>
 
     <div class="wiz-view" id="wizStep3">
-      <img id="wizAuthImg" src="YOUR_IMG_SIGNUP.jpg" class="wiz-img" alt="">
+      <img id="wizAuthImg" src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/66/93/04/caption.jpg" class="wiz-img" alt="">
       <h2 class="modal-title" id="wizAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
       <p class="modal-desc" id="wizAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
       <form id="authForm" style="margin-bottom:12px;">
@@ -1906,7 +1906,7 @@ class DataComparisonMap extends HTMLElement {
 <div class="modal-overlay" id="authModal">
   <div class="modal-content">
     <button class="modal-close">✕</button>
-    <img id="stdAuthImg" src="YOUR_IMG_SIGNUP.jpg" class="wiz-img" alt="">
+    <img id="stdAuthImg" src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/28/66/93/04/caption.jpg" class="wiz-img" alt="">
     <h2 class="modal-title" id="standaloneAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
     <p class="modal-desc" id="standaloneAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
     <form id="standaloneAuthForm" style="margin-bottom:12px;">
