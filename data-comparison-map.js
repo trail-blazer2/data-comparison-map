@@ -6,13 +6,12 @@ import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/fireb
 // FIREBASE CONFIGURATION
 // ============================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyAocOPQSgjuaQFkQy1RAypWrXbnhAWbKRE",
-  authDomain: "rwvtesting.firebaseapp.com",
-  projectId: "rwvtesting",
-  storageBucket: "rwvtesting.firebasestorage.app",
-  messagingSenderId: "473502983675",
-  appId: "1:473502983675:web:f3a9c602b6662c2180175e",
-  measurementId: "G-RW2W1N3DDS"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -40,12 +39,6 @@ const PROJECTION_Y_OFFSET = (WORLD_VIEWBOX_HEIGHT - PROJECTION_HEIGHT) / 2;
 
 const WORLD_CONTENT_PADDING_X = 20;
 const WORLD_CONTENT_PADDING_Y = 20;
-const WORLD_CONTENT_BBOX = {
-  x: WORLD_VIEWBOX.x - WORLD_CONTENT_PADDING_X,
-  y: PROJECTION_Y_OFFSET - WORLD_CONTENT_PADDING_Y,
-  w: WORLD_VIEWBOX.w + (WORLD_CONTENT_PADDING_X * 2),
-  h: PROJECTION_HEIGHT + (WORLD_CONTENT_PADDING_Y * 2)
-};
 
 const NUMERIC_TO_ALPHA2 = {
   '004':'AF','008':'AL','012':'DZ','024':'AO','031':'AZ','032':'AR','036':'AU','040':'AT','050':'BD','051':'AM','056':'BE','064':'BT','068':'BO','070':'BA','072':'BW','076':'BR','096':'BN','100':'BG','104':'MM','108':'BI','112':'BY','116':'KH','120':'CM','124':'CA','140':'CF','144':'LK','148':'TD','152':'CL','156':'CN','170':'CO','174':'KM','178':'CG','180':'CD','188':'CR','191':'HR','192':'CU','196':'CY','203':'CZ','204':'BJ','208':'DK','214':'DO','218':'EC','222':'SV','226':'GQ','231':'ET','232':'ER','233':'EE','242':'FJ','246':'FI','250':'FR','262':'DJ','266':'GA','268':'GE','270':'GM','276':'DE','288':'GH','300':'GR','320':'GT','324':'GN','328':'GY','332':'HT','340':'HN','348':'HU','352':'IS','356':'IN','360':'ID','364':'IR','368':'IQ','372':'IE','376':'IL','380':'IT','384':'CI','388':'JM','392':'JP','398':'KZ','400':'JO','404':'KE','408':'KP','410':'KR','414':'KW','417':'KG','418':'LA','422':'LB','426':'LS','428':'LV','430':'LR','434':'LY','440':'LT','442':'LU','450':'MG','454':'MW','458':'MY','466':'ML','470':'MT','478':'MR','480':'MU','484':'MX','496':'MN','498':'MD','499':'ME','504':'MA','508':'MZ','516':'NA','524':'NP','528':'NL','540':'NC','554':'NZ','558':'NI','562':'NE','566':'NG','578':'NO','586':'PK','591':'PA','598':'PG','600':'PY','604':'PE','608':'PH','616':'PL','620':'PT','634':'QA','642':'RO','643':'RU','646':'RW','678':'ST','682':'SA','686':'SN','688':'RS','694':'SL','703':'SK','704':'VN','705':'SI','706':'SO','710':'ZA','716':'ZW','724':'ES','728':'SS','729':'SD','740':'SR','748':'SZ','752':'SE','756':'CH','760':'SY','762':'TJ','764':'TH','768':'TG','784':'AE','788':'TN','792':'TR','795':'TM','800':'UG','804':'UA','807':'MK','818':'EG','826':'GB','834':'TZ','840':'US','858':'UY','860':'UZ','862':'VE','887':'YE','894':'ZM'
@@ -67,11 +60,15 @@ const I18N = {
     noProj: "Future projections not yet available for this metric/country combination.",
     normProg: "Normal yearly progression. No major outliers recorded.", noData: "No data", noDataSrc: "No data available",
     "Economy": "Economy", "Demographics": "Demographics", "Society": "Society", "Public Services": "Services", "other": "Other",
+    yes: "Yes", no: "No",
     wizTitle: "Help Predict the Future",
     wizDesc: "Share your prediction and get points. You are contributing to the best investment prediction tool in the world.",
     wizBtnStart: "Start Predicting",
     wizBtnClaim: "Claim Points",
     accTitle: "Your Account",
+    accMenuDash: "Dashboard",
+    accMenuPred: "Your Predictions",
+    accPredEmpty: "You haven't made any predictions yet.",
     tierFree: "Free User",
     tierPro: "Pro Membership (Coming Soon)",
     btnSignOut: "Sign Out",
@@ -109,11 +106,15 @@ const I18N = {
     noProj: "Pro tuto kombinaci metriky a země zatím nejsou k dispozici budoucí projekce.",
     normProg: "Normální roční vývoj. Nezaznamenány žádné významné odchylky.", noData: "Žádná data", noDataSrc: "Žádná data",
     "Economy": "Ekonomika", "Demographics": "Demografie", "Society": "Společnost", "Public Services": "Služby", "other": "Ostatní",
+    yes: "Ano", no: "Ne",
     wizTitle: "Pomozte předpovědět budoucnost",
     wizDesc: "Sdílejte svou předpověď a získejte body. Přispíváte k nejlepšímu investičnímu predikčnímu nástroji na světě.",
     wizBtnStart: "Začít předpovídat",
     wizBtnClaim: "Získat body",
     accTitle: "Váš účet",
+    accMenuDash: "Nástěnka",
+    accMenuPred: "Vaše předpovědi",
+    accPredEmpty: "Zatím jste neprovedli žádné předpovědi.",
     tierFree: "Bezplatný tarif",
     tierPro: "Pro Tarif (Brzy dostupné)",
     btnSignOut: "Odhlásit se",
@@ -281,6 +282,7 @@ class DataComparisonMap extends HTMLElement {
     this._user = null;
     this._wizardStep = 1;
     this._isLoginMode = false;
+    this._guestId = null;
   }
 
   t(key) {
@@ -303,6 +305,12 @@ class DataComparisonMap extends HTMLElement {
     this._baseUrl = baseUrl;
 
     // Load Local Storage Fallbacks (Guest data)
+    this._guestId = localStorage.getItem('datamap_guest_id');
+    if (!this._guestId) {
+      this._guestId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('datamap_guest_id', this._guestId);
+    }
+
     const savedPoints = localStorage.getItem('datamap_points');
     const savedTopics = localStorage.getItem('datamap_topics');
     const savedAnswers = localStorage.getItem('datamap_answers');
@@ -318,8 +326,6 @@ class DataComparisonMap extends HTMLElement {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Smart Merge: If they played as guest and then logged in, add points and combine topics
-          const dbPoints = data.points || 0;
           const dbTopics = data.completedTopics || [];
           const dbAnswers = data.answers || {};
 
@@ -331,7 +337,6 @@ class DataComparisonMap extends HTMLElement {
           this._completedTopics = mergedTopics;
           this._answers = mergedAnswers;
 
-          // Save merged data back to DB
           setDoc(docRef, {
             points: this._points, completedTopics: this._completedTopics, answers: this._answers
           }, { merge: true });
@@ -339,6 +344,8 @@ class DataComparisonMap extends HTMLElement {
           localStorage.removeItem('datamap_points');
           localStorage.removeItem('datamap_topics');
           localStorage.removeItem('datamap_answers');
+        } else {
+          // Document might not exist if they just registered, it's created on submit
         }
       }
       this.updateUserUI();
@@ -402,7 +409,6 @@ class DataComparisonMap extends HTMLElement {
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
 
-    // Auto-open Promo Wizard if URL parameter is present
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('promo') === 'true') {
       setTimeout(() => this.openWizard(1), 500);
@@ -440,9 +446,12 @@ class DataComparisonMap extends HTMLElement {
     this.$('#btnUpgrade').addEventListener('click', () => this.openModal('proModal'));
     
     this.$('#btnAccount').addEventListener('click', () => {
-      if (this._user) this.openModal('accountModal');
-      else {
-        this._isLoginMode = true; // Open auth modal in login mode by default
+      if (this._user) {
+        this.openAccountTab('Dashboard');
+        this.openModal('accountModal');
+      } else {
+        this._isLoginMode = true;
+        this.updateAuthUI();
         this.openModal('authModal');
       }
     });
@@ -451,10 +460,8 @@ class DataComparisonMap extends HTMLElement {
       btn.addEventListener('click', (e) => e.target.closest('.modal-overlay').classList.remove('active'));
     });
 
-    // Wizard Step 1 -> 2
     this.$('#btnStartWizard').addEventListener('click', () => this.renderWizardStep(2));
 
-    // Auth Switcher (Login vs Sign Up)
     this.$$('.switch-auth-mode').forEach(btn => {
       btn.addEventListener('click', () => {
         this._isLoginMode = !this._isLoginMode;
@@ -462,7 +469,6 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
-    // Shared submit handler for both Auth forms
     const handleAuthSubmit = async (e, emailId, passId, btnId, modalIdToClose) => {
       e.preventDefault();
       const email = this.$('#' + emailId).value;
@@ -483,6 +489,7 @@ class DataComparisonMap extends HTMLElement {
           });
         }
         this.$('#' + modalIdToClose).classList.remove('active');
+        this.openAccountTab('Dashboard');
         this.openModal('accountModal');
       } catch (error) {
         alert("Error: " + error.message);
@@ -497,7 +504,6 @@ class DataComparisonMap extends HTMLElement {
     const standaloneAuthForm = this.$('#standaloneAuthForm');
     if (standaloneAuthForm) standaloneAuthForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'standaloneAuthEmail', 'standaloneAuthPass', 'standaloneAuthSubmitBtn', 'authModal'));
 
-    // Sign out
     this.$('#btnSignOut').addEventListener('click', () => {
       signOut(auth).then(() => {
         this._points = 0; this._completedTopics = []; this._answers = {};
@@ -506,31 +512,66 @@ class DataComparisonMap extends HTMLElement {
         this.updateUserUI();
       });
     });
+    
+    // Account Tabs
+    this.$$('.acc-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.openAccountTab(btn.dataset.tab));
+    });
+  }
+  
+  openAccountTab(tabName) {
+    this.$$('.acc-tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+    this.$$('.acc-tab-view').forEach(view => view.classList.toggle('active', view.id === 'accTab' + tabName));
+    if (tabName === 'Predictions') this.renderAccountPredictions();
+  }
+  
+  renderAccountPredictions() {
+    const container = this.$('#accPredList');
+    container.innerHTML = '';
+    
+    if (Object.keys(this._answers).length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding: 40px 0; color: #8395a7;" data-i18n="accPredEmpty">${this.t('accPredEmpty')}</div>`;
+      return;
+    }
+    
+    QUESTIONNAIRE.forEach(topic => {
+      topic.questions.forEach(q => {
+        const userAns = this._answers[q.id];
+        if (userAns) {
+          const item = document.createElement('div');
+          item.className = 'pred-list-item';
+          const isYes = userAns === 'yes';
+          item.innerHTML = `
+            <div class="pred-q">${q.text[this._lang] || q.text.en}</div>
+            <div class="pred-ans ${isYes ? 'yes' : 'no'}">${isYes ? this.t('yes') : this.t('no')}</div>
+          `;
+          container.appendChild(item);
+        }
+      });
+    });
   }
 
   updateAuthUI() {
     const setTitle = (id, key) => { const el = this.$('#' + id); if (el) el.textContent = this.t(key); };
     
+    const wizImg = this.$('#wizAuthImg');
+    const stdImg = this.$('#stdAuthImg');
+    // Replace with your actual URLs!
+    const loginImgSrc = "YOUR_IMG_LOGIN.jpg"; 
+    const signupImgSrc = "YOUR_IMG_SIGNUP.jpg";
+
     if (this._isLoginMode) {
-      setTitle('wizAuthTitle', 'authTitleLog');
-      setTitle('wizAuthDesc', 'authDescLog');
-      setTitle('authSubmitBtn', 'btnLogin');
-      setTitle('switchAuthBtn', 'btnSwitchToSignUp');
-      
-      setTitle('authTitle', 'authTitleLog');
-      setTitle('authDesc', 'authDescLog');
-      setTitle('standaloneAuthSubmitBtn', 'btnLogin');
-      setTitle('standaloneSwitchAuthBtn', 'btnSwitchToSignUp');
+      setTitle('wizAuthTitle', 'authTitleLog'); setTitle('wizAuthDesc', 'authDescLog');
+      setTitle('authSubmitBtn', 'btnLogin'); setTitle('switchAuthBtn', 'btnSwitchToSignUp');
+      setTitle('authTitle', 'authTitleLog'); setTitle('authDesc', 'authDescLog');
+      setTitle('standaloneAuthSubmitBtn', 'btnLogin'); setTitle('standaloneSwitchAuthBtn', 'btnSwitchToSignUp');
+      if (wizImg) wizImg.src = loginImgSrc; if (stdImg) stdImg.src = loginImgSrc;
     } else {
-      setTitle('wizAuthTitle', 'authTitleSave');
-      setTitle('wizAuthDesc', 'authDescSave');
-      setTitle('authSubmitBtn', 'btnSignUp');
-      setTitle('switchAuthBtn', 'btnSwitchToLogin');
-      
-      setTitle('authTitle', 'authTitleSave');
-      setTitle('authDesc', 'authDescSave');
-      setTitle('standaloneAuthSubmitBtn', 'btnSignUp');
-      setTitle('standaloneSwitchAuthBtn', 'btnSwitchToLogin');
+      setTitle('wizAuthTitle', 'authTitleSave'); setTitle('wizAuthDesc', 'authDescSave');
+      setTitle('authSubmitBtn', 'btnSignUp'); setTitle('switchAuthBtn', 'btnSwitchToLogin');
+      setTitle('authTitle', 'authTitleSave'); setTitle('authDesc', 'authDescSave');
+      setTitle('standaloneAuthSubmitBtn', 'btnSignUp'); setTitle('standaloneSwitchAuthBtn', 'btnSwitchToLogin');
+      if (wizImg) wizImg.src = signupImgSrc; if (stdImg) stdImg.src = signupImgSrc;
     }
   }
 
@@ -579,9 +620,7 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.wiz-view').forEach(v => v.classList.remove('active'));
     this.$(`#wizStep${step}`).classList.add('active');
 
-    if (step === 2) {
-      this.renderQuestionnaireAccordion();
-    }
+    if (step === 2) this.renderQuestionnaireAccordion();
     if (step === 3) {
       this._isLoginMode = false;
       this.updateAuthUI();
@@ -611,7 +650,12 @@ class DataComparisonMap extends HTMLElement {
       const body = document.createElement('div');
       body.className = 'q-topic-body';
       
+      // Image Placeholder for each topic. Replace YOUR_IMG_TOPIC_... with actual URL
+      const topicImgSrc = `YOUR_IMG_TOPIC_${topic.id}.jpg`;
+      
       if (!isCompleted) {
+        body.innerHTML = `<img src="${topicImgSrc}" class="wiz-topic-img" alt="">`;
+        
         topic.questions.forEach((q, index) => {
           const card = document.createElement('div');
           card.className = 'q-question-card';
@@ -625,8 +669,8 @@ class DataComparisonMap extends HTMLElement {
               </div>
             </div>
             <div class="q-actions">
-              <button class="btn-vote yes" data-q="${q.id}" data-val="yes">Yes</button>
-              <button class="btn-vote no" data-q="${q.id}" data-val="no">No</button>
+              <button class="btn-vote yes" data-q="${q.id}" data-val="yes">${this.t('yes')}</button>
+              <button class="btn-vote no" data-q="${q.id}" data-val="no">${this.t('no')}</button>
             </div>
           `;
           body.appendChild(card);
@@ -667,6 +711,7 @@ class DataComparisonMap extends HTMLElement {
     claimBtn.onclick = () => {
       if (this._user) {
         this.$('#wizardModal').classList.remove('active');
+        this.openAccountTab('Dashboard');
         this.openModal('accountModal');
       } else {
         this.renderWizardStep(3); 
@@ -733,6 +778,16 @@ class DataComparisonMap extends HTMLElement {
               answers: this._answers
             }, { merge: true });
           } catch (e) { console.error("Error saving to db", e); }
+        } else {
+          // GHOST SAVE: Write to guest_predictions so you have data before they register
+          try {
+            await setDoc(doc(db, "guest_predictions", this._guestId), {
+              points: this._points,
+              completedTopics: this._completedTopics,
+              answers: this._answers,
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+          } catch (e) { console.error("Error saving guest data", e); }
         }
       }
     }, 400); 
@@ -793,6 +848,9 @@ class DataComparisonMap extends HTMLElement {
     }
     if (this.$('#wizardModal').classList.contains('active') && this._wizardStep === 2) {
       this.renderQuestionnaireAccordion(); 
+    }
+    if (this.$('#accountModal').classList.contains('active') && this.$('#accTabPredictions').classList.contains('active')) {
+      this.renderAccountPredictions();
     }
   }
 
@@ -1730,7 +1788,6 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
 
-      <!-- Actions -->
       <div class="nav-actions">
         <button class="btn-action btn-predict" id="btnPredict">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
@@ -1821,6 +1878,7 @@ class DataComparisonMap extends HTMLElement {
     </div>
     
     <div class="wiz-view" id="wizStep1">
+      <img src="YOUR_IMG_STEP_1.jpg" class="wiz-img" alt="">
       <h2 class="modal-title" data-i18n="wizTitle">Help Predict the Future</h2>
       <p class="modal-desc" data-i18n="wizDesc">Share your prediction and get points. You are contributing to the best investment prediction tool in the world.</p>
       <button class="btn-primary-large" id="btnStartWizard" data-i18n="wizBtnStart">Start Predicting</button>
@@ -1831,6 +1889,7 @@ class DataComparisonMap extends HTMLElement {
     </div>
 
     <div class="wiz-view" id="wizStep3">
+      <img id="wizAuthImg" src="YOUR_IMG_SIGNUP.jpg" class="wiz-img" alt="">
       <h2 class="modal-title" id="wizAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
       <p class="modal-desc" id="wizAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
       <form id="authForm" style="margin-bottom:12px;">
@@ -1847,6 +1906,7 @@ class DataComparisonMap extends HTMLElement {
 <div class="modal-overlay" id="authModal">
   <div class="modal-content">
     <button class="modal-close">✕</button>
+    <img id="stdAuthImg" src="YOUR_IMG_SIGNUP.jpg" class="wiz-img" alt="">
     <h2 class="modal-title" id="standaloneAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
     <p class="modal-desc" id="standaloneAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
     <form id="standaloneAuthForm" style="margin-bottom:12px;">
@@ -1858,27 +1918,46 @@ class DataComparisonMap extends HTMLElement {
   </div>
 </div>
 
-<!-- ACCOUNT MODAL -->
+<!-- ACCOUNT MODAL (Wider Dashboard Style) -->
 <div class="modal-overlay" id="accountModal">
-  <div class="modal-content" style="max-width: 400px;">
+  <div class="modal-content wide">
     <button class="modal-close">✕</button>
-    <h2 class="modal-title" data-i18n="accTitle">Your Account</h2>
     
-    <div class="acc-box">
-      <div class="acc-email" id="accEmail">loading...</div>
-      <div class="acc-pts" id="accPointsModal">0 Pts</div>
+    <div class="acc-layout">
+      <!-- Sidebar -->
+      <div class="acc-sidebar">
+        <h2 class="modal-title" style="margin-bottom: 24px; padding: 0 10px;" data-i18n="accTitle">Your Account</h2>
+        <button class="acc-tab-btn active" data-tab="Dashboard" data-i18n="accMenuDash">Dashboard</button>
+        <button class="acc-tab-btn" data-tab="Predictions" data-i18n="accMenuPred">Your Predictions</button>
+        <div style="flex:1"></div>
+        <button class="btn-text" id="btnSignOut" data-i18n="btnSignOut" style="text-align:left; padding: 12px 16px;">Sign Out</button>
+      </div>
+      
+      <!-- Content Area -->
+      <div class="acc-content">
+        <!-- Dashboard Tab -->
+        <div class="acc-tab-view active" id="accTabDashboard">
+          <div class="acc-box">
+            <div class="acc-email" id="accEmail">loading...</div>
+            <div class="acc-pts" id="accPointsModal">0 Pts</div>
+          </div>
+          <div class="tier-box active">
+            <span class="tier-name" data-i18n="tierFree">Free User</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#1e3a5f"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </div>
+          <div class="tier-box locked">
+            <span class="tier-name" data-i18n="tierPro">Pro Membership (Coming Soon)</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#8395a7"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+          </div>
+        </div>
+        
+        <!-- Predictions Tab -->
+        <div class="acc-tab-view" id="accTabPredictions">
+          <h3 style="margin-top:0; color:#1e3a5f;" data-i18n="accMenuPred">Your Predictions</h3>
+          <div id="accPredList"></div>
+        </div>
+      </div>
     </div>
-
-    <div class="tier-box active">
-      <span class="tier-name" data-i18n="tierFree">Free User</span>
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="#1e3a5f"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-    </div>
-    <div class="tier-box locked">
-      <span class="tier-name" data-i18n="tierPro">Pro Membership (Coming Soon)</span>
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="#8395a7"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
-    </div>
-
-    <button class="btn-text" id="btnSignOut" style="margin-top:8px;" data-i18n="btnSignOut">Sign Out</button>
   </div>
 </div>
 
