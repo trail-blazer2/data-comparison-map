@@ -255,7 +255,7 @@ class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this._lang = 'en';
+    this._lang = 'cs';
     this.DATA = {};
     this.categories = {};
     this.currentCategory = null;
