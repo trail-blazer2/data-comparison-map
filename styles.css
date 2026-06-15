@@ -208,7 +208,7 @@
 .btn-predict { background: rgba(52, 211, 153, 0.15); color: #059669; border: 1px solid rgba(52, 211, 153, 0.3); }
 .btn-predict:hover { transform: scale(1.05); background: rgba(52, 211, 153, 0.25); }
 
-.btn-upgrade { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4); }
+.btn-upgrade { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4); width: 100%; justify-content: center; }
 .btn-upgrade:hover { box-shadow: 0 6px 20px rgba(109, 40, 217, 0.6); transform: translateY(-1px); }
 .btn-upgrade svg { width: 14px; height: 14px; fill: #fff; }
 
@@ -225,7 +225,7 @@
 .modal-close:hover { background: rgba(30, 58, 95, 0.15); }
 
 /* Images in Wizard */
-.wiz-img { width: 100%; height: 160px; object-fit: scale-down; border-radius: 12px;}
+.wiz-img { width: 100%; height: 160px; object-fit: scale-down; border-radius: 12px; margin-bottom: 20px;}
 .wiz-topic-img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; margin-top: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
 
 /* Stepper for Wizard */
@@ -286,9 +286,14 @@
 .switch-auth-mode { background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 0.9rem; margin-top: 16px; font-weight: 600; font-family: inherit; width: 100%; }
 .switch-auth-mode:hover { text-decoration: underline; }
 
+/* GDPR & Legal Docs */
+.auth-legal { font-size: 0.75rem; color: #576574; margin-bottom: 16px; text-align: left; display: flex; align-items: flex-start; gap: 8px; }
+.auth-legal input { margin-top: 3px; cursor: pointer; }
+.legal-link { color: #1e3a5f; text-decoration: underline; cursor: pointer; font-weight: 600; }
+
 /* Account Modal Layout */
 .acc-layout { display: flex; flex-direction: row; height: 500px; max-height: 80vh; }
-.acc-sidebar { width: 220px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+.acc-sidebar { width: 240px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
 .acc-content { flex: 1; padding: 32px; overflow-y: auto; }
 
 .acc-tab-btn { background: transparent; border: none; padding: 12px 16px; text-align: left; font-weight: 600; color: #576574; border-radius: 10px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
@@ -302,7 +307,7 @@
 .acc-pts { font-size: 2rem; font-weight: 800; color: #059669; }
 
 .tier-box { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;}
-.tier-box.active { border-color: #1e3a5f; background: rgba(30,58,95,0.05); }
+.tier-box.active { border-color: #1e3a5f; background: rgba(30,58,95,0.02); }
 .tier-box.locked { opacity: 0.5; }
 .tier-name { font-weight: 700; color: #1e3a5f; }
 
@@ -373,9 +378,10 @@
   .wiz-img { height: 100px; }
   
   .acc-layout { flex-direction: column; height: auto; max-height: 85vh; }
-  .acc-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 16px; flex-direction: row; flex-wrap: wrap; }
+  .acc-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 16px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .acc-tab-btn { flex: 1; text-align: center; padding: 10px; font-size: 0.85rem; }
   .acc-content { padding: 20px; }
+  .btn-upgrade { width: auto; flex: 1; margin: 0 4px; }
 }
 
 @media (max-width: 480px) { 
