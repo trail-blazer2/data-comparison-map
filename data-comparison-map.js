@@ -255,7 +255,19 @@ class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this._lang = 'cs';
+    // Auto-detect language
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLang = urlParams.get('lang');
+    const browserLang = navigator.language || navigator.userLanguage;
+    if (urlLang === 'cs' || urlLang === 'cz') {
+      this._lang = 'cs';
+    } else if (urlLang === 'en') {
+      this._lang = 'en';
+    } else if (browserLang.toLowerCase().includes('cs') || browserLang.toLowerCase().includes('sk')) {
+      this._lang = 'cs';
+    } else {
+      this._lang = 'en';
+    }
     this.DATA = {};
     this.categories = {};
     this.currentCategory = null;
