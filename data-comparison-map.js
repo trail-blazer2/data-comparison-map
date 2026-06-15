@@ -129,12 +129,12 @@ const I18N = {
     btnSignOut: "Odhlásit se",
     btnAccount: "Účet",
     btnLogReg: "Přihlásit / Registrovat",
-    btnPredict: "Předpovědět a získat",
+    btnPredict: "Získejte body zdarma",
     btnUpgrade: "Vylepšit",
     topicChoose: "Vyberte téma k předpovědi",
     claimInfoMore: "Odpovězte i na ostatní a získejte více bodů",
     claimInfoAll: "Skvělé! Dokončili jste všechna témata.",
-    proModalTitle: "DataMap Pro",
+    proModalTitle: "RealWorldView Pro",
     proModalDesc: "Připravte se na profesionální analytiku. Náš Pro tarif obchází zpoždění vládních dat tím, že integruje alternativní data v reálném čase pro naše prediktivní algoritmy.",
     proSat: "Satelitní snímky: Sledování výkonu továren a vytížení lodních tras v reálném čase.",
     proSoc: "Analýza sentimentu a dat: Pokročilé vytěžování trendů náboru firem a globálních oznámení.",
@@ -577,7 +577,7 @@ class DataComparisonMap extends HTMLElement {
     const stdImg = this.$('#stdAuthImg');
     
     // Replace these URLs!
-    const loginImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.jpg"; 
+    const loginImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.png"; 
     const signupImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png";
 
     const wCheck = this.$('#wizAuthLegal');
@@ -1907,7 +1907,7 @@ class DataComparisonMap extends HTMLElement {
     </div>
     
     <div class="wiz-view" id="wizStep1">
-      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p1.jpg" class="wiz-img" alt="">
+      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p1.png" class="wiz-img" alt="">
       <h2 class="modal-title" data-i18n="wizTitle">Help Predict the Future</h2>
       <p class="modal-desc" data-i18n="wizDesc">Share your prediction and get points. You are contributing to the best investment prediction tool in the world.</p>
       <button class="btn-primary-large" id="btnStartWizard" data-i18n="wizBtnStart">Start Predicting</button>
