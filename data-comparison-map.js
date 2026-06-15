@@ -168,7 +168,7 @@ const CATEGORY_META = {
 
 const QUESTIONNAIRE = [
   {
-    id: 'ai_auto',
+    id: '1',
     title: { en: 'The AI & Automation Revolution', cs: 'Revoluce AI a automatizace' },
     questions: [
       { id: 'ai_q1', text: { en: 'Will AI displace >20% of administrative/coding jobs by 2030 without replacing them with equal-paying roles?', cs: 'Nahradí AI do roku 2030 více než 20 % administrativních a programátorských míst, aniž by vytvořila stejně placené alternativy?' }, info: { en: 'Look at the rapid adoption of LLMs in clerical tasks. Does it create more jobs than it destroys?', cs: 'Podívejte se na rychlé zavádění LLM v administrativě. Vytvoří více pracovních míst, než jich zničí?' } },
@@ -177,7 +177,7 @@ const QUESTIONNAIRE = [
     ]
   },
   {
-    id: 'geopolitics',
+    id: '2',
     title: { en: 'Geopolitics & The End of Free Trade', cs: 'Geopolitika a konec volného obchodu' },
     questions: [
       { id: 'geo_q1', text: { en: 'Will the US and China economically decouple into two completely separate tech ecosystems?', cs: 'Rozdělí se USA a Čína ekonomicky na dva zcela oddělené technologické ekosystémy?' }, info: { en: 'Will we see a splinternet where Western and Chinese hardware/software are completely isolated?', cs: 'Uvidíme rozštěpený internet, kde budou západní a čínský hardware a software zcela izolovány?' } },
@@ -186,7 +186,7 @@ const QUESTIONNAIRE = [
     ]
   },
   {
-    id: 'demographics',
+    id: '3',
     title: { en: 'The Demographic & Climate Tipping Point', cs: 'Demografický a klimatický zlom' },
     questions: [
       { id: 'dem_q1', text: { en: 'Will advanced aging economies (Germany, Japan) avoid GDP stagnation via mass skilled immigration?', cs: 'Vyhnou se vyspělé stárnoucí ekonomiky (Německo, Japonsko) stagnaci HDP díky masivní kvalifikované imigraci?' }, info: { en: 'Can nations with shrinking birth rates sustain their economies solely by importing millions of workers?', cs: 'Mohou národy s klesající porodností udržet své ekonomiky pouze importem milionů pracovníků?' } },
@@ -565,7 +565,7 @@ class DataComparisonMap extends HTMLElement {
     const stdImg = this.$('#stdAuthImg');
     // Replace with your actual URLs!
     const loginImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.jpg"; 
-    const signupImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.jpg";
+    const signupImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png";
 
     if (this._isLoginMode) {
       setTitle('wizAuthTitle', 'authTitleLog'); setTitle('wizAuthDesc', 'authDescLog');
@@ -657,7 +657,7 @@ class DataComparisonMap extends HTMLElement {
       const body = document.createElement('div');
       body.className = 'q-topic-body';
       
-      const topicImgSrc = `https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/m_${topic.id}.jpg`;
+      const topicImgSrc = `https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/m${topic.id}.jpg`;
       
       if (!isCompleted) {
         body.innerHTML = `<img src="${topicImgSrc}" class="wiz-topic-img" alt="">`;
