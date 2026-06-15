@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"> <!-- Výchozí bude EN, JS to přepne podle uživatele -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <!-- SEO & GOOGLE ADS PREPARATION -->
   <title>RealWorldView - Predictive Macro Intelligence</title>
-  <meta name="description" content="Help predict the future of global economy, demographics, and commodity markets. Join the best predictive intelligence tool and earn points.">
-  <meta name="keywords" content="data prediction, macro economy, commodity prices, AI investing, data map">
+  <meta name="description" content="Shape the future of global economy, demographics, and commodity markets. Join the most advanced predictive intelligence tool.">
+  <meta name="keywords" content="data prediction, macro economy, commodity prices, AI investing, data map, RealWorldView">
   
-  <!-- OpenGraph (For LinkedIn, Facebook sharing) -->
-  <meta property="og:title" content="RealWorldView - Predictive Macro Intelligence">
+  <!-- OpenGraph -->
+  <meta property="og:title" content="RealWorldView - Predict the Future of Markets">
   <meta property="og:description" content="Contribute your predictions on global supply chains, AI, and geopolitics to our global algorithm.">
   <meta property="og:type" content="website">
   
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   
   <style>
-    html, body { margin:0; padding:0; height:100%; font-size:16px; -webkit-text-size-adjust:100%; text-size-adjust:100%; background: #dbeafe; }
+    html, body { 
+      margin:0; padding:0; height:100%; 
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size:16px; -webkit-text-size-adjust:100%; text-size-adjust:100%; background: #dbeafe; 
+    }
     data-comparison-map { display:block; width:100%; height:100%; }
     
-    /* Global Footer Disclaimer (Required for Google Ads Financial Policies) */
     .global-disclaimer {
       text-align: center; font-size: 0.65rem; color: #64748b; padding: 0 20px 10px; background: transparent; position: relative; z-index: 100;
     }
 
-    /* Cookie Consent Banner */
     .cookie-banner {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
       background: #1e3a5f; color: #fff; padding: 16px 24px; border-radius: 16px;
@@ -36,7 +38,10 @@
     .cookie-banner.show { opacity: 1; visibility: visible; bottom: 30px; }
     .cookie-text { font-size: 0.85rem; line-height: 1.4; flex: 1; }
     .cookie-buttons { display: flex; gap: 10px; }
-    .btn-cookie { padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem; }
+    .btn-cookie { 
+      padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 0.8rem;
+      font-family: inherit;
+    }
     .btn-cookie.accept { background: #34d399; color: #fff; }
     .btn-cookie.decline { background: rgba(255,255,255,0.1); color: #fff; }
     
@@ -47,18 +52,17 @@
     }
   </style>
 
-  <!-- IMPORTANT: Google Analytics / Google Ads Tag (Replace G-XXXXXXXXXX with your actual tag later) -->
+  <!-- IMPORTANT: Google Analytics / Google Ads Tag -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    // Default to denied for GDPR
     gtag('consent', 'default', {
       'ad_storage': 'denied',
       'analytics_storage': 'denied'
     });
     gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX'); // ADD YOUR GA4 / ADS ID HERE
+    gtag('config', 'G-XXXXXXXXXX');
   </script>
 
   <script src="data-algo.js"></script>
@@ -68,15 +72,14 @@
   
   <data-comparison-map></data-comparison-map>
 
-  <!-- Mandatory Google Ads Disclaimer -->
-  <div class="global-disclaimer">
-    Disclaimer: The predictions, maps, and information on RealWorldView do not constitute financial, investment, or legal advice. Capital is at risk. Past performance is not indicative of future results.
+  <!-- Disclaimer se automaticky přepne na CZ nebo EN přes JavaScript -->
+  <div class="global-disclaimer" id="globalDisclaimer">
+    Disclaimer: The predictions, maps, and information on RealWorldView do not constitute financial, investment, or legal advice. Capital is at risk.
   </div>
 
-  <!-- Cookie Consent Banner -->
   <div class="cookie-banner" id="cookieBanner">
-    <div class="cookie-text">
-      We use cookies and similar technologies to ensure our website works properly, to measure our traffic, and for targeted advertising. By clicking "Accept", you consent to our use of cookies.
+    <div class="cookie-text" id="cookieText">
+      We use cookies to ensure our website works properly, measure traffic, and for targeted advertising.
     </div>
     <div class="cookie-buttons">
       <button class="btn-cookie decline" id="cookieDecline">Decline</button>
@@ -85,27 +88,35 @@
   </div>
 
   <script>
-    // Cookie Banner Logic
     document.addEventListener("DOMContentLoaded", () => {
-      const banner = document.getElementById('cookieBanner');
-      
-      // Check if user already answered
-      if (!localStorage.getItem('datamap_cookie_consent')) {
-        setTimeout(() => banner.classList.add('show'), 1500);
+      // 1. Zjistíme jazyk z URL nebo z prohlížeče
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get('lang');
+      const browserLang = navigator.language || navigator.userLanguage;
+      let isCzech = false;
+      if (urlLang === 'cs' || urlLang === 'cz') { isCzech = true; }
+      else if (!urlLang && (browserLang.toLowerCase().includes('cs') || browserLang.toLowerCase().includes('sk'))) { isCzech = true; }
+
+      // 2. Přeložíme cookies a disclaimer mimo ShadowDOM
+      if (isCzech) {
+        document.getElementById('globalDisclaimer').textContent = "Upozornění: Predikce, mapy a informace na platformě RealWorldView nepředstavují finanční, investiční ani právní poradenství. Váš kapitál je vystaven riziku.";
+        document.getElementById('cookieText').textContent = "Používáme soubory cookie, abychom zajistili správné fungování našeho webu, měřili návštěvnost a pro cílenou reklamu.";
+        document.getElementById('cookieDecline').textContent = "Odmítnout";
+        document.getElementById('cookieAccept').textContent = "Přijmout vše";
       }
 
+      // 3. Logika Cookies
+      const banner = document.getElementById('cookieBanner');
+      if (!localStorage.getItem('rwv_cookie_consent')) {
+        setTimeout(() => banner.classList.add('show'), 1500);
+      }
       document.getElementById('cookieAccept').addEventListener('click', () => {
-        localStorage.setItem('datamap_cookie_consent', 'accepted');
+        localStorage.setItem('rwv_cookie_consent', 'accepted');
         banner.classList.remove('show');
-        // Update Google Consent Mode
-        gtag('consent', 'update', {
-          'ad_storage': 'granted',
-          'analytics_storage': 'granted'
-        });
+        gtag('consent', 'update', { 'ad_storage': 'granted', 'analytics_storage': 'granted' });
       });
-
       document.getElementById('cookieDecline').addEventListener('click', () => {
-        localStorage.setItem('datamap_cookie_consent', 'declined');
+        localStorage.setItem('rwv_cookie_consent', 'declined');
         banner.classList.remove('show');
       });
     });
