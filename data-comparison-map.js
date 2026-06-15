@@ -14,7 +14,7 @@ const firebaseConfig = {
   appId: "1:473502983675:web:f3a9c602b6662c2180175e",
   measurementId: "G-RW2W1N3DDS"
 };
- 
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -67,9 +67,9 @@ const I18N = {
     noProj: "Future projections not yet available for this metric/country combination.",
     normProg: "Normal yearly progression. No major outliers recorded.", noData: "No data", noDataSrc: "No data available",
     "Economy": "Economy", "Demographics": "Demographics", "Society": "Society", "Public Services": "Services", "other": "Other",
-    yes: "Yes", no: "No",
+    yes: "Yes", no: "No", done: "Done",
     wizTitle: "Help Predict the Future",
-    wizDesc: "Share your prediction and get points. You are contributing to the best investment prediction tool in the world.",
+    wizDesc: "Share your prediction and get points to unlock our upcoming Pro version. You are contributing to the best investment prediction tool in the world.",
     wizBtnStart: "Start Predicting",
     wizBtnClaim: "Claim Points",
     accTitle: "Your Account",
@@ -93,7 +93,7 @@ const I18N = {
     proAlgo: "Algorithmic Predictive Modeling: See exactly how macro-events alter GDP trajectories 5 years before they happen.",
     proNote: "*Use your earned Points to unlock early access when we launch.",
     authTitleSave: "Save Your Points!",
-    authDescSave: "Create a free account to secure the points you just earned and track your prediction accuracy.",
+    authDescSave: "Create a free account to secure your points. You can use them later to unlock RealWorldView Pro for free!",
     authTitleLog: "Welcome Back",
     authDescLog: "Log in to view your points and predictions.",
     btnSignUp: "Sign Up & Save Points",
@@ -115,9 +115,9 @@ const I18N = {
     noProj: "Pro tuto kombinaci metriky a země zatím nejsou k dispozici budoucí projekce.",
     normProg: "Normální roční vývoj. Nezaznamenány žádné významné odchylky.", noData: "Žádná data", noDataSrc: "Žádná data",
     "Economy": "Ekonomika", "Demographics": "Demografie", "Society": "Společnost", "Public Services": "Služby", "other": "Ostatní",
-    yes: "Ano", no: "Ne",
+    yes: "Ano", no: "Ne", done: "Hotovo",
     wizTitle: "Pomozte předpovědět budoucnost",
-    wizDesc: "Sdílejte svou předpověď a získejte body. Přispíváte k nejlepšímu investičnímu predikčnímu nástroji na světě.",
+    wizDesc: "Sdílejte svou předpověď a získejte body k odemčení chystané Pro verze. Přispíváte k nejlepšímu investičnímu predikčnímu nástroji na světě.",
     wizBtnStart: "Začít předpovídat",
     wizBtnClaim: "Získat body",
     accTitle: "Váš účet",
@@ -129,7 +129,7 @@ const I18N = {
     btnSignOut: "Odhlásit se",
     btnAccount: "Účet",
     btnLogReg: "Přihlásit / Registrovat",
-    btnPredict: "Získejte body zdarma",
+    btnPredict: "Předpovědět a získat",
     btnUpgrade: "Vylepšit",
     topicChoose: "Vyberte téma k předpovědi",
     claimInfoMore: "Odpovězte i na ostatní a získejte více bodů",
@@ -141,7 +141,7 @@ const I18N = {
     proAlgo: "Algoritmické prediktivní modelování: Podívejte se přesně, jak makro události změní trajektorie HDP 5 let dopředu.",
     proNote: "*Využijte získané body k odemknutí předběžného přístupu při našem spuštění.",
     authTitleSave: "Uložte si své body!",
-    authDescSave: "Vytvořte si bezplatný účet, abyste zabezpečili získané body a mohli sledovat přesnost svých předpovědí.",
+    authDescSave: "Vytvořte si bezplatný účet pro zabezpečení svých bodů. Později je využijete k bezplatnému odemčení RealWorldView Pro!",
     authTitleLog: "Vítejte zpět",
     authDescLog: "Přihlaste se pro zobrazení svých bodů a předpovědí.",
     btnSignUp: "Registrovat se a uložit body",
@@ -659,7 +659,11 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.wiz-view').forEach(v => v.classList.remove('active'));
     this.$(`#wizStep${step}`).classList.add('active');
 
-    if (step === 2) this.renderQuestionnaireAccordion();
+    if (step === 2) {
+      this.renderQuestionnaireAccordion();
+      const firstIncomplete = this.$('#qList').querySelector('.q-topic-wrap:not(.completed)');
+      if (firstIncomplete) firstIncomplete.classList.add('expanded');
+    }
     if (step === 3) {
       this._isLoginMode = false;
       this.updateAuthUI();
@@ -683,7 +687,7 @@ class DataComparisonMap extends HTMLElement {
       header.className = 'q-topic-btn';
       header.innerHTML = `
         <span class="q-topic-title">${topic.title[this._lang] || topic.title.en}</span>
-        <span class="q-topic-reward">${isCompleted ? '✔ Done' : '+50 Pts'}</span>
+        <span class="q-topic-reward">${isCompleted ? '✔ ' + this.t('done') : '+50 Pts'}</span>
       `;
       
       const body = document.createElement('div');
@@ -791,7 +795,7 @@ class DataComparisonMap extends HTMLElement {
     wrapperEl.classList.add('completed');
     const rewardEl = wrapperEl.querySelector('.q-topic-reward');
     if(rewardEl) {
-      rewardEl.innerHTML = '✔ Done';
+      rewardEl.innerHTML = '✔ ' + this.t('done');
       rewardEl.style.color = '#059669';
       rewardEl.style.background = 'rgba(52,211,153,0.15)';
     }
@@ -832,6 +836,12 @@ class DataComparisonMap extends HTMLElement {
   }
 
   applyLanguage() {
+    const langLbl = this.$('#currentLangLabel');
+    if (langLbl) langLbl.textContent = this._lang.toUpperCase();
+    this.$$('.lang-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.lang === this._lang);
+    });
+
     this.$$('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
       if (I18N[this._lang] && I18N[this._lang][key]) {
@@ -1981,7 +1991,7 @@ class DataComparisonMap extends HTMLElement {
         <div style="flex:1"></div>
         <div style="margin-top: 16px; margin-bottom: 8px;">
           <button class="btn-action btn-upgrade" id="btnUpgradeAcc" style="width: 100%; justify-content: center;">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
             <span data-i18n="btnUpgrade">Upgrade</span>
           </button>
         </div>
