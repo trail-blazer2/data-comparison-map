@@ -82,6 +82,7 @@ const I18N = {
     btnAccount: "Account",
     btnLogReg: "Log in / Register",
     btnPredict: "Predict & Earn",
+    btnUpgrade: "Upgrade",
     topicChoose: "Choose a topic to predict",
     claimInfoMore: "Answer the others to get more points",
     claimInfoAll: "Amazing! You completed all topics.",
@@ -101,6 +102,7 @@ const I18N = {
     btnSwitchToSignUp: "Need an account? Sign up",
     emailPlaceholder: "Email Address",
     passPlaceholder: "Password",
+    authGdpr: `I agree to the <a href="terms.html" target="_blank" class="legal-link">Terms of Service</a> and <a href="privacy.html" target="_blank" class="legal-link">Privacy Policy</a>.`,
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
     "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
@@ -128,6 +130,7 @@ const I18N = {
     btnAccount: "Účet",
     btnLogReg: "Přihlásit / Registrovat",
     btnPredict: "Předpovědět a získat",
+    btnUpgrade: "Vylepšit",
     topicChoose: "Vyberte téma k předpovědi",
     claimInfoMore: "Odpovězte i na ostatní a získejte více bodů",
     claimInfoAll: "Skvělé! Dokončili jste všechna témata.",
@@ -147,6 +150,7 @@ const I18N = {
     btnSwitchToSignUp: "Nemáte účet? Registrujte se",
     emailPlaceholder: "E-mailová adresa",
     passPlaceholder: "Heslo",
+    authGdpr: `Souhlasím s <a href="terms.html" target="_blank" class="legal-link">Podmínkami služby</a> a <a href="privacy.html" target="_blank" class="legal-link">Zásadami ochrany osobních údajů</a>.`,
     "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem", "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
     "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití", "Immigration": "Imigrace", "Net migration": "Čistá migrace",
     "Inflation": "Inflace", "Population": "Populace", "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
@@ -169,29 +173,29 @@ const CATEGORY_META = {
 const QUESTIONNAIRE = [
   {
     id: '1',
-    title: { en: 'The AI & Automation Revolution', cs: 'Revoluce AI a automatizace' },
+    title: { en: 'Global Health & Demographic Shocks', cs: 'Globální zdravotní a demografické šoky' },
     questions: [
-      { id: 'ai_q1', text: { en: 'Will AI displace >20% of administrative/coding jobs by 2030 without replacing them with equal-paying roles?', cs: 'Nahradí AI do roku 2030 více než 20 % administrativních a programátorských míst, aniž by vytvořila stejně placené alternativy?' }, info: { en: 'Look at the rapid adoption of LLMs in clerical tasks. Does it create more jobs than it destroys?', cs: 'Podívejte se na rychlé zavádění LLM v administrativě. Vytvoří více pracovních míst, než jich zničí?' } },
-      { id: 'ai_q2', text: { en: 'Will Western economies successfully automate and reshore critical manufacturing in the next decade?', cs: 'Dokážou západní ekonomiky úspěšně automatizovat a vrátit kritickou výrobu zpět domů v příštím desetiletí?' }, info: { en: 'Consider the CHIPS Act and European equivalents. Can they overcome high domestic labor costs?', cs: 'Zvažte americký CHIPS Act a evropské ekvivalenty. Dokážou překonat vysoké domácí náklady na práci?' } },
-      { id: 'ai_q3', text: { en: 'Will AI-driven drug discovery add 2+ years to average global life expectancy by 2035?', cs: 'Prodlouží objevy léků pomocí AI průměrnou celosvětovou naději dožití o 2+ roky do roku 2035?' }, info: { en: 'AI folds proteins and simulates trials millions of times faster. Will this translate to actual lifespan extension?', cs: 'AI modeluje proteiny a simuluje testy milionkrát rychleji. Projeví se to na skutečném prodloužení života?' } }
+      { id: 'q1_1', text: { en: 'Will you reduce your meat and livestock food consumption in the next 6 months due to rising global health warnings?', cs: 'Omezíte v následujících 6 měsících spotřebu masa a živočišných produktů kvůli rostoucím globálním zdravotním varováním?' }, info: { en: 'WHO data shows a global shift toward plant-based diets and stricter food regulations. Your answer helps predict future demand for agricultural commodities like soy, corn, and livestock.', cs: 'Data WHO ukazují globální posun k rostlinné stravě a přísnějším potravinovým regulacím. Vaše odpověď pomáhá předpovídat budoucí poptávku po zemědělských komoditách, jako je sója, kukuřice a dobytek.' } },
+      { id: 'q1_2', text: { en: 'Do you consider buying physical gold safer than holding cash due to aging populations and strained pension systems?', cs: 'Považujete nákup fyzického zlata za bezpečnější než držení hotovosti kvůli stárnutí populace a přetíženým důchodovým systémům?' }, info: { en: 'Demographic data tracks rapidly aging societies in Europe and Asia. This question measures if capital is structurally shifting from cash and bonds into safe-haven precious metals.', cs: 'Demografická data sledují rychle stárnoucí společnost v Evropě a Asii. Tato otázka měří, zda se kapitál strukturálně přesouvá z hotovosti a dluhopisů do bezpečných drahých kovů.' } },
+      { id: 'q1_3', text: { en: 'Do you expect new global health or environmental risks to disrupt mining operations in developing countries this year?', cs: 'Očekáváte, že nová globální zdravotní nebo ekologická rizika letos přeruší těžební operace v rozvojových zemích?' }, info: { en: 'WHO health maps monitor regional disease outbreaks and pollution. Investors use this to predict sudden supply shocks for industrial metals like copper, lithium, and cobalt.', cs: 'Zdravotní mapy WHO monitorují regionální ohniska nemocí a znečištění. Investoři tyto informace využívají k předpovídání náhlých nabídkových šoků u průmyslových kovů, jako je měď, lithium a kobalt.' } }
     ]
   },
   {
     id: '2',
-    title: { en: 'Geopolitics & The End of Free Trade', cs: 'Geopolitika a konec volného obchodu' },
+    title: { en: 'Regional Regulations & Economic Policies', cs: 'Regionální regulace a ekonomické politiky' },
     questions: [
-      { id: 'geo_q1', text: { en: 'Will the US and China economically decouple into two completely separate tech ecosystems?', cs: 'Rozdělí se USA a Čína ekonomicky na dva zcela oddělené technologické ekosystémy?' }, info: { en: 'Will we see a splinternet where Western and Chinese hardware/software are completely isolated?', cs: 'Uvidíme rozštěpený internet, kde budou západní a čínský hardware a software zcela izolovány?' } },
-      { id: 'geo_q2', text: { en: 'Will global defense spending permanently exceed 2.5% of GDP across NATO and allies?', cs: 'Překročí globální výdaje na obranu trvale 2,5 % HDP napříč státy NATO a spojenci?' }, info: { en: 'NATO historical target is 2%. Will prolonged tension make 2.5%+ the new permanent baseline?', cs: 'Historický cíl NATO je 2 %. Udělá prodloužené napětí z hranice 2,5 %+ nový standard?' } },
-      { id: 'geo_q3', text: { en: 'Will blanket multi-national tariffs end the era of frictionless free trade?', cs: 'Ukončí plošná mezinárodní cla éru bezproblémového volného obchodu?' }, info: { en: 'Is the era of WTO-led free trade over? Will most nations adopt protectionist policies?', cs: 'Skončila éra volného obchodu vedená WTO? Přijme většina zemí protekcionistické politiky?' } }
+      { id: 'q2_1', text: { en: 'Will you move your investments out of European assets if official data confirms a continuous drop in industrial production?', cs: 'Přesunete své investice z evropských aktiv, pokud oficiální data potvrdí trvalý pokles průmyslové produkce?' }, info: { en: 'Eurostat tracks monthly industrial output across the EU. This question provides a leading indicator of capital flight and geographical reallocation before markets react.', cs: 'Eurostat sleduje měsíční průmyslovou produkci v celé EU. Tato otázka poskytuje předstihový indikátor odlivu kapitálu a geografické rotace peněz dříve, než trhy zareagují.' } },
+      { id: 'q2_2', text: { en: 'Do you believe heavy industry will shut down production if regional energy prices stay above the historical average?', cs: 'Věříte, že těžký průmysl ukončí výrobu, pokud regionální ceny energií zůstanou nad historickým průměrem?' }, info: { en: 'Eurostat energy metrics show the real cost burden on factories. Your response helps predict "demand destruction" – a key factor that can crash the prices of aluminum, steel, and gas.', cs: 'Energetické metriky Eurostatu ukazují reálné nákladové zatížení továren. Vaše odpověď pomáhá předpovídat „destrukci poptávky“ – klíčový faktor, který může srazit ceny hliníku, oceli a plynu.' } },
+      { id: 'q2_3', text: { en: 'Is the current inflation rate forcing you to allocate more money into commodities instead of traditional stocks?', cs: 'Nutí vás současná míra inflace investovat více peněz do komodit namísto tradičních akcií?' }, info: { en: 'Eurostat Consumer Price Index (CPI) tracks inflation strength. This data helps algorithms measure how strongly market participants are using commodities as an inflation hedge.', cs: 'Index spotřebitelských cen (CPI) Eurostatu sleduje sílu inflace. Tato data pomáhají algoritmům měřit, jak silně účastníci trhu využívají komodity jako zajištění proti inflaci.' } }
     ]
   },
   {
     id: '3',
-    title: { en: 'The Demographic & Climate Tipping Point', cs: 'Demografický a klimatický zlom' },
+    title: { en: 'Global Supply Chains & Geopolitical Substitution', cs: 'Globální dodavatelské řetězce a geopolitická substituce' },
     questions: [
-      { id: 'dem_q1', text: { en: 'Will advanced aging economies (Germany, Japan) avoid GDP stagnation via mass skilled immigration?', cs: 'Vyhnou se vyspělé stárnoucí ekonomiky (Německo, Japonsko) stagnaci HDP díky masivní kvalifikované imigraci?' }, info: { en: 'Can nations with shrinking birth rates sustain their economies solely by importing millions of workers?', cs: 'Mohou národy s klesající porodností udržet své ekonomiky pouze importem milionů pracovníků?' } },
-      { id: 'dem_q2', text: { en: 'Will the transition to green energy cause a global energy price spike lasting more than 5 years?', cs: 'Způsobí přechod na zelenou energii celosvětový skok cen energií trvající déle než 5 let?' }, info: { en: 'Will moving away from cheap fossil fuels before renewables are fully scaled cause a structural energy crisis?', cs: 'Způsobí odklon od levných fosilních paliv dříve, než se obnovitelné zdroje plně rozšíří, strukturální energetickou krizi?' } },
-      { id: 'dem_q3', text: { en: 'Will climate events create over 50 million global climate refugees by 2030?', cs: 'Vytvoří klimatické události do roku 2030 více než 50 milionů globálních klimatických uprchlíků?' }, info: { en: 'Will rising sea levels and extreme heat force unprecedented mass migrations by 2030?', cs: 'Donutí stoupající hladiny moří a extrémní vedra k bezprecedentní masové migraci do roku 2030?' } }
+      { id: 'q3_1', text: { en: 'Will the global market successfully replace eastern commodity exports with supplies from South America and India this year?', cs: 'Nahradí globální trh v tomto roce úspěšně export komodit z Východu dodávkami z Jižní Ameriky a Indie?' }, info: { en: 'This question cross-references Eurostat trade flow data to determine if deglobalization is succeeding, allowing investors to price in new logistics and shipping costs.', cs: 'Tato otázka porovnává data Eurostatu o obchodních tocích a zjišťuje, zda deglobalizace úspěšně pokračuje, což investorům umožňuje započítat nové náklady na logistiku a přepravu.' } },
+      { id: 'q3_2', text: { en: 'Do you expect disruptions in critical maritime trade routes to trigger a major oil and gas price spike this quarter?', cs: 'Očekáváte, že narušení kritických námořních obchodních tras způsobí v tomto čtvrtletí výrazný nárůst cen ropy a plynu?' }, info: { en: 'Global supply chain stability directly impacts energy prices. Measuring market fear of transit blockages helps calculate the "geopolitical risk premium" added to oil prices.', cs: 'Stabilita globálních dodavatelských řetězců přímo ovlivňuje ceny energií. Měření obav trhu z blokád tranzitu pomáhá vypočítat „geopolitickou rizikovou prémii“ započítanou do cen ropy.' } },
+      { id: 'q3_3', text: { en: 'Do you think western government sanctions on strategic raw materials will cause a severe shortage in domestic tech industries?', cs: 'Myslíte si, že vládní sankce Západu na strategické suroviny způsobí vážný nedostatek v domácím technologickém průmyslu?' }, info: { en: 'Combining industrial demand data with geopolitical sentiment helps predict retaliatory trade bans. A high "Yes" rate indicates upcoming extreme volatility in rare earth metals and uranium.', cs: 'Spojení dat o průmyslové poptávce s geopolitickým sentimentem pomáhá předvídat odvetná obchodní embarga. Vysoký podíl odpovědí „Ano“ značí blížící se extrémní volatilitu u kovů vzácných zemin a uranu.' } }
     ]
   }
 ];
@@ -351,8 +355,6 @@ class DataComparisonMap extends HTMLElement {
           localStorage.removeItem('datamap_points');
           localStorage.removeItem('datamap_topics');
           localStorage.removeItem('datamap_answers');
-        } else {
-          // Document might not exist if they just registered, it's created on submit
         }
       }
       this.updateUserUI();
@@ -450,7 +452,7 @@ class DataComparisonMap extends HTMLElement {
     this.updateUserUI();
     
     this.$('#btnPredict').addEventListener('click', () => this.openWizard(this._completedTopics.length > 0 ? 2 : 1));
-    this.$('#btnUpgrade').addEventListener('click', () => this.openModal('proModal'));
+    this.$('#btnUpgradeAcc').addEventListener('click', () => this.openModal('proModal'));
     
     this.$('#btnAccount').addEventListener('click', () => {
       if (this._user) {
@@ -476,8 +478,9 @@ class DataComparisonMap extends HTMLElement {
       });
     });
 
-    const handleAuthSubmit = async (e, emailId, passId, btnId, modalIdToClose) => {
+    const handleAuthSubmit = async (e, emailId, passId, btnId, checkId, modalIdToClose) => {
       e.preventDefault();
+      
       const email = this.$('#' + emailId).value;
       const pass = this.$('#' + passId).value;
       const btn = this.$('#' + btnId);
@@ -488,6 +491,15 @@ class DataComparisonMap extends HTMLElement {
         if (this._isLoginMode) {
           await signInWithEmailAndPassword(auth, email, pass);
         } else {
+          // Check if GDPR is checked for signup
+          const checkEl = this.$('#' + checkId);
+          if (checkEl && !checkEl.checked) {
+            alert("You must agree to the Terms and Privacy Policy.");
+            btn.disabled = false;
+            this.updateAuthUI();
+            return;
+          }
+
           const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
           const user = userCredential.user;
           await setDoc(doc(db, "users", user.uid), {
@@ -506,10 +518,10 @@ class DataComparisonMap extends HTMLElement {
     };
 
     const authForm = this.$('#authForm');
-    if (authForm) authForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'authEmail', 'authPass', 'authSubmitBtn', 'wizardModal'));
+    if (authForm) authForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'authEmail', 'authPass', 'authSubmitBtn', 'wizGdprCheck', 'wizardModal'));
 
     const standaloneAuthForm = this.$('#standaloneAuthForm');
-    if (standaloneAuthForm) standaloneAuthForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'standaloneAuthEmail', 'standaloneAuthPass', 'standaloneAuthSubmitBtn', 'authModal'));
+    if (standaloneAuthForm) standaloneAuthForm.addEventListener('submit', (e) => handleAuthSubmit(e, 'standaloneAuthEmail', 'standaloneAuthPass', 'standaloneAuthSubmitBtn', 'stdGdprCheck', 'authModal'));
 
     this.$('#btnSignOut').addEventListener('click', () => {
       signOut(auth).then(() => {
@@ -563,22 +575,30 @@ class DataComparisonMap extends HTMLElement {
     
     const wizImg = this.$('#wizAuthImg');
     const stdImg = this.$('#stdAuthImg');
-    // Replace with your actual URLs!
+    
+    // Replace these URLs!
     const loginImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.jpg"; 
     const signupImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png";
+
+    const wCheck = this.$('#wizAuthLegal');
+    const sCheck = this.$('#stdAuthLegal');
 
     if (this._isLoginMode) {
       setTitle('wizAuthTitle', 'authTitleLog'); setTitle('wizAuthDesc', 'authDescLog');
       setTitle('authSubmitBtn', 'btnLogin'); setTitle('switchAuthBtn', 'btnSwitchToSignUp');
-      setTitle('authTitle', 'authTitleLog'); setTitle('authDesc', 'authDescLog');
+      setTitle('standaloneAuthTitle', 'authTitleLog'); setTitle('standaloneAuthDesc', 'authDescLog');
       setTitle('standaloneAuthSubmitBtn', 'btnLogin'); setTitle('standaloneSwitchAuthBtn', 'btnSwitchToSignUp');
       if (wizImg) wizImg.src = loginImgSrc; if (stdImg) stdImg.src = loginImgSrc;
+      if (wCheck) wCheck.style.display = 'none';
+      if (sCheck) sCheck.style.display = 'none';
     } else {
       setTitle('wizAuthTitle', 'authTitleSave'); setTitle('wizAuthDesc', 'authDescSave');
       setTitle('authSubmitBtn', 'btnSignUp'); setTitle('switchAuthBtn', 'btnSwitchToLogin');
-      setTitle('authTitle', 'authTitleSave'); setTitle('authDesc', 'authDescSave');
+      setTitle('standaloneAuthTitle', 'authTitleSave'); setTitle('standaloneAuthDesc', 'authDescSave');
       setTitle('standaloneAuthSubmitBtn', 'btnSignUp'); setTitle('standaloneSwitchAuthBtn', 'btnSwitchToLogin');
       if (wizImg) wizImg.src = signupImgSrc; if (stdImg) stdImg.src = signupImgSrc;
+      if (wCheck) wCheck.style.display = 'flex';
+      if (sCheck) sCheck.style.display = 'flex';
     }
   }
 
@@ -657,6 +677,7 @@ class DataComparisonMap extends HTMLElement {
       const body = document.createElement('div');
       body.className = 'q-topic-body';
       
+      // Replace with your actual image URLs
       const topicImgSrc = `https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/m${topic.id}.jpg`;
       
       if (!isCompleted) {
@@ -811,6 +832,13 @@ class DataComparisonMap extends HTMLElement {
       const key = el.dataset.i18nPlaceholder;
       if (I18N[this._lang] && I18N[this._lang][key]) {
         el.placeholder = I18N[this._lang][key];
+      }
+    });
+
+    this.$$('[data-i18n-html]').forEach(el => {
+      const key = el.dataset.i18nHtml;
+      if (I18N[this._lang] && I18N[this._lang][key]) {
+        el.innerHTML = I18N[this._lang][key];
       }
     });
 
@@ -1798,10 +1826,6 @@ class DataComparisonMap extends HTMLElement {
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.07 1.8 1.15 3.03 2.9 3.42V20h2.25v-1.64c1.78-.34 2.85-1.43 2.85-3.04 0-2.16-1.75-2.82-3.69-3.32z"/></svg>
           <span data-i18n="btnPredict">Predict & Earn</span>
         </button>
-        <button class="btn-action btn-upgrade" id="btnUpgrade">
-          <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
-          <span>Upgrade</span>
-        </button>
         <button class="btn-action btn-account" id="btnAccount">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
           <span id="accLabel" data-i18n="btnLogReg">Log in</span>
@@ -1894,12 +1918,16 @@ class DataComparisonMap extends HTMLElement {
     </div>
 
     <div class="wiz-view" id="wizStep3">
-      <img id="wizAuthImg" src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.jpg" class="wiz-img" alt="">
+      <img id="wizAuthImg" src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png" class="wiz-img" alt="">
       <h2 class="modal-title" id="wizAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
       <p class="modal-desc" id="wizAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
       <form id="authForm" style="margin-bottom:12px;">
         <input type="email" id="authEmail" class="auth-input" data-i18n-placeholder="emailPlaceholder" placeholder="Email Address" required>
         <input type="password" id="authPass" class="auth-input" data-i18n-placeholder="passPlaceholder" placeholder="Create a Password" required>
+        <div class="auth-legal" id="wizAuthLegal">
+          <input type="checkbox" required id="wizGdprCheck">
+          <span data-i18n-html="authGdpr">I agree to the <a href="terms.html" target="_blank" class="legal-link">Terms of Service</a> and <a href="privacy.html" target="_blank" class="legal-link">Privacy Policy</a>.</span>
+        </div>
         <button type="submit" id="authSubmitBtn" class="btn-primary-large" data-i18n="btnSignUp">Sign Up & Save Points</button>
       </form>
       <button class="switch-auth-mode" id="switchAuthBtn" data-i18n="btnSwitchToLogin">Already have an account? Log in</button>
@@ -1911,12 +1939,16 @@ class DataComparisonMap extends HTMLElement {
 <div class="modal-overlay" id="authModal">
   <div class="modal-content">
     <button class="modal-close">✕</button>
-    <img id="stdAuthImg" src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.jpg" class="wiz-img" alt="">
+    <img id="stdAuthImg" src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png" class="wiz-img" alt="">
     <h2 class="modal-title" id="standaloneAuthTitle" data-i18n="authTitleSave">Save Your Points!</h2>
     <p class="modal-desc" id="standaloneAuthDesc" data-i18n="authDescSave">Create a free account to secure the points you just earned and track your prediction accuracy.</p>
     <form id="standaloneAuthForm" style="margin-bottom:12px;">
       <input type="email" id="standaloneAuthEmail" class="auth-input" data-i18n-placeholder="emailPlaceholder" placeholder="Email Address" required>
       <input type="password" id="standaloneAuthPass" class="auth-input" data-i18n-placeholder="passPlaceholder" placeholder="Password" required>
+      <div class="auth-legal" id="stdAuthLegal">
+        <input type="checkbox" required id="stdGdprCheck">
+        <span data-i18n-html="authGdpr">I agree to the <a href="terms.html" target="_blank" class="legal-link">Terms of Service</a> and <a href="privacy.html" target="_blank" class="legal-link">Privacy Policy</a>.</span>
+      </div>
       <button type="submit" id="standaloneAuthSubmitBtn" class="btn-primary-large" data-i18n="btnSignUp">Sign Up & Save Points</button>
     </form>
     <button class="switch-auth-mode" id="standaloneSwitchAuthBtn" data-i18n="btnSwitchToLogin">Already have an account? Log in</button>
@@ -1935,6 +1967,12 @@ class DataComparisonMap extends HTMLElement {
         <button class="acc-tab-btn active" data-tab="Dashboard" data-i18n="accMenuDash">Dashboard</button>
         <button class="acc-tab-btn" data-tab="Predictions" data-i18n="accMenuPred">Your Predictions</button>
         <div style="flex:1"></div>
+        <div style="margin-top: 16px; margin-bottom: 8px;">
+          <button class="btn-action btn-upgrade" id="btnUpgradeAcc" style="width: 100%; justify-content: center;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
+            <span data-i18n="btnUpgrade">Upgrade</span>
+          </button>
+        </div>
         <button class="btn-text" id="btnSignOut" data-i18n="btnSignOut" style="text-align:left; padding: 12px 16px;">Sign Out</button>
       </div>
       
