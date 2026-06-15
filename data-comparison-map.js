@@ -129,7 +129,7 @@ const I18N = {
     btnSignOut: "Odhlásit se",
     btnAccount: "Účet",
     btnLogReg: "Přihlásit / Registrovat",
-    btnPredict: "Předpovědět a získat",
+    btnPredict: "Získejte body zdarma",
     btnUpgrade: "Vylepšit",
     topicChoose: "Vyberte téma k předpovědi",
     claimInfoMore: "Odpovězte i na ostatní a získejte více bodů",
@@ -405,7 +405,7 @@ class DataComparisonMap extends HTMLElement {
     const logoEl = this.$('#navLogo'); if (logoEl) logoEl.src = baseUrl + 'logo.png';
     const logoMob = this.$('#navLogoMobile'); if (logoMob) logoMob.src = baseUrl + 'logo-mobile.png';
     const aboutBtn = this.$('#aboutBtn');
-    if (aboutBtn) aboutBtn.addEventListener('click', () => { window.parent.postMessage({ action: 'redirect', url: '/landing' }, '*'); });
+    if (aboutBtn) aboutBtn.addEventListener('click', () => { window.open('/about', '_blank'); });
 
     if (this._isDesktop) {
       const filterDiv = document.createElement('div');
