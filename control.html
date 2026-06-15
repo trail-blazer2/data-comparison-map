@@ -1,92 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RealWorldView - Command Center</title>
+  <title>RealWorldView - Řídicí centrum</title>
+  
+  <!-- Importmap for Three.js (Required for the 3D Network) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+    }
+  }
+  </script>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Enterprise Professional Theme */
     :root {
-      --bg-body: #f1f5f9; 
-      --bg-sidebar: #ffffff;
-      --bg-card: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --success: #059669;
-      --danger: #e11d48;
+      --bg-body: #020617; 
+      --bg-sidebar: #0f172a;
+      --bg-card: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --success: #10b981;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
     }
 
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
     
     /* Login Overlay */
     #loginOverlay { position: fixed; inset: 0; background: var(--bg-body); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.3s; }
-    .login-box { background: var(--bg-card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); text-align: center; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-    .login-box h2 { margin: 0 0 8px; font-weight: 700; font-size: 1.2rem; color: var(--text-main); }
+    .login-box { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); text-align: center; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+    .login-box h2 { margin: 0 0 8px; font-weight: 700; font-size: 1.4rem; color: var(--text-main); letter-spacing: -0.02em; }
     .login-box p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
-    .login-box input { width: 100%; box-sizing: border-box; padding: 12px 16px; margin-bottom: 20px; background: #f8fafc; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .login-box input { width: 100%; box-sizing: border-box; padding: 12px 16px; margin-bottom: 20px; background: #0f172a; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
     .login-box input:focus { border-color: var(--primary); }
     .login-box button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; }
     .login-box button:hover { background: var(--primary-hover); }
 
     /* Layout */
-    aside { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 1px 0 10px rgba(0,0,0,0.02); z-index: 10; }
-    .logo { padding: 24px; font-size: 1.1rem; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .logo-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+    aside { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+    .logo { padding: 24px; font-size: 1.1rem; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+    .logo-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
     
     nav { flex: 1; padding: 20px 0; display: flex; flex-direction: column; gap: 4px; }
     .nav-item { padding: 10px 24px; color: var(--text-muted); cursor: pointer; transition: 0.2s; border-left: 3px solid transparent; font-size: 0.9rem; font-weight: 500; }
-    .nav-item:hover { background: #f8fafc; color: var(--text-main); }
-    .nav-item.active { background: #eff6ff; color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+    .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
+    .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
     
-    main { flex: 1; overflow-y: auto; padding: 32px 40px; }
-    .view { display: none; animation: fade 0.3s ease; }
-    .view.active { display: block; }
+    main { flex: 1; overflow-y: auto; padding: 32px 40px; position: relative; }
+    .view { display: none; animation: fade 0.3s ease; height: 100%; flex-direction: column; }
+    .view.active { display: flex; }
 
     /* Typography & Grid */
     h1 { margin: 0 0 24px; font-weight: 700; font-size: 1.6rem; color: var(--text-main); letter-spacing: -0.02em; }
-    .section-title { font-size: 1.1rem; font-weight: 600; margin: 32px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .section-title { font-size: 1.1rem; font-weight: 600; margin: 32px 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--text-main); }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
     .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px; }
     
     /* Cards */
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
     .card-title { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; display: block; }
     .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
     .stat-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
 
-    /* Chart Containers - FIX FOR STRETCHING BUG */
+    /* Chart Containers */
     .chart-wrapper { position: relative; width: 100%; height: 260px; margin-top: 16px; }
 
     /* Tables */
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; background: #f8fafc; }
+    th { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; background: rgba(255,255,255,0.02); }
     td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-main); }
     tr:last-child td { border-bottom: none; }
-    .td-email { font-weight: 500; }
+    .td-email { font-weight: 500; color: #e2e8f0; }
     .td-pts { font-weight: 700; color: var(--primary); }
 
     /* Badges */
     .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
-    .b-blue { background: #eff6ff; color: #2563eb; }
-    .b-green { background: #ecfdf5; color: #059669; }
-    .b-gray { background: #f1f5f9; color: #475569; }
+    .b-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .b-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .b-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
 
-    /* System Integration Cards */
-    .integration-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .integration-header svg { width: 32px; height: 32px; }
-    .integration-title { font-size: 1.1rem; font-weight: 700; }
-    .system-list { list-style: none; padding: 0; margin: 0; }
-    .system-list li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-    .system-list li:last-child { border-bottom: none; }
-    .system-label { color: var(--text-muted); }
-    .system-val { font-weight: 600; color: var(--text-main); }
-    .system-val.ok { color: var(--success); display: flex; align-items: center; gap: 6px; }
-    .system-val.ok::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; display: inline-block; }
+    /* Integration Links (Infrastructure Tab) */
+    .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .integration-link:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-color: var(--primary); }
+    .integration-header { display: flex; align-items: center; gap: 16px; }
+    .integration-icon { width: 40px; height: 40px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+    .integration-icon svg { width: 22px; height: 22px; fill: currentColor; }
+    .integration-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
+    .integration-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    /* 3D Canvas Container */
+    #neural-network-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; }
 
     @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -97,10 +110,10 @@
   <div id="loginOverlay">
     <div class="login-box">
       <h2>RealWorldView</h2>
-      <p>Administrative Control Center</p>
-      <input type="password" id="adminPass" placeholder="Enter Password" autofocus>
-      <button onclick="checkAuth()">Login</button>
-      <p id="loginErr" style="color:var(--danger); font-size:0.8rem; margin-top:12px; display:none; font-weight:600;">Incorrect Password</p>
+      <p>Administrativní řídicí centrum</p>
+      <input type="password" id="adminPass" placeholder="Zadejte heslo" autofocus>
+      <button onclick="checkAuth()">Přihlásit se</button>
+      <p id="loginErr" style="color:var(--danger); font-size:0.8rem; margin-top:12px; display:none; font-weight:600;">Nesprávné heslo</p>
     </div>
   </div>
 
@@ -108,37 +121,38 @@
   <aside>
     <div class="logo"><div class="logo-dot"></div> RWV Admin</div>
     <nav>
-      <div class="nav-item active" data-target="view-overview">Overview</div>
-      <div class="nav-item" data-target="view-predictions">Prediction Analytics</div>
-      <div class="nav-item" data-target="view-users">User Directory</div>
-      <div class="nav-item" data-target="view-sources">Data Sources</div>
-      <div class="nav-item" data-target="view-system">Infrastructure</div>
+      <div class="nav-item active" data-target="view-overview">Přehled</div>
+      <div class="nav-item" data-target="view-predictions">Analytika predikcí</div>
+      <div class="nav-item" data-target="view-visualization">3D Síť uživatelů</div>
+      <div class="nav-item" data-target="view-users">Adresář uživatelů</div>
+      <div class="nav-item" data-target="view-sources">Zdroje dat</div>
+      <div class="nav-item" data-target="view-system">Infrastruktura</div>
     </nav>
   </aside>
 
   <main>
     <!-- OVERVIEW -->
     <section id="view-overview" class="view active">
-      <h1>Platform Overview</h1>
+      <h1>Přehled platformy</h1>
       <div class="grid-3">
         <div class="card">
-          <span class="card-title">Total Participants</span>
+          <span class="card-title">Celkem aktivních relací</span>
           <div class="stat-value" id="statTotalSubs">0</div>
-          <div class="stat-sub">Guest + Registered Profiles</div>
+          <div class="stat-sub">Hosté + Ověřené účty</div>
         </div>
         <div class="card">
-          <span class="card-title">Registered Accounts</span>
+          <span class="card-title">Ověřené účty</span>
           <div class="stat-value" id="statRegUsers">0</div>
-          <div class="stat-sub">Secured Database Entries</div>
+          <div class="stat-sub">Zabezpečené záznamy v databázi</div>
         </div>
         <div class="card">
-          <span class="card-title">Points Distributed</span>
-          <div class="stat-value" id="statTotalPoints">0</div>
-          <div class="stat-sub">Total user balance</div>
+          <span class="card-title">Konverze účtů</span>
+          <div class="stat-value" id="statConvRate">0%</div>
+          <div class="stat-sub">% relací s registrací</div>
         </div>
       </div>
 
-      <div class="section-title">Data Collection Funnel</div>
+      <div class="section-title">Trychtýř sběru dat</div>
       <div class="card">
         <div class="chart-wrapper">
           <canvas id="funnelChart"></canvas>
@@ -148,40 +162,48 @@
 
     <!-- PREDICTION ANALYTICS -->
     <section id="view-predictions" class="view">
-      <h1>Algorithm Sentiment Analysis</h1>
+      <h1>Analýza sentimentu algoritmu</h1>
       
       <div class="grid-2">
         <div class="card">
-          <span class="card-title">Global Macro Sentiment (Overall 'Yes' Average)</span>
+          <span class="card-title">Globální makro sentiment (Celkový průměr 'ANO')</span>
           <div class="chart-wrapper" style="height: 300px;">
             <canvas id="macroChart"></canvas>
           </div>
         </div>
         <div class="card">
-          <span class="card-title">High Conviction Indicators</span>
-          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:-5px;">Metrics with the highest consensus across the database.</p>
-          <div id="convictionList" style="margin-top: 20px;">
-            <!-- Generated via JS -->
+          <span class="card-title">Sentiment toku kapitálu (Kombinované metriky)</span>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:-5px;">Agregovaný záměr přesunout bohatství do tvrdých aktiv.</p>
+          <div class="chart-wrapper" style="height: 250px;">
+            <canvas id="combinedChart"></canvas>
           </div>
         </div>
       </div>
 
-      <div class="section-title">Topic Breakdown (% predicting YES)</div>
+      <div class="section-title">Indikátory s vysokým přesvědčením</div>
+      <div class="card" style="margin-bottom: 24px;">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Metriky s nejvyšší shodou napříč databází.</p>
+        <div id="convictionList" style="margin-top: 10px;">
+          <!-- Generated via JS -->
+        </div>
+      </div>
+
+      <div class="section-title">Rozpad témat (% predikujících ANO)</div>
       <div class="grid-3">
         <div class="card">
-          <span class="card-title">Topic 1: Health & Demo</span>
+          <span class="card-title">Zdraví a demografie</span>
           <div class="chart-wrapper">
             <canvas id="chartT1"></canvas>
           </div>
         </div>
         <div class="card">
-          <span class="card-title">Topic 2: Regional Regs</span>
+          <span class="card-title">Regionální regulace</span>
           <div class="chart-wrapper">
             <canvas id="chartT2"></canvas>
           </div>
         </div>
         <div class="card">
-          <span class="card-title">Topic 3: Supply Chain</span>
+          <span class="card-title">Globální dodavatelské řetězce</span>
           <div class="chart-wrapper">
             <canvas id="chartT3"></canvas>
           </div>
@@ -189,22 +211,33 @@
       </div>
     </section>
 
+    <!-- 3D VISUALIZATION -->
+    <section id="view-visualization" class="view">
+      <h1>Živá síť uživatelů</h1>
+      <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:16px;">
+        Uzly představují aktivní relace. Tloušťka spojení představuje sdílené tržní predikce. Barva indikuje hustotu vyplnění.
+      </p>
+      <div style="flex: 1; position: relative; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; min-height: 500px; background: #000;">
+        <canvas id="neural-network-canvas"></canvas>
+      </div>
+    </section>
+
     <!-- USERS -->
     <section id="view-users" class="view">
-      <h1>User Directory</h1>
-      <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Note: Emails are masked to comply with GDPR data protection protocols.</p>
+      <h1>Adresář uživatelů</h1>
+      <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Poznámka: E-maily jsou maskovány v souladu s protokoly ochrany dat GDPR.</p>
       <div class="card table-container" style="padding: 0;">
         <table>
           <thead>
             <tr>
-              <th>Account Hash / Email</th>
-              <th>Points Balance</th>
-              <th>Topics Completed</th>
-              <th>Account Type</th>
+              <th>Hash účtu / E-mail</th>
+              <th>Zůstatek bodů</th>
+              <th>Dokončená témata</th>
+              <th>Typ účtu</th>
             </tr>
           </thead>
           <tbody id="userTableBody">
-            <tr><td colspan="4" style="text-align:center; padding: 40px;">Fetching records...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding: 40px;">Načítání záznamů...</td></tr>
           </tbody>
         </table>
       </div>
@@ -212,20 +245,20 @@
 
     <!-- DATA SOURCES -->
     <section id="view-sources" class="view">
-      <h1>API Data Integrations</h1>
+      <h1>Integrace API dat</h1>
       <div class="card table-container" style="padding: 0;">
         <table>
           <thead>
             <tr>
-              <th>Indicator</th>
-              <th>Category</th>
-              <th>Primary Source</th>
-              <th>Year Sync</th>
-              <th>Status</th>
+              <th>Indikátor</th>
+              <th>Kategorie</th>
+              <th>Hlavní zdroj</th>
+              <th>Rok synchronizace</th>
+              <th>Stav</th>
             </tr>
           </thead>
           <tbody id="sourcesTableBody">
-            <tr><td colspan="5" style="text-align:center; padding: 40px;">Fetching local data.json...</td></tr>
+            <tr><td colspan="5" style="text-align:center; padding: 40px;">Načítání lokálního data.json...</td></tr>
           </tbody>
         </table>
       </div>
@@ -233,44 +266,67 @@
 
     <!-- SYSTEM & INFRASTRUCTURE -->
     <section id="view-system" class="view">
-      <h1>Infrastructure & Hosting</h1>
-      <div class="grid-2">
-        
-        <!-- Cloudflare Card -->
-        <div class="card">
+      <h1>Infrastruktura a hosting</h1>
+      <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Rychlé odkazy na externí administrační konzole.</p>
+      
+      <div class="grid-3">
+        <!-- Firebase -->
+        <a href="https://console.firebase.google.com/" target="_blank" class="card integration-link">
           <div class="integration-header">
-            <svg viewBox="0 0 24 24" fill="#F38020"><path d="M19.34 10.63c-.15-3.08-2.68-5.51-5.84-5.51-2.48 0-4.62 1.54-5.46 3.73-.24-.07-.49-.1-.75-.1-1.66 0-3 1.34-3 3 0 .17.03.33.06.49-1.33.56-2.27 1.87-2.27 3.39 0 2.04 1.66 3.7 3.7 3.7h13.31c2.14 0 3.88-1.74 3.88-3.88 0-1.92-1.41-3.52-3.34-3.82z"/></svg>
-            <span class="integration-title">Domain & DNS</span>
+            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#FFCA28"><path d="M3.33 17.51l8.03-13.9c.28-.48.98-.48 1.25 0l2.36 4.09-8.49 14.67-3.15-4.86z"/><path fill="#FFA000" d="M15.42 16.59L11.83 22c-.28.48-.98.48-1.25 0l-7.25-12.54 12.09 7.13z"/><path fill="#F57C00" d="M15.42 16.59l5.24-9.08c.28-.48-.06-1.07-.62-.97l-4.62 1.63-8.49 14.67 8.49-6.25z"/></svg></div>
+            <div class="integration-title">Firebase</div>
           </div>
-          <ul class="system-list">
-            <li><span class="system-label">Registrar & DNS</span><span class="system-val">Cloudflare, Inc.</span></li>
-            <li><span class="system-label">Expiration Date</span><span class="system-val">06/2027</span></li>
-            <li><span class="system-label">Network Routing</span><span class="system-val ok">Proxied (Active)</span></li>
-            <li><span class="system-label">DDoS Protection</span><span class="system-val ok">Enabled</span></li>
-          </ul>
-        </div>
+          <div class="integration-desc">Databáze a IAM autentizace. Real-time úložiště dokumentů pro uživatelské predikce.</div>
+          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">rwvtesting</span></div>
+        </a>
 
-        <!-- GitHub Card -->
-        <div class="card">
+        <!-- Google Ads -->
+        <a href="https://ads.google.com/" target="_blank" class="card integration-link">
           <div class="integration-header">
-            <svg viewBox="0 0 24 24" fill="#181717"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-            <span class="integration-title">Hosting & Deployment</span>
+            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#4285F4"><path d="M21.2 10.9l-8.5-8.5c-.8-.8-2.1-.8-2.8 0l-8.5 8.5c-.8.8-.8 2.1 0 2.8l8.5 8.5c.8.8 2.1.8 2.8 0l8.5-8.5c.8-.8.8-2.1 0-2.8zM12 18.5L5.5 12 12 5.5 18.5 12 12 18.5z"/><circle cx="12" cy="12" r="3" fill="#34A853"/></svg></div>
+            <div class="integration-title">Google Ads</div>
           </div>
-          <ul class="system-list">
-            <li><span class="system-label">Provider</span><span class="system-val">GitHub Pages</span></li>
-            <li><span class="system-label">Service Tier</span><span class="system-val">Pro (Free)</span></li>
-            <li><span class="system-label">SSL Certificate</span><span class="system-val ok">Active / Managed</span></li>
-            <li><span class="system-label">Frontend Framework</span><span class="system-val">Vanilla JS / Web Components</span></li>
-          </ul>
-        </div>
+          <div class="integration-desc">PPC kampaně a sledování konverzí. Konfigurováno pro Demand Gen a Display sítě.</div>
+          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">Ads Konzole</span></div>
+        </a>
+
+        <!-- Google Analytics -->
+        <a href="https://analytics.google.com/" target="_blank" class="card integration-link">
+          <div class="integration-header">
+            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F9AB00"><path d="M4 18h4V6H4v12zm6 0h4V10h-4v8zm6-12v12h4V12h-4z"/></svg></div>
+            <div class="integration-title">Google Analytics</div>
+          </div>
+          <div class="integration-desc">GA4 Tagging a sledování událostí. GDPR Consent Mode V2 je aktivní.</div>
+          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">GA4 Služba</span></div>
+        </a>
+
+        <!-- Cloudflare -->
+        <a href="https://dash.cloudflare.com/" target="_blank" class="card integration-link">
+          <div class="integration-header">
+            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F38020"><path d="M19.34 10.63c-.15-3.08-2.68-5.51-5.84-5.51-2.48 0-4.62 1.54-5.46 3.73-.24-.07-.49-.1-.75-.1-1.66 0-3 1.34-3 3 0 .17.03.33.06.49-1.33.56-2.27 1.87-2.27 3.39 0 2.04 1.66 3.7 3.7 3.7h13.31c2.14 0 3.88-1.74 3.88-3.88 0-1.92-1.41-3.52-3.34-3.82z"/></svg></div>
+            <div class="integration-title">Cloudflare</div>
+          </div>
+          <div class="integration-desc">Registrátor domény a DNS směrování. Skryto za proxy s ochranou proti DDoS útokům.</div>
+          <div class="status-row"><span class="badge b-green">Přes proxy</span><span style="font-size:0.75rem;color:var(--text-muted)">Exp: 06/2027</span></div>
+        </a>
+
+        <!-- GitHub -->
+        <a href="https://github.com/" target="_blank" class="card integration-link">
+          <div class="integration-header">
+            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></div>
+            <div class="integration-title">GitHub Pages</div>
+          </div>
+          <div class="integration-desc">Frontend hosting a nasazení. Implementace čistého JavaScriptu a webových komponent.</div>
+          <div class="status-row"><span class="badge b-green">Nasazeno</span><span style="font-size:0.75rem;color:var(--text-muted)">Pro úroveň (Zdarma)</span></div>
+        </a>
       </div>
       
-      <div class="card">
-        <h3 style="margin-top:0; font-size: 1rem;">Database Configuration</h3>
+      <div class="card" style="margin-top: 24px;">
+        <h3 style="margin-top:0; font-size: 1rem;">Konfigurace databáze</h3>
         <ul class="system-list">
-          <li><span class="system-label">Database Type</span><span class="system-val">Google Firestore (NoSQL)</span></li>
-          <li><span class="system-label">Authentication</span><span class="system-val">Firebase IAM (Email/Password)</span></li>
-          <li><span class="system-label">Connection Status</span><span class="system-val ok" id="dbStatus">Connected</span></li>
+          <li><span class="system-label">Typ databáze</span><span class="system-val">Google Firestore (NoSQL)</span></li>
+          <li><span class="system-label">Autentizace</span><span class="system-val">Firebase IAM (E-mail/Heslo)</span></li>
+          <li><span class="system-label">Stav připojení</span><span class="system-val ok" id="dbStatus">Připojeno</span></li>
         </ul>
       </div>
     </section>
@@ -294,6 +350,7 @@
 
     let db;
     let allAnswers = [];
+    let usersArray = [];
 
     // Simple Frontend Password Logic
     window.checkAuth = function() {
@@ -309,7 +366,7 @@
           fetchData();
           fetchDataJson();
         } catch(e) {
-          document.getElementById('dbStatus').textContent = "Connection Error";
+          document.getElementById('dbStatus').textContent = "Chyba připojení";
           document.getElementById('dbStatus').className = "system-val term-err";
         }
       } else {
@@ -328,12 +385,17 @@
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         nav.classList.add('active');
         document.getElementById(nav.dataset.target).classList.add('active');
+
+        // Force resize for Three.js canvas when tab opens
+        if(nav.dataset.target === 'view-visualization') {
+            window.dispatchEvent(new Event('resize'));
+        }
       });
     });
 
     // Mask Email for GDPR Compliance
     function maskEmail(email) {
-      if (!email) return 'Guest Session';
+      if (!email) return 'Relace hosta';
       const [name, domain] = email.split('@');
       if (!domain) return email;
       return name.charAt(0) + '***@' + domain;
@@ -347,53 +409,54 @@
 
         let users = [];
         let guests = [];
+        usersArray = []; // Store globally for ThreeJS
 
         usersSnap.forEach(doc => {
             const data = doc.data();
             users.push(data);
+            usersArray.push(data);
             if(data.answers) allAnswers.push(data.answers);
         });
 
         guestsSnap.forEach(doc => {
             const data = doc.data();
             guests.push(data);
+            usersArray.push(data);
             if(data.answers) allAnswers.push(data.answers);
         });
 
         const totalSubs = users.length + guests.length;
+        const convRate = totalSubs > 0 ? Math.round((users.length / totalSubs) * 100) : 0;
         
-        let totalDataPoints = 0;
         let complete3Topics = 0;
-        
         allAnswers.forEach(ansSet => { 
-            const k = Object.keys(ansSet).length;
-            totalDataPoints += k; 
-            if(k === 9) complete3Topics++; // 9 questions total = full completion
+            if(Object.keys(ansSet).length === 9) complete3Topics++; 
         });
 
         // Update Overview Metrics
         document.getElementById('statTotalSubs').textContent = totalSubs;
         document.getElementById('statRegUsers').textContent = users.length;
-        
+        document.getElementById('statConvRate').textContent = convRate + '%';
+
         let totalPointsCalculated = 0;
         users.forEach(u => totalPointsCalculated += (u.points || 0));
         guests.forEach(g => totalPointsCalculated += (g.points || 0));
-        document.getElementById('statTotalPoints').textContent = totalPointsCalculated;
+        document.getElementById('statTotalPoints').textContent = totalPointsCalculated.toLocaleString();
 
         // Populate User Table
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = '';
         
         // Combine arrays for table, guests at the bottom
-        const combinedList = [...users.map(u => ({...u, type: 'Registered'})), ...guests.map(g => ({...g, type: 'Guest'}))];
+        const combinedList = [...users.map(u => ({...u, type: 'Registrovaný'})), ...guests.map(g => ({...g, type: 'Host'}))];
         
         if (combinedList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px;">No data collected yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px;">Zatím nebyla shromážděna žádná data.</td></tr>';
         } else {
             // Sort by points descending
             combinedList.sort((a,b) => (b.points || 0) - (a.points || 0)).forEach(u => {
                 const tr = document.createElement('tr');
-                const badgeClass = u.type === 'Registered' ? 'b-blue' : 'b-gray';
+                const badgeClass = u.type === 'Registrovaný' ? 'b-blue' : 'b-gray';
                 tr.innerHTML = `
                     <td class="td-email">${maskEmail(u.email)}</td>
                     <td class="td-pts">${u.points || 0}</td>
@@ -405,10 +468,15 @@
         }
 
         renderCharts(totalSubs, complete3Topics, users.length);
+        
+        // Trigger ThreeJS Generation
+        if(window.buildUserNetwork) {
+            window.buildUserNetwork(usersArray);
+        }
 
       } catch (e) {
         console.error("Firebase fetch error:", e);
-        document.getElementById('userTableBody').innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center;">Error connecting to Database. Check Config.</td></tr>';
+        document.getElementById('userTableBody').innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center; padding:30px;">Chyba připojení k databázi. Zkontrolujte konfiguraci.</td></tr>';
       }
     }
 
@@ -417,11 +485,11 @@
       Chart.defaults.color = '#64748b';
       Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-      // 1. Funnel Chart (Bar chart masquerading as funnel)
+      // 1. Funnel Chart
       new Chart(document.getElementById('funnelChart'), {
         type: 'bar',
         data: {
-          labels: ['Total Profiles Created', 'Completed All Topics', 'Registered Accounts'],
+          labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
           datasets: [{
             data: [totalGuests, totalComplete, totalReg],
             backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'],
@@ -431,7 +499,7 @@
         options: {
           indexAxis: 'y', responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-          scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false }, ticks: { font: {weight: 'bold'} } } }
+          scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } }
         }
       });
 
@@ -439,15 +507,12 @@
       const calcYesPercent = (qId) => {
         let yes = 0, total = 0;
         allAnswers.forEach(ans => {
-            if (ans[qId]) {
-                total++;
-                if (ans[qId] === 'yes') yes++;
-            }
+            if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; }
         });
         return total > 0 ? Math.round((yes / total) * 100) : 0;
       };
 
-      // Calculate Topic Averages
+      // Topic Averages
       const t1_avg = Math.round((calcYesPercent('q1_1') + calcYesPercent('q1_2') + calcYesPercent('q1_3')) / 3) || 0;
       const t2_avg = Math.round((calcYesPercent('q2_1') + calcYesPercent('q2_2') + calcYesPercent('q2_3')) / 3) || 0;
       const t3_avg = Math.round((calcYesPercent('q3_1') + calcYesPercent('q3_2') + calcYesPercent('q3_3')) / 3) || 0;
@@ -456,41 +521,58 @@
       new Chart(document.getElementById('macroChart'), {
         type: 'polarArea',
         data: {
-          labels: ['Health & Demo', 'Regs & Policies', 'Supply Chains'],
+          labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'],
           datasets: [{
             data: [t1_avg, t2_avg, t3_avg],
             backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)']
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0 } } }
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
       });
 
-      // 3. Conviction Matrix List
+      // 3. Combined Flow Sentiment (Doughnut)
+      const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
+      const statusQuo = 100 - flightToSafety;
+
+      new Chart(document.getElementById('combinedChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'],
+          datasets: [{
+            data: [flightToSafety, statusQuo],
+            backgroundColor: ['#f59e0b', '#1e293b'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+      });
+
+      // 4. Conviction Matrix List
       const allQStats = [
-        { name: "Reduce Meat (Q1)", val: calcYesPercent('q1_1') },
-        { name: "Gold > Cash (Q2)", val: calcYesPercent('q1_2') },
-        { name: "Mining Risks (Q3)", val: calcYesPercent('q1_3') },
-        { name: "Leave EU Assets (Q4)", val: calcYesPercent('q2_1') },
-        { name: "Industry Shutdown (Q5)", val: calcYesPercent('q2_2') },
-        { name: "Cmdty over Stocks (Q6)", val: calcYesPercent('q2_3') },
-        { name: "Replace East (Q7)", val: calcYesPercent('q3_1') },
-        { name: "Oil Spike (Q8)", val: calcYesPercent('q3_2') },
-        { name: "Tech Shortage (Q9)", val: calcYesPercent('q3_3') }
+        { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') },
+        { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') },
+        { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
+        { name: "Opuštění EU aktiv (Q4)", val: calcYesPercent('q2_1') },
+        { name: "Odstávka průmyslu (Q5)", val: calcYesPercent('q2_2') },
+        { name: "Komodity > Akcie (Q6)", val: calcYesPercent('q2_3') },
+        { name: "Nahrazení Východu (Q7)", val: calcYesPercent('q3_1') },
+        { name: "Růst cen ropy (Q8)", val: calcYesPercent('q3_2') },
+        { name: "Nedostatek tech. (Q9)", val: calcYesPercent('q3_3') }
       ];
-      // Sort to find the highest convictions (closest to 100 or 0)
       allQStats.sort((a, b) => Math.abs(50 - b.val) - Math.abs(50 - a.val));
       
       const convList = document.getElementById('convictionList');
       if (allAnswers.length === 0) {
-        convList.innerHTML = '<p style="color:var(--text-muted)">Waiting for data...</p>';
+        convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>';
       } else {
         // Take top 3 highest convictions
         allQStats.slice(0, 3).forEach(item => {
             const isHigh = item.val >= 50;
             convList.innerHTML += `
               <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                <span style="font-weight:500;">${item.name}</span>
-                <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'YES' : 'NO'}</span>
+                <span style="font-weight:500; color:var(--text-main);">${item.name}</span>
+                <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span>
               </div>
             `;
         });
@@ -506,31 +588,22 @@
         }
       };
 
-      // Topic 1
       new Chart(document.getElementById('chartT1'), {
         type: 'bar',
-        data: {
-          labels: ['Meat Reduct.', 'Buy Gold', 'Mining Disrupt.'],
-          datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }]
-        }, options: barOpt
+        data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] },
+        options: barOpt
       });
 
-      // Topic 2
       new Chart(document.getElementById('chartT2'), {
         type: 'bar',
-        data: {
-          labels: ['Leave Assets', 'Ind. Shutdown', 'Cmdty Hedge'],
-          datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }]
-        }, options: barOpt
+        data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] },
+        options: barOpt
       });
 
-      // Topic 3
       new Chart(document.getElementById('chartT3'), {
         type: 'bar',
-        data: {
-          labels: ['Replace East', 'Oil Spike', 'Tech Shortage'],
-          datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }]
-        }, options: barOpt
+        data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] },
+        options: barOpt
       });
     }
 
@@ -545,7 +618,6 @@
             Object.entries(data).forEach(([key, val]) => {
                 if(key === '_meta') return;
                 
-                // Get Source Names and the Specific Year used
                 let sourceNames = [];
                 let latestYear = "N/A";
                 Object.values(val.sources).forEach(s => {
@@ -559,14 +631,219 @@
                     <td style="color:var(--text-muted)">${val.category.toUpperCase()}</td>
                     <td>${sourceNames.join(', ')}</td>
                     <td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td>
-                    <td><span class="badge b-green">Sync OK</span></td>
+                    <td><span class="badge b-green">Synch. OK</span></td>
                 `;
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            document.getElementById('sourcesTableBody').innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center;">Could not load local data.json</td></tr>';
+            document.getElementById('sourcesTableBody').innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center;">Načítání lokálního data.json selhalo.</td></tr>';
         }
     }
+  </script>
+
+  <!-- THREE.JS 3D NETWORK LOGIC -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // A simpler shader for the dark theme
+    const nodeVertexShader = `
+      attribute float nodeSize;
+      varying vec3 vColor;
+      void main() {
+        vColor = vec3(0.22, 0.51, 0.96); // Blue 500
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = nodeSize * (150.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `;
+    const nodeFragmentShader = `
+      varying vec3 vColor;
+      void main() {
+        float dist = length(2.0 * gl_PointCoord - 1.0);
+        if (dist > 1.0) discard;
+        float alpha = 1.0 - smoothstep(0.5, 1.0, dist);
+        gl_FragColor = vec4(vColor, alpha * 0.8);
+      }
+    `;
+
+    const connVertexShader = `
+      attribute float connectionStrength;
+      varying float vAlpha;
+      void main() {
+        vAlpha = connectionStrength;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+    const connFragmentShader = `
+      varying float vAlpha;
+      void main() {
+        gl_FragColor = vec4(0.22, 0.51, 0.96, vAlpha * 0.4);
+      }
+    `;
+
+    class Node {
+        constructor(position) {
+            this.position = position;
+            this.connections = [];
+            this.size = 1.0;
+            this.userData = null;
+        }
+        addConnection(node, strength = 1.0) {
+            if (!this.isConnectedTo(node)) {
+                this.connections.push({ node, strength });
+                node.connections.push({ node: this, strength });
+            }
+        }
+        isConnectedTo(node) { return this.connections.some(conn => conn.node === node); }
+    }
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+    const container = document.getElementById('view-visualization');
+    const canvas = document.getElementById('neural-network-canvas');
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 0, 45);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setClearColor(0x020617); // Match body bg
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
+    controls.enablePan = false;
+
+    let nodesMesh = null, connectionsMesh = null;
+
+    window.buildUserNetwork = function(users) {
+        if(!users) users = [];
+        
+        if (nodesMesh) { scene.remove(nodesMesh); nodesMesh.geometry.dispose(); nodesMesh.material.dispose(); }
+        if (connectionsMesh) { scene.remove(connectionsMesh); connectionsMesh.geometry.dispose(); connectionsMesh.material.dispose(); }
+
+        let nodes = [];
+        let rootNode = new Node(new THREE.Vector3(0, 0, 0)); 
+        rootNode.size = 2.0; 
+        nodes.push(rootNode);
+
+        const radius = 20;
+        const userNodes = [];
+
+        // 1. Create a node for each user
+        users.forEach((u, i) => {
+            const phi = Math.acos(1 - 2 * (i + 0.5) / users.length);
+            const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+            const pos = new THREE.Vector3(
+                radius * Math.cos(theta) * Math.sin(phi),
+                radius * Math.sin(theta) * Math.sin(phi),
+                radius * Math.cos(phi)
+            );
+            const node = new Node(pos);
+            node.userData = u;
+            node.size = 0.8 + (Object.keys(u.answers || {}).length * 0.2); // Bigger node = more answers
+            nodes.push(node);
+            userNodes.push(node);
+            
+            // Connect to core loosely
+            rootNode.addConnection(node, 0.1);
+        });
+
+        // 2. Connect users based on shared answers
+        for (let i = 0; i < userNodes.length; i++) {
+            for (let j = i + 1; j < userNodes.length; j++) {
+                const u1 = userNodes[i].userData.answers || {};
+                const u2 = userNodes[j].userData.answers || {};
+                let shared = 0;
+                const questions = Object.keys(u1);
+                questions.forEach(q => { if (u2[q] && u1[q] === u2[q]) shared++; });
+                
+                if (shared > 0) {
+                    const strength = (shared / 9); 
+                    userNodes[i].addConnection(userNodes[j], strength * 2);
+                }
+            }
+        }
+
+        // 3. Add ambient nodes if too empty
+        if (users.length < 30) {
+            for(let i=0; i < (40 - users.length); i++) {
+                const pos = new THREE.Vector3(
+                    THREE.MathUtils.randFloatSpread(50),
+                    THREE.MathUtils.randFloatSpread(50),
+                    THREE.MathUtils.randFloatSpread(50)
+                );
+                const aNode = new Node(pos);
+                aNode.size = 0.4;
+                nodes.push(aNode);
+            }
+        }
+
+        // Render Nodes
+        const nodePositions = [], nodeSizes = [];
+        nodes.forEach(node => {
+            nodePositions.push(node.position.x, node.position.y, node.position.z);
+            nodeSizes.push(node.size);
+        });
+
+        const nGeo = new THREE.BufferGeometry();
+        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
+        nGeo.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
+        const nMat = new THREE.ShaderMaterial({
+            vertexShader: nodeVertexShader, fragmentShader: nodeFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+        });
+        nodesMesh = new THREE.Points(nGeo, nMat);
+        scene.add(nodesMesh);
+
+        // Render Connections
+        const connPositions = [], connStrengths = [];
+        const processed = new Set();
+        nodes.forEach((node, nodeIndex) => {
+            node.connections.forEach(conn => {
+                const connectedIndex = nodes.indexOf(conn.node);
+                if (connectedIndex === -1) return;
+                const key = [Math.min(nodeIndex, connectedIndex), Math.max(nodeIndex, connectedIndex)].join('-');
+                if (!processed.has(key)) {
+                    processed.add(key);
+                    connPositions.push(node.position.x, node.position.y, node.position.z);
+                    connPositions.push(conn.node.position.x, conn.node.position.y, conn.node.position.z);
+                    connStrengths.push(conn.strength, conn.strength);
+                }
+            });
+        });
+
+        const cGeo = new THREE.BufferGeometry();
+        cGeo.setAttribute('position', new THREE.Float32BufferAttribute(connPositions, 3));
+        cGeo.setAttribute('connectionStrength', new THREE.Float32BufferAttribute(connStrengths, 1));
+        const cMat = new THREE.ShaderMaterial({
+            vertexShader: connVertexShader, fragmentShader: connFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+        });
+        connectionsMesh = new THREE.LineSegments(cGeo, cMat);
+        scene.add(connectionsMesh);
+    };
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        if (nodesMesh) nodesMesh.rotation.y += 0.001;
+        if (connectionsMesh) connectionsMesh.rotation.y += 0.001;
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        if(container.clientWidth === 0) return; // Tab is hidden
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+    
+    window.addEventListener('resize', onWindowResize);
+    
+    // Init empty network
+    window.buildUserNetwork([]);
+    animate();
+
   </script>
 </body>
 </html>
