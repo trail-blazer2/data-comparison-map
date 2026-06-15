@@ -17,7 +17,7 @@
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Enterprise Professional Theme */
+    /* Enterprise Professional Dark Theme */
     :root {
       --bg-body: #020617; 
       --bg-sidebar: #0f172a;
@@ -70,7 +70,7 @@
     .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
     .stat-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
 
-    /* Chart Containers */
+    /* Chart Containers - FIX FOR STRETCHING BUG */
     .chart-wrapper { position: relative; width: 100%; height: 260px; margin-top: 16px; }
 
     /* Tables */
@@ -89,7 +89,7 @@
     .b-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
 
     /* Integration Links (Infrastructure Tab) */
-    .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; cursor: pointer; }
     .integration-link:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-color: var(--primary); }
     .integration-header { display: flex; align-items: center; gap: 16px; }
     .integration-icon { width: 40px; height: 40px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
@@ -97,6 +97,15 @@
     .integration-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
     .integration-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
     .status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    /* Infrastructure Lists */
+    .system-list { list-style: none; padding: 0; margin: 0; }
+    .system-list li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .system-list li:last-child { border-bottom: none; }
+    .system-label { color: var(--text-muted); }
+    .system-val { font-weight: 600; color: var(--text-main); }
+    .system-val.ok { color: var(--success); display: flex; align-items: center; gap: 6px; }
+    .system-val.ok::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; display: inline-block; }
 
     /* 3D Canvas Container */
     #neural-network-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; }
@@ -152,10 +161,17 @@
         </div>
       </div>
 
-      <div class="section-title">Trychtýř sběru dat</div>
-      <div class="card">
-        <div class="chart-wrapper">
-          <canvas id="funnelChart"></canvas>
+      <div class="grid-2">
+        <div class="card">
+          <span class="card-title">Celkem distribuováno bodů</span>
+          <div class="stat-value" id="statTotalPoints">0</div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top: 8px;">Součet bodů na všech uživatelských účtech.</p>
+        </div>
+        <div class="card">
+          <span class="card-title">Trychtýř sběru dat</span>
+          <div class="chart-wrapper" style="height: 120px;">
+            <canvas id="funnelChart"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -322,7 +338,7 @@
       </div>
       
       <div class="card" style="margin-top: 24px;">
-        <h3 style="margin-top:0; font-size: 1rem;">Konfigurace databáze</h3>
+        <h3 style="margin-top:0; font-size: 1.1rem; color: var(--text-main);">Konfigurace databáze</h3>
         <ul class="system-list">
           <li><span class="system-label">Typ databáze</span><span class="system-val">Google Firestore (NoSQL)</span></li>
           <li><span class="system-label">Autentizace</span><span class="system-val">Firebase IAM (E-mail/Heslo)</span></li>
@@ -366,8 +382,12 @@
           fetchData();
           fetchDataJson();
         } catch(e) {
-          document.getElementById('dbStatus').textContent = "Chyba připojení";
-          document.getElementById('dbStatus').className = "system-val term-err";
+          const el = document.getElementById('dbStatus');
+          if(el) {
+              el.textContent = "Chyba připojení";
+              el.className = "system-val";
+              el.style.color = "var(--danger)";
+          }
         }
       } else {
         document.getElementById('loginErr').style.display = 'block';
@@ -433,38 +453,42 @@
             if(Object.keys(ansSet).length === 9) complete3Topics++; 
         });
 
-        // Update Overview Metrics
-        document.getElementById('statTotalSubs').textContent = totalSubs;
-        document.getElementById('statRegUsers').textContent = users.length;
-        document.getElementById('statConvRate').textContent = convRate + '%';
+        // Safe DOM Updates
+        const elTotalSubs = document.getElementById('statTotalSubs');
+        const elRegUsers = document.getElementById('statRegUsers');
+        const elConvRate = document.getElementById('statConvRate');
+        const elTotalPoints = document.getElementById('statTotalPoints');
+
+        if(elTotalSubs) elTotalSubs.textContent = totalSubs;
+        if(elRegUsers) elRegUsers.textContent = users.length;
+        if(elConvRate) elConvRate.textContent = convRate + '%';
 
         let totalPointsCalculated = 0;
         users.forEach(u => totalPointsCalculated += (u.points || 0));
         guests.forEach(g => totalPointsCalculated += (g.points || 0));
-        document.getElementById('statTotalPoints').textContent = totalPointsCalculated.toLocaleString();
+        if(elTotalPoints) elTotalPoints.textContent = totalPointsCalculated.toLocaleString();
 
         // Populate User Table
         const tbody = document.getElementById('userTableBody');
-        tbody.innerHTML = '';
-        
-        // Combine arrays for table, guests at the bottom
-        const combinedList = [...users.map(u => ({...u, type: 'Registrovaný'})), ...guests.map(g => ({...g, type: 'Host'}))];
-        
-        if (combinedList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px;">Zatím nebyla shromážděna žádná data.</td></tr>';
-        } else {
-            // Sort by points descending
-            combinedList.sort((a,b) => (b.points || 0) - (a.points || 0)).forEach(u => {
-                const tr = document.createElement('tr');
-                const badgeClass = u.type === 'Registrovaný' ? 'b-blue' : 'b-gray';
-                tr.innerHTML = `
-                    <td class="td-email">${maskEmail(u.email)}</td>
-                    <td class="td-pts">${u.points || 0}</td>
-                    <td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td>
-                    <td><span class="badge ${badgeClass}">${u.type}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
+        if(tbody) {
+            tbody.innerHTML = '';
+            const combinedList = [...users.map(u => ({...u, type: 'Registrovaný'})), ...guests.map(g => ({...g, type: 'Host'}))];
+            
+            if (combinedList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:30px;">Zatím nebyla shromážděna žádná data.</td></tr>';
+            } else {
+                combinedList.sort((a,b) => (b.points || 0) - (a.points || 0)).forEach(u => {
+                    const tr = document.createElement('tr');
+                    const badgeClass = u.type === 'Registrovaný' ? 'b-blue' : 'b-gray';
+                    tr.innerHTML = `
+                        <td class="td-email">${maskEmail(u.email)}</td>
+                        <td class="td-pts">${u.points || 0}</td>
+                        <td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td>
+                        <td><span class="badge ${badgeClass}">${u.type}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
 
         renderCharts(totalSubs, complete3Topics, users.length);
@@ -476,7 +500,8 @@
 
       } catch (e) {
         console.error("Firebase fetch error:", e);
-        document.getElementById('userTableBody').innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center; padding:30px;">Chyba připojení k databázi. Zkontrolujte konfiguraci.</td></tr>';
+        const tbody = document.getElementById('userTableBody');
+        if(tbody) tbody.innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center; padding:30px;">Chyba připojení k databázi. Zkontrolujte konfiguraci.</td></tr>';
       }
     }
 
@@ -486,22 +511,25 @@
       Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
       // 1. Funnel Chart
-      new Chart(document.getElementById('funnelChart'), {
-        type: 'bar',
-        data: {
-          labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
-          datasets: [{
-            data: [totalGuests, totalComplete, totalReg],
-            backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'],
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } }
-        }
-      });
+      const funnelCanvas = document.getElementById('funnelChart');
+      if(funnelCanvas) {
+          new Chart(funnelCanvas, {
+            type: 'bar',
+            data: {
+              labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
+              datasets: [{
+                data: [totalGuests, totalComplete, totalReg],
+                backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'],
+                borderRadius: 6
+              }]
+            },
+            options: {
+              indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } }
+            }
+          });
+      }
 
       // Helper to calculate YES percentages
       const calcYesPercent = (qId) => {
@@ -518,35 +546,41 @@
       const t3_avg = Math.round((calcYesPercent('q3_1') + calcYesPercent('q3_2') + calcYesPercent('q3_3')) / 3) || 0;
 
       // 2. Global Macro Sentiment (Polar Area)
-      new Chart(document.getElementById('macroChart'), {
-        type: 'polarArea',
-        data: {
-          labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'],
-          datasets: [{
-            data: [t1_avg, t2_avg, t3_avg],
-            backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
-      });
+      const macroCanvas = document.getElementById('macroChart');
+      if(macroCanvas) {
+          new Chart(macroCanvas, {
+            type: 'polarArea',
+            data: {
+              labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'],
+              datasets: [{
+                data: [t1_avg, t2_avg, t3_avg],
+                backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)']
+              }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
+          });
+      }
 
       // 3. Combined Flow Sentiment (Doughnut)
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
 
-      new Chart(document.getElementById('combinedChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'],
-          datasets: [{
-            data: [flightToSafety, statusQuo],
-            backgroundColor: ['#f59e0b', '#1e293b'],
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
-      });
+      const combinedCanvas = document.getElementById('combinedChart');
+      if(combinedCanvas) {
+          new Chart(combinedCanvas, {
+            type: 'doughnut',
+            data: {
+              labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'],
+              datasets: [{
+                data: [flightToSafety, statusQuo],
+                backgroundColor: ['#f59e0b', '#1e293b'],
+                borderWidth: 0,
+                hoverOffset: 4
+              }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
+          });
+      }
 
       // 4. Conviction Matrix List
       const allQStats = [
@@ -563,19 +597,20 @@
       allQStats.sort((a, b) => Math.abs(50 - b.val) - Math.abs(50 - a.val));
       
       const convList = document.getElementById('convictionList');
-      if (allAnswers.length === 0) {
-        convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>';
-      } else {
-        // Take top 3 highest convictions
-        allQStats.slice(0, 3).forEach(item => {
-            const isHigh = item.val >= 50;
-            convList.innerHTML += `
-              <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                <span style="font-weight:500; color:var(--text-main);">${item.name}</span>
-                <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span>
-              </div>
-            `;
-        });
+      if(convList) {
+          if (allAnswers.length === 0) {
+            convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>';
+          } else {
+            allQStats.slice(0, 3).forEach(item => {
+                const isHigh = item.val >= 50;
+                convList.innerHTML += `
+                  <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                    <span style="font-weight:500; color:var(--text-main);">${item.name}</span>
+                    <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span>
+                  </div>
+                `;
+            });
+          }
       }
 
       // Bar Charts Shared Options
@@ -583,28 +618,19 @@
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            x: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' }, ticks: { callback: v => v + '%' } },
+            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } },
             y: { grid: { display: false }, ticks: { font: {size: 11} } }
         }
       };
 
-      new Chart(document.getElementById('chartT1'), {
-        type: 'bar',
-        data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] },
-        options: barOpt
-      });
+      const cT1 = document.getElementById('chartT1');
+      if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
 
-      new Chart(document.getElementById('chartT2'), {
-        type: 'bar',
-        data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] },
-        options: barOpt
-      });
+      const cT2 = document.getElementById('chartT2');
+      if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
 
-      new Chart(document.getElementById('chartT3'), {
-        type: 'bar',
-        data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] },
-        options: barOpt
-      });
+      const cT3 = document.getElementById('chartT3');
+      if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
     }
 
     // Fetch data.json config for Sources Tab
@@ -613,6 +639,7 @@
             const res = await fetch('data.json');
             const data = await res.json();
             const tbody = document.getElementById('sourcesTableBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             
             Object.entries(data).forEach(([key, val]) => {
@@ -636,7 +663,8 @@
                 tbody.appendChild(tr);
             });
         } catch (e) {
-            document.getElementById('sourcesTableBody').innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center;">Načítání lokálního data.json selhalo.</td></tr>';
+            const tbody = document.getElementById('sourcesTableBody');
+            if(tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center; padding: 30px;">Načítání lokálního data.json selhalo.</td></tr>';
         }
     }
   </script>
