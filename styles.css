@@ -225,7 +225,7 @@
 .modal-close:hover { background: rgba(30, 58, 95, 0.15); }
 
 /* Images in Wizard */
-.wiz-img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+.wiz-img { width: 100%; height: 160px; object-fit: scale-down; border-radius: 12px;}
 .wiz-topic-img { width: 100%; height: 100px; object-fit: cover; border-radius: 10px; margin-top: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
 
 /* Stepper for Wizard */
