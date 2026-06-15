@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | RealWorldView</title>
+  <meta name="description" content="For anyone who's ever thought: 'That number doesn't feel right.' Discover how RealWorldView maps global data discrepancies.">
+  
+  <style>
+    /* =========================================
+       BASE STYLES & VARIABLES (Matching your app)
+       ========================================= */
+    :root {
+      --primary: #1e3a5f;
+      --secondary: #34d399;
+      --bg-light: #f8fafc;
+      --text-main: #1a1a2e;
+      --text-muted: #576574;
+    }
+    
+    html, body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: #f0f4f8; /* Soft background */
+      color: var(--text-main);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: all 0.3s ease; border: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #0a1628; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30,58,95,0.2); }
+    .btn-secondary { background: rgba(52, 211, 153, 0.15); color: #059669; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .btn-secondary:hover { background: rgba(52, 211, 153, 0.25); transform: translateY(-2px); }
+    
+    /* Glassmorphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    }
+
+    /* =========================================
+       NAVIGATION
+       ========================================= */
+    header {
+      position: sticky; top: 0; z-index: 1000;
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .nav-content { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+    .nav-logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .nav-logo img { height: 32px; }
+    .nav-links { display: flex; gap: 16px; align-items: center; }
+
+    /* =========================================
+       HERO SECTION
+       ========================================= */
+    .hero { padding: 80px 0; overflow: hidden; position: relative; }
+    .hero .container { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .hero h1 { font-size: 3.5rem; line-height: 1.1; color: var(--primary); margin: 0 0 24px; letter-spacing: -1px; }
+    .hero p { font-size: 1.25rem; color: var(--text-muted); margin: 0 0 32px; line-height: 1.6; }
+    .hero-img { width: 100%; border-radius: 24px; transform: scale(1.05); }
+
+    /* =========================================
+       LOGOS SECTION
+       ========================================= */
+    .logos { background: var(--primary); color: #fff; padding: 40px 0; text-align: center; }
+    .logos h3 { font-size: 0.85rem; letter-spacing: 2px; opacity: 0.7; margin: 0 0 24px; text-transform: uppercase; }
+    .logo-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; align-items: center; }
+    .logo-grid img { height: 40px; filter: brightness(0) invert(1); opacity: 0.8; transition: opacity 0.3s; }
+    .logo-grid img:hover { opacity: 1; }
+
+    /* =========================================
+       HOW IT WORKS
+       ========================================= */
+    .how-it-works { padding: 100px 0; text-align: center; }
+    .section-title { font-size: 2.5rem; color: var(--primary); margin-bottom: 60px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+    .card { padding: 30px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .card img { width: 100%; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .card h3 { font-size: 1.25rem; color: var(--primary); margin: 0 0 12px; }
+    .card p { color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+    /* =========================================
+       DEMO CTA SECTION
+       ========================================= */
+    .demo-cta { background: linear-gradient(135deg, #d1fae5, #ecfdf5); padding: 60px 0; text-align: center; border-radius: 24px; margin: 0 24px 100px; }
+    .demo-cta h2 { font-size: 2.2rem; color: var(--primary); margin: 0 0 16px; }
+    .demo-cta p { font-size: 1.1rem; color: var(--text-muted); margin: 0 0 32px; max-width: 600px; margin-inline: auto; }
+
+    /* =========================================
+       REAL STORIES
+       ========================================= */
+    .real-stories { padding: 0 0 100px; text-align: center; }
+    .story-card { text-align: center; padding-bottom: 24px; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .story-card img { width: 100%; height: 240px; object-fit: cover; }
+    .story-card h3 { color: var(--primary); margin: 20px 0 10px; }
+    .story-card p { color: var(--text-muted); padding: 0 20px; font-size: 0.95rem; }
+
+    /* =========================================
+       USE CASES (PARALLAX)
+       ========================================= */
+    .use-cases { 
+      padding: 120px 0; position: relative; color: var(--primary); text-align: center;
+      background: url('https://static.wixstatic.com/media/036bc3_e2adb43c4b8643498ef500181f1912f2~mv2.jpg/v1/fill/w_1920,h_1080,al_c,q_85/bg.jpg') center/cover fixed;
+    }
+    .use-cases::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); }
+    .use-cases .container { position: relative; z-index: 1; }
+    .use-case-card { background: rgba(255,255,255,0.85); padding: 40px 24px; border-radius: 24px; }
+    .use-case-card img { height: 60px; margin-bottom: 20px; }
+
+    /* =========================================
+       TESTIMONIALS
+       ========================================= */
+    .testimonials { padding: 100px 0; background: var(--primary); color: #fff; text-align: center; }
+    .testimonials .section-title { color: #fff; }
+    .test-card { 
+      position: relative; border-radius: 20px; overflow: hidden; height: 350px; 
+      display: flex; flex-direction: column; justify-content: flex-end; padding: 30px; text-align: center;
+    }
+    .test-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.6; }
+    .test-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.2)); z-index: 1; }
+    .test-card-content { position: relative; z-index: 2; }
+    .test-card h3 { color: var(--secondary); margin: 0 0 4px; font-size: 1.1rem; }
+    .test-card span { font-size: 0.85rem; opacity: 0.8; display: block; margin-bottom: 16px; }
+    .test-card p { font-size: 1.05rem; font-style: italic; margin: 0; line-height: 1.5; }
+
+    /* =========================================
+       FINAL CTA
+       ========================================= */
+    .final-cta {
+      padding: 120px 0; text-align: center; position: relative;
+      background: url('https://static.wixstatic.com/media/036bc3_0cff4ca56dee421289c0801fac755ea8~mv2.jpg/v1/fill/w_1920,h_800,al_c,q_85/bg.jpg') center/cover;
+    }
+    .final-cta::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.4); backdrop-filter: blur(10px); }
+    .final-cta .glass { max-width: 600px; margin: 0 auto; padding: 60px 40px; position: relative; z-index: 1; }
+    .final-cta h2 { font-size: 2.5rem; color: var(--primary); margin: 0 0 16px; }
+    
+    /* =========================================
+       FOOTER
+       ========================================= */
+    footer { background: #1a1a2e; color: #8395a7; padding: 40px 0; font-size: 0.9rem; }
+    .footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .footer-logo { color: #fff; font-size: 1.25rem; font-weight: 800; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a:hover { color: #fff; }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .hero .container { grid-template-columns: 1fr; text-align: center; }
+      .hero h1 { font-size: 2.5rem; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .use-cases .grid-3 { gap: 20px; }
+    }
+    @media (max-width: 600px) {
+      .nav-links .btn-secondary { display: none; }
+      .demo-cta { margin: 0 16px 80px; padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container nav-content">
+      <a href="/" class="nav-logo">
+        <img src="https://static.wixstatic.com/media/036bc3_8d873f90026f44468babe85366bf75f7~mv2.png/v1/fill/w_271,h_44,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/logo.png" alt="RealWorldView">
+      </a>
+      <div class="nav-links">
+        <a href="/" class="btn btn-secondary">Try the demo</a>
+        <a href="#support" class="btn btn-primary">Support our mission</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-text">
+        <h1>For anyone who's ever thought:<br><strong>"That number doesn't feel right."</strong></h1>
+        <p>We trust the data we're given. But should we?</p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content: flex-start;">
+          <a href="#support" class="btn btn-primary">Support our mission</a>
+          <a href="#how-it-works" class="btn btn-secondary" style="background:transparent; border-color:var(--primary); color:var(--primary)">Learn more</a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="https://static.wixstatic.com/media/036bc3_52234a2e73a64d3091b3d5ec3767c8c5~mv2.png/v1/fill/w_800,h_800,al_c,q_85,blur_2,enc_avif,quality_auto/map.png" alt="Map App Preview" class="hero-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGOS STRIP -->
+  <section class="logos">
+    <div class="container">
+      <h3>We compare data from</h3>
+      <div class="logo-grid">
+        <img src="https://static.wixstatic.com/media/036bc3_d151d7d75be54451924c9d8a76218d97~mv2.png/v1/fill/w_150,h_150,al_c,q_85,enc_auto/S3.png" alt="World Bank">
+        <img src="https://static.wixstatic.com/media/036bc3_e45713aae2e64a6e98847dd66cd6d3af~mv2.png/v1/fill/w_150,h_150,al_c,q_85,enc_auto/S5.png" alt="OECD">
+        <img src="https://static.wixstatic.com/media/036bc3_d2a4694e25c442b5b844a908895e3836~mv2.png/v1/fill/w_150,h_150,al_c,q_85,enc_auto/S1.png" alt="IMF">
+        <img src="https://static.wixstatic.com/media/036bc3_97948ecf2c654a7094acf0e67ed32593~mv2.png/v1/fill/w_150,h_150,al_c,q_85,enc_auto/S2.png" alt="Eurostat">
+        <img src="https://static.wixstatic.com/media/036bc3_fc3a6407bb1c406db05d6abb3fd5b7de~mv2.png/v1/fill/w_150,h_150,al_c,q_85,enc_auto/S4.png" alt="UN">
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="how-it-works container">
+    <h2 class="section-title">How Our Map Works</h2>
+    <div class="grid-3">
+      <div class="card glass">
+        <img src="https://static.wixstatic.com/media/036bc3_33b6f76306c2485892c30f1644cad3d2~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80/wh1.jpg" alt="Choose data">
+        <h3>Choose your data type</h3>
+        <p>Pick a topic - poverty, freedom of press, CO2 emissions...</p>
+      </div>
+      <div class="card glass">
+        <img src="https://static.wixstatic.com/media/036bc3_a79c73213cde49bfbf1500375f49e0bd~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80/wh2.jpg" alt="Toggle sources">
+        <h3>Toggle between sources</h3>
+        <p>...and toggle between sources in real time. Watch the colors shift as the differences occur.</p>
+      </div>
+      <div class="card glass">
+        <img src="https://static.wixstatic.com/media/036bc3_934690908655424e811b52689fb0b737~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80/wh3.jpg" alt="See for yourself">
+        <h3>See for yourself</h3>
+        <p>Make your own informed decision about world events based on the comparison.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO CTA -->
+  <section class="demo-cta">
+    <h2>Test out our <span style="color:#059669">demo map</span></h2>
+    <p>Our concept has a beautifully simple idea: One interactive world map where you can compare data from different sources.</p>
+    <a href="/" class="btn btn-primary">Go to Demo Map</a>
+  </section>
+
+  <!-- REAL STORIES -->
+  <section class="real-stories container">
+    <h2 class="section-title"><span style="background:#D7FFC1; padding:0 10px; border-radius:8px;">Real Stories</span> of Data Discrepancies</h2>
+    <div class="grid-3">
+      <div class="story-card">
+        <img src="https://static.wixstatic.com/media/036bc3_44940e16d34a463d9c659da8fb46c449~mv2.jpg/v1/fill/w_400,h_300,al_c,q_80/story1.jpg" alt="Maternal Mortality">
+        <h3>Maternal Mortality</h3>
+        <p>Behind every data gap there is a mother or a child no one counted.</p>
+      </div>
+      <div class="story-card">
+        <img src="https://static.wixstatic.com/media/036bc3_01393d51490f4610b804eb942cdc037e~mv2.jpg/v1/fill/w_400,h_300,al_c,q_80/story2.jpg" alt="Child Poverty">
+        <h3>Child Poverty Rates</h3>
+        <p>If we can't even agree on how many children are suffering, how do we solve it?</p>
+      </div>
+      <div class="story-card">
+        <img src="https://static.wixstatic.com/media/036bc3_2bdc306cb1134c67aadf97377d588800~mv2.jpg/v1/fill/w_400,h_300,al_c,q_80/story3.jpg" alt="Access to Education">
+        <h3>Access to Education</h3>
+        <p>Enrollment isn't education, but some sources treat them as the same thing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="use-cases">
+    <div class="container">
+      <h2 class="section-title" style="color:var(--primary); margin-bottom: 40px;">Many Possible <span style="background:#D7FFC1; padding:0 10px; border-radius:8px;">Use Cases</span></h2>
+      <div class="grid-3">
+        <div class="use-case-card glass">
+          <img src="https://static.wixstatic.com/media/036bc3_7e95e8be5d3649b98c4f86277f438ff6~mv2.png/v1/fill/w_150,h_100,al_c,q_85,enc_auto/newsrooms.png" alt="Newsrooms">
+          <h3>Newsrooms</h3>
+          <p>Embed interactive maps in articles to <strong>show readers</strong> the full picture.</p>
+        </div>
+        <div class="use-case-card glass">
+          <img src="https://static.wixstatic.com/media/036bc3_840273af71734ce2ad79c97298142c8b~mv2.png/v1/fill/w_150,h_100,al_c,q_85,enc_auto/factcheckers.png" alt="Fact-Checkers">
+          <h3>Fact-Checkers</h3>
+          <p>Cross-reference claims against multiple sources <strong>literally instantly</strong>.</p>
+        </div>
+        <div class="use-case-card glass">
+          <img src="https://static.wixstatic.com/media/036bc3_8b297241932c4dfc94786f4808efe019~mv2.png/v1/fill/w_150,h_100,al_c,q_85,enc_auto/educators.png" alt="Educators">
+          <h3>Educators</h3>
+          <p>Teach data literacy with a fun tool students actually <strong>want to use</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="container">
+      <h2 class="section-title">What the experts say about data</h2>
+      <div class="grid-3">
+        <div class="test-card">
+          <img src="https://static.wixstatic.com/media/036bc3_d8c65019b9b24eec9d9592339fff5dec~mv2.jpg/v1/fill/w_400,h_400,al_c,q_80/t1.jpg" alt="John Naisbitt">
+          <div class="test-card-content">
+            <h3>John Naisbitt</h3>
+            <span>Global Macro Analyst</span>
+            <p>"The problem with today's data is that we are drowning in information but starved for knowledge."</p>
+          </div>
+        </div>
+        <div class="test-card">
+          <img src="https://static.wixstatic.com/media/036bc3_4383f767a48a4ce98a620fe1ea4fa1d1~mv2.jpg/v1/fill/w_400,h_400,al_c,q_80/t2.jpg" alt="Cassie Kozyrkov">
+          <div class="test-card-content">
+            <h3>Cassie Kozyrkov</h3>
+            <span>Decision Scientist</span>
+            <p>"In a world of big data, the most dangerous thing you can do is have a big ego and a small sample."</p>
