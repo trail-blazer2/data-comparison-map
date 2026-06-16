@@ -413,7 +413,6 @@
       });
     });
 
-    // Mask Email for GDPR Compliance
     function maskEmail(email) {
       if (!email) return 'Relace hosta';
       const [name, domain] = email.split('@');
@@ -421,7 +420,6 @@
       return name.charAt(0) + '***@' + domain;
     }
 
-    // Fetch Firebase Data
     async function fetchData() {
       try {
         const usersSnap = await getDocs(collection(db, "users"));
@@ -429,7 +427,7 @@
 
         let users = [];
         let guests = [];
-        usersArray = []; // Store globally for ThreeJS
+        usersArray = []; 
 
         usersSnap.forEach(doc => {
             const data = doc.data();
@@ -453,7 +451,6 @@
             if(Object.keys(ansSet).length === 9) complete3Topics++; 
         });
 
-        // Safe DOM Updates
         const elTotalSubs = document.getElementById('statTotalSubs');
         const elRegUsers = document.getElementById('statRegUsers');
         const elConvRate = document.getElementById('statConvRate');
@@ -468,7 +465,6 @@
         guests.forEach(g => totalPointsCalculated += (g.points || 0));
         if(elTotalPoints) elTotalPoints.textContent = totalPointsCalculated.toLocaleString();
 
-        // Populate User Table
         const tbody = document.getElementById('userTableBody');
         if(tbody) {
             tbody.innerHTML = '';
@@ -493,9 +489,9 @@
 
         renderCharts(totalSubs, complete3Topics, users.length);
         
-        // Trigger ThreeJS Generation
-        if(window.buildUserNetwork) {
-            window.buildUserNetwork(usersArray);
+        // Load the logo coordinates and then build network
+        if(window.loadLogoAndBuildNetwork) {
+            window.loadLogoAndBuildNetwork(usersArray);
         }
 
       } catch (e) {
@@ -505,63 +501,41 @@
       }
     }
 
-    // Chart.js Rendering
     function renderCharts(totalGuests, totalComplete, totalReg) {
       Chart.defaults.color = '#64748b';
       Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-      // 1. Funnel Chart
       const funnelCanvas = document.getElementById('funnelChart');
       if(funnelCanvas) {
           new Chart(funnelCanvas, {
             type: 'bar',
             data: {
               labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
-              datasets: [{
-                data: [totalGuests, totalComplete, totalReg],
-                backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'],
-                borderRadius: 6
-              }]
+              datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }]
             },
-            options: {
-              indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } }
-            }
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } } }
           });
       }
 
-      // Helper to calculate YES percentages
       const calcYesPercent = (qId) => {
         let yes = 0, total = 0;
-        allAnswers.forEach(ans => {
-            if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; }
-        });
+        allAnswers.forEach(ans => { if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; } });
         return total > 0 ? Math.round((yes / total) * 100) : 0;
       };
 
-      // Topic Averages
       const t1_avg = Math.round((calcYesPercent('q1_1') + calcYesPercent('q1_2') + calcYesPercent('q1_3')) / 3) || 0;
       const t2_avg = Math.round((calcYesPercent('q2_1') + calcYesPercent('q2_2') + calcYesPercent('q2_3')) / 3) || 0;
       const t3_avg = Math.round((calcYesPercent('q3_1') + calcYesPercent('q3_2') + calcYesPercent('q3_3')) / 3) || 0;
 
-      // 2. Global Macro Sentiment (Polar Area)
       const macroCanvas = document.getElementById('macroChart');
       if(macroCanvas) {
           new Chart(macroCanvas, {
             type: 'polarArea',
-            data: {
-              labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'],
-              datasets: [{
-                data: [t1_avg, t2_avg, t3_avg],
-                backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)']
-              }]
-            },
+            data: { labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'], datasets: [{ data: [t1_avg, t2_avg, t3_avg], backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)'] }] },
             options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
           });
       }
 
-      // 3. Combined Flow Sentiment (Doughnut)
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
 
@@ -569,71 +543,36 @@
       if(combinedCanvas) {
           new Chart(combinedCanvas, {
             type: 'doughnut',
-            data: {
-              labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'],
-              datasets: [{
-                data: [flightToSafety, statusQuo],
-                backgroundColor: ['#f59e0b', '#1e293b'],
-                borderWidth: 0,
-                hoverOffset: 4
-              }]
-            },
+            data: { labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'], datasets: [{ data: [flightToSafety, statusQuo], backgroundColor: ['#f59e0b', '#1e293b'], borderWidth: 0, hoverOffset: 4 }] },
             options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
           });
       }
 
-      // 4. Conviction Matrix List
       const allQStats = [
-        { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') },
-        { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') },
-        { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
-        { name: "Opuštění EU aktiv (Q4)", val: calcYesPercent('q2_1') },
-        { name: "Odstávka průmyslu (Q5)", val: calcYesPercent('q2_2') },
-        { name: "Komodity > Akcie (Q6)", val: calcYesPercent('q2_3') },
-        { name: "Nahrazení Východu (Q7)", val: calcYesPercent('q3_1') },
-        { name: "Růst cen ropy (Q8)", val: calcYesPercent('q3_2') },
-        { name: "Nedostatek tech. (Q9)", val: calcYesPercent('q3_3') }
+        { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') }, { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') }, { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
+        { name: "Opuštění EU aktiv (Q4)", val: calcYesPercent('q2_1') }, { name: "Odstávka průmyslu (Q5)", val: calcYesPercent('q2_2') }, { name: "Komodity > Akcie (Q6)", val: calcYesPercent('q2_3') },
+        { name: "Nahrazení Východu (Q7)", val: calcYesPercent('q3_1') }, { name: "Růst cen ropy (Q8)", val: calcYesPercent('q3_2') }, { name: "Nedostatek tech. (Q9)", val: calcYesPercent('q3_3') }
       ];
       allQStats.sort((a, b) => Math.abs(50 - b.val) - Math.abs(50 - a.val));
       
       const convList = document.getElementById('convictionList');
       if(convList) {
-          if (allAnswers.length === 0) {
-            convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>';
-          } else {
+          if (allAnswers.length === 0) { convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>'; } 
+          else {
             allQStats.slice(0, 3).forEach(item => {
                 const isHigh = item.val >= 50;
-                convList.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <span style="font-weight:500; color:var(--text-main);">${item.name}</span>
-                    <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span>
-                  </div>
-                `;
+                convList.innerHTML += `<div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);"><span style="font-weight:500; color:var(--text-main);">${item.name}</span><span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span></div>`;
             });
           }
       }
 
-      // Bar Charts Shared Options
-      const barOpt = {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } },
-            y: { grid: { display: false }, ticks: { font: {size: 11} } }
-        }
-      };
+      const barOpt = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } }, y: { grid: { display: false }, ticks: { font: {size: 11} } } } };
 
-      const cT1 = document.getElementById('chartT1');
-      if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
-
-      const cT2 = document.getElementById('chartT2');
-      if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
-
-      const cT3 = document.getElementById('chartT3');
-      if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
+      const cT1 = document.getElementById('chartT1'); if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
+      const cT2 = document.getElementById('chartT2'); if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
+      const cT3 = document.getElementById('chartT3'); if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
     }
 
-    // Fetch data.json config for Sources Tab
     async function fetchDataJson() {
         try {
             const res = await fetch('data.json');
@@ -644,22 +583,11 @@
             
             Object.entries(data).forEach(([key, val]) => {
                 if(key === '_meta') return;
-                
-                let sourceNames = [];
-                let latestYear = "N/A";
-                Object.values(val.sources).forEach(s => {
-                    sourceNames.push(s.label);
-                    if(s.year) latestYear = s.year;
-                });
+                let sourceNames = []; let latestYear = "N/A";
+                Object.values(val.sources).forEach(s => { sourceNames.push(s.label); if(s.year) latestYear = s.year; });
                 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight:600;">${val.label}</td>
-                    <td style="color:var(--text-muted)">${val.category.toUpperCase()}</td>
-                    <td>${sourceNames.join(', ')}</td>
-                    <td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td>
-                    <td><span class="badge b-green">Synch. OK</span></td>
-                `;
+                tr.innerHTML = `<td style="font-weight:600;">${val.label}</td><td style="color:var(--text-muted)">${val.category.toUpperCase()}</td><td>${sourceNames.join(', ')}</td><td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td><td><span class="badge b-green">Synch. OK</span></td>`;
                 tbody.appendChild(tr);
             });
         } catch (e) {
@@ -669,18 +597,24 @@
     }
   </script>
 
-  <!-- THREE.JS 3D NETWORK LOGIC -->
+  <!-- THREE.JS 3D NETWORK LOGIC WITH PNG MORPH INTRO -->
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // A simpler shader for the dark theme
+    // === CHANGE THIS URL TO YOUR LOGO (Black on Transparent PNG recommended) ===
+    const LOGO_PNG_URL = 'https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/logo.png'; 
+
+    // Morphable Shader for Nodes
     const nodeVertexShader = `
       attribute float nodeSize;
+      attribute vec3 targetPosition;
+      uniform float uMorph;
       varying vec3 vColor;
       void main() {
         vColor = vec3(0.22, 0.51, 0.96); // Blue 500
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vec3 pos = mix(position, targetPosition, uMorph);
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
         gl_PointSize = nodeSize * (150.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
       }
@@ -695,6 +629,7 @@
       }
     `;
 
+    // Fadeable Shader for Connections
     const connVertexShader = `
       attribute float connectionStrength;
       varying float vAlpha;
@@ -705,8 +640,9 @@
     `;
     const connFragmentShader = `
       varying float vAlpha;
+      uniform float uAlphaMult;
       void main() {
-        gl_FragColor = vec4(0.22, 0.51, 0.96, vAlpha * 0.4);
+        gl_FragColor = vec4(0.22, 0.51, 0.96, vAlpha * 0.4 * uAlphaMult);
       }
     `;
 
@@ -735,7 +671,7 @@
     camera.position.set(0, 0, 45);
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-    renderer.setClearColor(0x020617); // Match body bg
+    renderer.setClearColor(0x020617);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -744,6 +680,43 @@
     controls.enablePan = false;
 
     let nodesMesh = null, connectionsMesh = null;
+    let logoPoints = [];
+    
+    // Animation State
+    let introPlayed = false;
+    let morphStartTime = 0;
+    let introState = 0; // 0: Logo shape, 1: Morphing, 2: Final Network
+    let uniformsNodes = { uMorph: { value: 0.0 } };
+    let uniformsConns = { uAlphaMult: { value: 0.0 } };
+
+    // Function to parse the PNG pixels
+    window.loadLogoAndBuildNetwork = function(users) {
+        if(introPlayed) { window.buildUserNetwork(users); return; }
+
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            const tempCanvas = document.createElement('canvas');
+            const ctx = tempCanvas.getContext('2d');
+            tempCanvas.width = 120; tempCanvas.height = 120;
+            ctx.drawImage(img, 0, 0, 120, 120);
+            const data = ctx.getImageData(0,0,120,120).data;
+            for(let y=0; y<120; y++) {
+                for(let x=0; x<120; x++) {
+                    if(data[(y*120 + x)*4 + 3] > 128) { // if pixel is visible
+                        // map to 3D coordinate centered around 0,0
+                        logoPoints.push(new THREE.Vector3((x - 60)*0.5, -(y - 60)*0.5, 0));
+                    }
+                }
+            }
+            window.buildUserNetwork(users);
+        };
+        img.onerror = () => { 
+            logoPoints = [new THREE.Vector3(0,0,0)]; // fallback empty
+            window.buildUserNetwork(users); 
+        };
+        img.src = LOGO_PNG_URL;
+    }
 
     window.buildUserNetwork = function(users) {
         if(!users) users = [];
@@ -770,11 +743,10 @@
             );
             const node = new Node(pos);
             node.userData = u;
-            node.size = 0.8 + (Object.keys(u.answers || {}).length * 0.2); // Bigger node = more answers
+            node.size = 0.8 + (Object.keys(u.answers || {}).length * 0.2);
             nodes.push(node);
             userNodes.push(node);
             
-            // Connect to core loosely
             rootNode.addConnection(node, 0.1);
         });
 
@@ -794,37 +766,52 @@
             }
         }
 
-        // 3. Add ambient nodes if too empty
-        if (users.length < 30) {
-            for(let i=0; i < (40 - users.length); i++) {
+        // 3. Ambient nodes (Massively increased so the initial logo looks dense and clear!)
+        const totalDesiredNodes = 800;
+        if (nodes.length < totalDesiredNodes) {
+            const needed = totalDesiredNodes - nodes.length;
+            for(let i=0; i < needed; i++) {
                 const pos = new THREE.Vector3(
                     THREE.MathUtils.randFloatSpread(50),
                     THREE.MathUtils.randFloatSpread(50),
                     THREE.MathUtils.randFloatSpread(50)
                 );
                 const aNode = new Node(pos);
-                aNode.size = 0.4;
+                aNode.size = 0.2 + Math.random() * 0.3;
                 nodes.push(aNode);
             }
         }
 
-        // Render Nodes
-        const nodePositions = [], nodeSizes = [];
+        // 4. Construct morphable Geometries
+        const startPositions = [], targetPositions = [], nodeSizes = [];
+        
         nodes.forEach(node => {
-            nodePositions.push(node.position.x, node.position.y, node.position.z);
+            targetPositions.push(node.position.x, node.position.y, node.position.z);
             nodeSizes.push(node.size);
+            
+            if(logoPoints.length > 0) {
+                // Grab random pixel from logo to assign this particle
+                const lp = logoPoints[Math.floor(Math.random() * logoPoints.length)];
+                // Add slight noise so it looks volumetric
+                startPositions.push(lp.x + (Math.random()-0.5)*0.8, lp.y + (Math.random()-0.5)*0.8, (Math.random()-0.5)*1.5);
+            } else {
+                startPositions.push(0,0,0);
+            }
         });
 
         const nGeo = new THREE.BufferGeometry();
-        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
+        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); // Starting Logo
+        nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); // Final Network
         nGeo.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
+        
         const nMat = new THREE.ShaderMaterial({
+            uniforms: uniformsNodes,
             vertexShader: nodeVertexShader, fragmentShader: nodeFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         nodesMesh = new THREE.Points(nGeo, nMat);
         scene.add(nodesMesh);
 
-        // Render Connections
+        // Connections setup
         const connPositions = [], connStrengths = [];
         const processed = new Set();
         nodes.forEach((node, nodeIndex) => {
@@ -845,22 +832,61 @@
         cGeo.setAttribute('position', new THREE.Float32BufferAttribute(connPositions, 3));
         cGeo.setAttribute('connectionStrength', new THREE.Float32BufferAttribute(connStrengths, 1));
         const cMat = new THREE.ShaderMaterial({
+            uniforms: uniformsConns,
             vertexShader: connVertexShader, fragmentShader: connFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         connectionsMesh = new THREE.LineSegments(cGeo, cMat);
         scene.add(connectionsMesh);
+
+        // Set state for intro (or skip if already played)
+        if(!introPlayed) {
+            uniformsNodes.uMorph.value = 0.0;
+            uniformsConns.uAlphaMult.value = 0.0;
+            morphStartTime = performance.now() + 1000; // Hold logo for 1 second
+            introState = 0;
+            introPlayed = true;
+        } else {
+            uniformsNodes.uMorph.value = 1.0;
+            uniformsConns.uAlphaMult.value = 1.0;
+            introState = 2;
+        }
     };
 
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
-        if (nodesMesh) nodesMesh.rotation.y += 0.001;
-        if (connectionsMesh) connectionsMesh.rotation.y += 0.001;
+
+        // Intro Sequence Timeline
+        if (nodesMesh && connectionsMesh) {
+            const now = performance.now();
+            if (introState === 0 && now > morphStartTime) {
+                introState = 1; // Start Morphing
+            }
+            if (introState === 1) {
+                let p = (now - morphStartTime) / 2000.0; // Morph takes 2 seconds
+                if (p >= 1.0) { p = 1.0; introState = 2; }
+                
+                // Cubic Ease-in-out curve for smooth flow
+                const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+                uniformsNodes.uMorph.value = ease;
+            }
+            if (introState === 2) {
+                // Fade in lines once nodes arrive at destination
+                if (uniformsConns.uAlphaMult.value < 1.0) {
+                    uniformsConns.uAlphaMult.value = Math.min(1.0, uniformsConns.uAlphaMult.value + 0.03);
+                }
+            }
+            
+            // Continuous gentle rotation
+            nodesMesh.rotation.y += 0.001;
+            connectionsMesh.rotation.y += 0.001;
+        }
+
         renderer.render(scene, camera);
     }
 
     function onWindowResize() {
-        if(container.clientWidth === 0) return; // Tab is hidden
+        if(container.clientWidth === 0) return; 
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
@@ -868,7 +894,7 @@
     
     window.addEventListener('resize', onWindowResize);
     
-    // Init empty network
+    // Init with empty empty data before Firebase loads
     window.buildUserNetwork([]);
     animate();
 
