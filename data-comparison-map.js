@@ -1433,9 +1433,10 @@ class DataComparisonMap extends HTMLElement {
       this._isPanning = false; wrap.style.cursor = ''; 
       if (this._is3D) {
         if (!this._dragged) {
-          // FIX: Use shadowRoot to pierce the Web Component boundary
-          const target = this.shadowRoot.elementFromPoint(e.clientX, e.clientY);
-          if (target && target.classList && target.classList.contains('cp')) {
+          // Robust collision detection piercing the Shadow DOM
+          const targets = this.shadowRoot.elementsFromPoint(e.clientX, e.clientY);
+          const target = targets.find(el => el.classList && el.classList.contains('cp'));
+          if (target) {
             this.openSidePanel(target.dataset.code, target.dataset.name, target, e);
           }
         }
@@ -1444,6 +1445,7 @@ class DataComparisonMap extends HTMLElement {
         this._snapBack();
       }
     });
+
     wrap.addEventListener('dblclick', (e) => { 
       e.preventDefault(); 
       this._animateTo(1, 0, 0); 
@@ -1509,9 +1511,9 @@ class DataComparisonMap extends HTMLElement {
       if (this._is3D) {
         if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
           const touch = e.changedTouches[0];
-          // FIX: Use shadowRoot to pierce the Web Component boundary
-          const target = this.shadowRoot.elementFromPoint(touch.clientX, touch.clientY);
-          if (target && target.classList && target.classList.contains('cp')) {
+          const targets = this.shadowRoot.elementsFromPoint(touch.clientX, touch.clientY);
+          const target = targets.find(el => el.classList && el.classList.contains('cp'));
+          if (target) {
             this.openSidePanel(target.dataset.code, target.dataset.name, target, touch);
           }
         }
@@ -1520,6 +1522,7 @@ class DataComparisonMap extends HTMLElement {
         this._snapBack(); 
       }
     });
+    
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
       this._autoSpinning = false;
