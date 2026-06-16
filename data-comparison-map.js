@@ -1432,14 +1432,13 @@ class DataComparisonMap extends HTMLElement {
       if (!this._isPanning) return;
       this._isPanning = false; wrap.style.cursor = ''; 
       if (this._is3D) {
-        // --- FIX START ---
         if (!this._dragged) {
-          const target = document.elementFromPoint(e.clientX, e.clientY);
-          if (target && target.classList.contains('cp')) {
+          // FIX: Use shadowRoot to pierce the Web Component boundary
+          const target = this.shadowRoot.elementFromPoint(e.clientX, e.clientY);
+          if (target && target.classList && target.classList.contains('cp')) {
             this.openSidePanel(target.dataset.code, target.dataset.name, target, e);
           }
         }
-        // --- FIX END ---
         this.drawMap();
       } else {
         this._snapBack();
@@ -1508,15 +1507,14 @@ class DataComparisonMap extends HTMLElement {
     wrap.addEventListener('touchend', (e) => { 
       this._isPanning = false; 
       if (this._is3D) {
-        // --- FIX START ---
         if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
           const touch = e.changedTouches[0];
-          const target = document.elementFromPoint(touch.clientX, touch.clientY);
-          if (target && target.classList.contains('cp')) {
+          // FIX: Use shadowRoot to pierce the Web Component boundary
+          const target = this.shadowRoot.elementFromPoint(touch.clientX, touch.clientY);
+          if (target && target.classList && target.classList.contains('cp')) {
             this.openSidePanel(target.dataset.code, target.dataset.name, target, touch);
           }
         }
-        // --- FIX END ---
         this.drawMap();
       } else {
         this._snapBack(); 
