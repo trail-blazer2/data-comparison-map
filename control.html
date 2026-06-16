@@ -516,14 +516,13 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // === CHANGE THIS URL TO YOUR LOGO (Black on Transparent PNG recommended) ===
     const LOGO_PNG_URL = 'https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/logoblack.png'; 
 
-    // Morphable Shader for Nodes
     const nodeVertexShader = `
       attribute float targetSize;
       attribute float logoSize;
       attribute vec3 targetPosition;
+      attribute float targetAlpha;
       uniform float uMorph;
       varying vec3 vColor;
       varying float vAlpha;
@@ -533,8 +532,8 @@
         vec3 normalColor = vec3(0.22, 0.51, 0.96); 
         vColor = mix(brightColor, normalColor, uMorph);
         
-        // Solid opaque when logo, slightly transparent when network
-        vAlpha = mix(1.0, 0.8, uMorph);
+        // Solid opaque when logo, fades to specific targetAlpha when network
+        vAlpha = mix(1.0, targetAlpha, uMorph);
         
         vec3 pos = mix(position, targetPosition, uMorph);
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -555,7 +554,6 @@
       }
     `;
 
-    // Fadeable Shader for Connections
     const connVertexShader = `
       attribute float connectionStrength;
       varying float vAlpha;
@@ -577,6 +575,7 @@
             this.position = position;
             this.connections = [];
             this.size = 1.0;
+            this.targetAlpha = 0.8; 
             this.userData = null;
         }
         addConnection(node, strength = 1.0) {
@@ -601,32 +600,26 @@
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.autoRotate = false; // Locked perfectly flat during intro
+    controls.autoRotate = false; 
     controls.autoRotateSpeed = 1.0;
     controls.enablePan = false;
 
     let nodesMesh = null, connectionsMesh = null;
     let logoPoints = [];
     
-    // Animation State
     let introPlayed = false;
     let morphStartTime = 0;
-    let introState = 0; // 0: Logo shape, 1: Morphing, 2: Final Network
+    let introState = 0; 
     let uniformsNodes = { uMorph: { value: 0.0 } };
     let uniformsConns = { uAlphaMult: { value: 0.0 } };
 
-    // Triggered by Replay Button
     document.getElementById('debugReplay').addEventListener('click', () => {
         introPlayed = false;
         introState = 0;
         morphStartTime = performance.now() + 1500;
-        
-        if(window.usersArray) {
-            window.loadLogoAndBuildNetwork(window.usersArray);
-        }
+        if(window.usersArray) window.loadLogoAndBuildNetwork(window.usersArray);
     });
 
-    // Parse the PNG pixels preserving exact aspect ratio
     window.loadLogoAndBuildNetwork = function(users) {
         if(introPlayed) { window.buildUserNetwork(users, false); return; }
 
@@ -635,27 +628,27 @@
         img.onload = () => {
             const tempCanvas = document.createElement('canvas');
             const ctx = tempCanvas.getContext('2d');
-            tempCanvas.width = 120; tempCanvas.height = 120;
+            const RES = 180; 
+            tempCanvas.width = RES; tempCanvas.height = RES;
             
-            let w = 120, h = 120;
+            let w = RES, h = RES;
             const aspect = img.width / img.height;
             if(aspect > 1) { h = w / aspect; } else { w = h * aspect; }
-            ctx.drawImage(img, (120-w)/2, (120-h)/2, w, h);
+            ctx.drawImage(img, (RES-w)/2, (RES-h)/2, w, h);
 
-            const data = ctx.getImageData(0,0,120,120).data;
+            const data = ctx.getImageData(0,0,RES,RES).data;
             logoPoints = [];
-            for(let y=0; y<120; y++) {
-                for(let x=0; x<120; x++) {
-                    if(data[(y*120 + x)*4 + 3] > 32) { // Lower threshold captures more edge pixels
-                        // map to 3D flat coordinate centered around 0,0
-                        logoPoints.push(new THREE.Vector3((x - 60)*0.35, -(y - 60)*0.35, 0)); // Flat Z=0
+            for(let y=0; y<RES; y++) {
+                for(let x=0; x<RES; x++) {
+                    if(data[(y*RES + x)*4 + 3] > 32) { 
+                        logoPoints.push(new THREE.Vector3((x - RES/2)*0.24, -(y - RES/2)*0.24, 0)); 
                     }
                 }
             }
             window.buildUserNetwork(users, false);
         };
         img.onerror = () => { 
-            logoPoints = [new THREE.Vector3(0,0,0)]; // fallback empty
+            logoPoints = [new THREE.Vector3(0,0,0)]; 
             window.buildUserNetwork(users, false); 
         };
         img.src = LOGO_PNG_URL;
@@ -708,8 +701,7 @@
             }
         }
 
-        // MASSIVE amount of ambient nodes to exactly match logo pixels if needed
-        const minDesiredNodes = Math.max(2500, logoPoints.length);
+        const minDesiredNodes = Math.max(4500, logoPoints.length); 
         if (nodes.length < minDesiredNodes) {
             const needed = minDesiredNodes - nodes.length;
             for(let i=0; i < needed; i++) {
@@ -720,21 +712,22 @@
                 );
                 const aNode = new Node(pos);
                 aNode.size = 0.2 + Math.random() * 0.3;
+                aNode.targetAlpha = Math.random() > 0.4 ? 0.0 : 0.2; 
                 nodes.push(aNode);
             }
         }
 
-        const startPositions = [], targetPositions = [], logoSizes = [], targetSizes = [];
+        const startPositions = [], targetPositions = [], logoSizes = [], targetSizes = [], targetAlphas = [];
         
         nodes.forEach((node, index) => {
             targetPositions.push(node.position.x, node.position.y, node.position.z);
             targetSizes.push(node.size);
-            logoSizes.push(0.35); // Very crisp small, uniform dots for the logo
+            targetAlphas.push(node.targetAlpha);
+            logoSizes.push(0.35); 
             
             if(logoPoints.length > 0) {
-                // First nodes cover the logo 1-to-1. Any extra nodes just piggy-back randomly.
                 const lp = index < logoPoints.length ? logoPoints[index] : logoPoints[Math.floor(Math.random() * logoPoints.length)];
-                startPositions.push(lp.x, lp.y, lp.z); // Flat alignment, no 3D scatter
+                startPositions.push(lp.x, lp.y, lp.z); 
             } else {
                 startPositions.push(0,0,0);
             }
@@ -745,13 +738,14 @@
         nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); 
         nGeo.setAttribute('logoSize', new THREE.Float32BufferAttribute(logoSizes, 1));
         nGeo.setAttribute('targetSize', new THREE.Float32BufferAttribute(targetSizes, 1));
+        nGeo.setAttribute('targetAlpha', new THREE.Float32BufferAttribute(targetAlphas, 1));
         
         const nMat = new THREE.ShaderMaterial({
             uniforms: uniformsNodes,
             vertexShader: nodeVertexShader, fragmentShader: nodeFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         nodesMesh = new THREE.Points(nGeo, nMat);
-        nodesMesh.rotation.set(0,0,0); // Flat
+        nodesMesh.rotation.set(0,0,0); 
         scene.add(nodesMesh);
 
         const connPositions = [], connStrengths = [];
@@ -782,7 +776,7 @@
         scene.add(connectionsMesh);
 
         if(!introPlayed) {
-            controls.autoRotate = false; // Lock flat
+            controls.autoRotate = false; 
             uniformsNodes.uMorph.value = 0.0;
             uniformsConns.uAlphaMult.value = 0.0;
             
@@ -808,16 +802,16 @@
         if (nodesMesh && connectionsMesh) {
             const now = performance.now();
             if (introState === 0 && now > morphStartTime) {
-                introState = 1; // Start Morphing
+                introState = 1; 
                 document.getElementById('networkLoader').style.opacity = '0';
                 setTimeout(() => { document.getElementById('networkLoader').style.display = 'none'; }, 400);
             }
             if (introState === 1) {
-                let p = (now - morphStartTime) / 2000.0; // Morph takes 2 seconds
+                let p = (now - morphStartTime) / 2000.0; 
                 if (p >= 1.0) { 
                     p = 1.0; 
                     introState = 2; 
-                    controls.autoRotate = true; // Engage orbit camera spin
+                    controls.autoRotate = true; 
                 }
                 const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
                 uniformsNodes.uMorph.value = ease;
