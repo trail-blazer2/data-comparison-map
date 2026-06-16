@@ -333,7 +333,7 @@
 
     let db;
     let allAnswers = [];
-    let usersArray = [];
+    window.usersArray = []; // Globally scoped for replay button
 
     window.checkAuth = function() {
       const pass = document.getElementById('adminPass').value;
@@ -388,10 +388,10 @@
         const usersSnap = await getDocs(collection(db, "users"));
         const guestsSnap = await getDocs(collection(db, "guest_predictions"));
 
-        let users = []; let guests = []; usersArray = []; 
+        let users = []; let guests = []; window.usersArray = []; 
 
-        usersSnap.forEach(doc => { const data = doc.data(); users.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
-        guestsSnap.forEach(doc => { const data = doc.data(); guests.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
+        usersSnap.forEach(doc => { const data = doc.data(); users.push(data); window.usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
+        guestsSnap.forEach(doc => { const data = doc.data(); guests.push(data); window.usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
 
         const totalSubs = users.length + guests.length;
         const convRate = totalSubs > 0 ? Math.round((users.length / totalSubs) * 100) : 0;
@@ -432,7 +432,7 @@
         
         // Trigger 3D logo fetch and sequence build
         if(window.loadLogoAndBuildNetwork) {
-            window.loadLogoAndBuildNetwork(usersArray);
+            window.loadLogoAndBuildNetwork(window.usersArray);
         }
 
       } catch (e) {
@@ -589,7 +589,7 @@
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.autoRotate = false; // Turned off initially so the logo doesn't spin away!
+    controls.autoRotate = false; // Locked perfectly flat during intro
     controls.autoRotateSpeed = 1.0;
     controls.enablePan = false;
 
@@ -603,7 +603,18 @@
     let uniformsNodes = { uMorph: { value: 0.0 } };
     let uniformsConns = { uAlphaMult: { value: 0.0 } };
 
-    // Function to parse the PNG pixels preserving exact aspect ratio
+    // Triggered by Replay Button
+    document.getElementById('debugReplay').addEventListener('click', () => {
+        introPlayed = false;
+        introState = 0;
+        morphStartTime = performance.now() + 1500;
+        
+        if(window.usersArray) {
+            window.loadLogoAndBuildNetwork(window.usersArray);
+        }
+    });
+
+    // Parse the PNG pixels into an array of strictly flat points
     window.loadLogoAndBuildNetwork = function(users) {
         if(introPlayed) { window.buildUserNetwork(users, false); return; }
 
@@ -614,7 +625,6 @@
             const ctx = tempCanvas.getContext('2d');
             tempCanvas.width = 120; tempCanvas.height = 120;
             
-            // Draw preserving aspect ratio inside a 120x120 box
             let w = 120, h = 120;
             const aspect = img.width / img.height;
             if(aspect > 1) { h = w / aspect; } else { w = h * aspect; }
@@ -624,24 +634,22 @@
             logoPoints = [];
             for(let y=0; y<120; y++) {
                 for(let x=0; x<120; x++) {
-                    if(data[(y*120 + x)*4 + 3] > 128) { // if pixel is visible
-                        // map to 3D flat coordinate centered around 0,0
-                        // Scaling factor applied here (0.35) so it fits nicely in camera view
-                        logoPoints.push(new THREE.Vector3((x - 60)*0.35, -(y - 60)*0.35, 0));
+                    if(data[(y*120 + x)*4 + 3] > 128) { // Visible pixel
+                        logoPoints.push(new THREE.Vector3((x - 60)*0.35, -(y - 60)*0.35, 0)); // Flat Z=0
                     }
                 }
             }
             window.buildUserNetwork(users, false);
         };
         img.onerror = () => { 
-            logoPoints = [new THREE.Vector3(0,0,0)]; // fallback empty
+            logoPoints = [new THREE.Vector3(0,0,0)];
             window.buildUserNetwork(users, false); 
         };
         img.src = LOGO_PNG_URL;
     }
 
     window.buildUserNetwork = function(users, isInitEmptyDraw = false) {
-        if (isInitEmptyDraw) return; // Do not touch state variables or draw on boot
+        if (isInitEmptyDraw) return; 
         if(!users) users = [];
         
         if (nodesMesh) { scene.remove(nodesMesh); nodesMesh.geometry.dispose(); nodesMesh.material.dispose(); }
@@ -655,7 +663,6 @@
         const radius = 20;
         const userNodes = [];
 
-        // 1. Create a node for each user
         users.forEach((u, i) => {
             const phi = Math.acos(1 - 2 * (i + 0.5) / users.length);
             const theta = Math.PI * (1 + Math.sqrt(5)) * i;
@@ -673,7 +680,6 @@
             rootNode.addConnection(node, 0.1);
         });
 
-        // 2. Connect users based on shared answers
         for (let i = 0; i < userNodes.length; i++) {
             for (let j = i + 1; j < userNodes.length; j++) {
                 const u1 = userNodes[i].userData.answers || {};
@@ -689,7 +695,7 @@
             }
         }
 
-        // 3. Ambient nodes (Massively increased so the initial logo looks dense and solid)
+        // MASSIVE amount of ambient nodes for a solid, clear initial logo
         const totalDesiredNodes = 1200;
         if (nodes.length < totalDesiredNodes) {
             const needed = totalDesiredNodes - nodes.length;
@@ -705,7 +711,6 @@
             }
         }
 
-        // 4. Construct morphable Geometries
         const startPositions = [], targetPositions = [], nodeSizes = [];
         
         nodes.forEach((node, index) => {
@@ -713,17 +718,16 @@
             nodeSizes.push(node.size);
             
             if(logoPoints.length > 0) {
-                // Map every single node directly onto the 2D logo shape cleanly
                 const lp = logoPoints[index % logoPoints.length];
-                startPositions.push(lp.x, lp.y, lp.z);
+                startPositions.push(lp.x, lp.y, lp.z); // Flat alignment, no 3D scatter
             } else {
                 startPositions.push(0,0,0);
             }
         });
 
         const nGeo = new THREE.BufferGeometry();
-        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); // Starting Flat Logo
-        nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); // Final 3D Network
+        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); 
+        nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); 
         nGeo.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
         
         const nMat = new THREE.ShaderMaterial({
@@ -731,11 +735,9 @@
             vertexShader: nodeVertexShader, fragmentShader: nodeFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         nodesMesh = new THREE.Points(nGeo, nMat);
-        // Force the logo to face the camera dead-on initially
-        nodesMesh.rotation.set(0,0,0);
+        nodesMesh.rotation.set(0,0,0); // Flat
         scene.add(nodesMesh);
 
-        // Connections setup
         const connPositions = [], connStrengths = [];
         const processed = new Set();
         nodes.forEach((node, nodeIndex) => {
@@ -763,13 +765,11 @@
         connectionsMesh.rotation.set(0,0,0);
         scene.add(connectionsMesh);
 
-        // Set state for intro (or skip if already played)
         if(!introPlayed) {
-            controls.autoRotate = false; // Lock camera while reading logo
+            controls.autoRotate = false; // Lock flat
             uniformsNodes.uMorph.value = 0.0;
             uniformsConns.uAlphaMult.value = 0.0;
             
-            // Hold logo completely still with spinner for 1.5 seconds
             morphStartTime = performance.now() + 1500; 
             introState = 0;
             introPlayed = true;
@@ -780,30 +780,20 @@
         } else {
             uniformsNodes.uMorph.value = 1.0;
             uniformsConns.uAlphaMult.value = 1.0;
-            controls.autoRotate = true; // Turn spinning back on immediately
+            controls.autoRotate = true; 
             introState = 2;
         }
     };
-
-    // Debug Button Logic
-    document.getElementById('debugReplay').addEventListener('click', () => {
-        introPlayed = false;
-        // Fetch data globally or just build with whatever is currently locally stored
-        if(window.usersArray) {
-            window.loadLogoAndBuildNetwork(window.usersArray);
-        }
-    });
 
     function animate() {
         requestAnimationFrame(animate);
         controls.update();
 
-        // Intro Sequence Timeline
         if (nodesMesh && connectionsMesh) {
             const now = performance.now();
             if (introState === 0 && now > morphStartTime) {
                 introState = 1; // Start Morphing
-                document.getElementById('networkLoader').style.opacity = '0'; // Fade out spinner
+                document.getElementById('networkLoader').style.opacity = '0';
                 setTimeout(() => { document.getElementById('networkLoader').style.display = 'none'; }, 400);
             }
             if (introState === 1) {
@@ -813,18 +803,13 @@
                     introState = 2; 
                     controls.autoRotate = true; // Engage orbit camera spin
                 }
-                
-                // Cubic Ease-in-out curve for smooth flow
                 const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
                 uniformsNodes.uMorph.value = ease;
             }
             if (introState === 2) {
-                // Fade in lines once nodes arrive at destination
                 if (uniformsConns.uAlphaMult.value < 1.0) {
                     uniformsConns.uAlphaMult.value = Math.min(1.0, uniformsConns.uAlphaMult.value + 0.03);
                 }
-                
-                // Continuous gentle internal rotation
                 nodesMesh.rotation.y += 0.001;
                 connectionsMesh.rotation.y += 0.001;
             }
@@ -841,8 +826,6 @@
     }
     
     window.addEventListener('resize', onWindowResize);
-    
-    // Init with empty empty data before Firebase loads
     window.buildUserNetwork([], true);
     animate();
 
