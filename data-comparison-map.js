@@ -201,7 +201,6 @@ const QUESTIONNAIRE = [
 ];
 
 function getColor(t) {
-  // Switched to more saturated, happier blues
   const c = [ [190, 215, 250], [115, 160, 220], [65, 115, 185], [25, 65, 125], [10, 30, 70] ];
   const n = c.length - 1; const i = Math.min(Math.floor(t * n), n - 1); const f = (t * n) - i;
   return `rgb(${Math.round(c[i][0] + (c[i+1][0] - c[i][0]) * f)},${Math.round(c[i][1] + (c[i+1][1] - c[i][1]) * f)},${Math.round(c[i][2] + (c[i+1][2] - c[i][2]) * f)})`;
@@ -251,12 +250,10 @@ function animateValue(el, startVal, endVal, unit, duration = 300, tFn = k=>k) {
   requestAnimationFrame(tick);
 }
 
-// ============================================================
 class DataComparisonMap extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    // Auto-detect language
     const urlParams = new URLSearchParams(window.location.search);
     const urlLang = urlParams.get('lang');
     const browserLang = navigator.language || navigator.userLanguage;
@@ -299,7 +296,6 @@ class DataComparisonMap extends HTMLElement {
     this._lastSpinTime = 0;
     this._autoSpinning = true; 
 
-    // Firebase & User State
     this._points = 0;
     this._completedTopics = [];
     this._answers = {};
@@ -328,7 +324,6 @@ class DataComparisonMap extends HTMLElement {
     if (scripts.length) { const src = scripts[scripts.length - 1].src; baseUrl = src.substring(0, src.lastIndexOf('/') + 1); }
     this._baseUrl = baseUrl;
 
-    // Load Local Storage Fallbacks (Guest data)
     this._guestId = localStorage.getItem('datamap_guest_id');
     if (!this._guestId) {
       this._guestId = Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -342,7 +337,6 @@ class DataComparisonMap extends HTMLElement {
     if (savedTopics) this._completedTopics = JSON.parse(savedTopics);
     if (savedAnswers) this._answers = JSON.parse(savedAnswers);
 
-    // Set up Firebase Auth Listener
     onAuthStateChanged(auth, async (user) => {
       this._user = user;
       if (user) {
@@ -504,7 +498,6 @@ class DataComparisonMap extends HTMLElement {
         if (this._isLoginMode) {
           await signInWithEmailAndPassword(auth, email, pass);
         } else {
-          // Check if GDPR is checked for signup
           const checkEl = this.$('#' + checkId);
           if (checkEl && !checkEl.checked) {
             alert("You must agree to the Terms and Privacy Policy.");
@@ -545,7 +538,6 @@ class DataComparisonMap extends HTMLElement {
       });
     });
     
-    // Account Tabs
     this.$$('.acc-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => this.openAccountTab(btn.dataset.tab));
     });
@@ -589,7 +581,6 @@ class DataComparisonMap extends HTMLElement {
     const wizImg = this.$('#wizAuthImg');
     const stdImg = this.$('#stdAuthImg');
     
-    // Replace these URLs!
     const loginImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.png"; 
     const signupImgSrc = "https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png";
 
@@ -694,7 +685,6 @@ class DataComparisonMap extends HTMLElement {
       const body = document.createElement('div');
       body.className = 'q-topic-body';
       
-      // Replace with your actual image URLs
       const topicImgSrc = `https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/m${topic.id}.jpg`;
       
       if (!isCompleted) {
@@ -940,7 +930,6 @@ class DataComparisonMap extends HTMLElement {
     let scale;
 
     if (this._is3D) {
-      // Scale is strictly controlled by viewBox now, enabling hardware-accelerated zoom in 3D
       scale = Math.min(WORLD_VIEWBOX.w, WORLD_VIEWBOX.h) / 2.2;
       const ocean = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       ocean.setAttribute('cx', cx); ocean.setAttribute('cy', cy);
@@ -968,7 +957,7 @@ class DataComparisonMap extends HTMLElement {
       svg.appendChild(fog);
     }
 
-    this._isHighResVisible = null; // Forces sync reset after re-draw
+    this._isHighResVisible = null;
     this._syncDetailLayerVisibility();
 
     const overlayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -984,6 +973,20 @@ class DataComparisonMap extends HTMLElement {
 
     overlayG.appendChild(hPath); overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
+
+    // RESTORE THE BLUE SELECTION HIGHLIGHT IN 3D
+    if (this._selectedCountryCode) {
+      const allPaths = this.$$(`.cp[data-code="${this._selectedCountryCode}"]`);
+      allPaths.forEach(p => p.classList.add('selected'));
+      const sOverlay = this.$('#selectOverlay');
+      if (sOverlay && allPaths.length > 0) {
+        let combinedD = '';
+        allPaths.forEach(p => combinedD += p.getAttribute('d') + ' ');
+        sOverlay.setAttribute('d', combinedD.trim());
+        sOverlay.style.transition = 'none';
+        sOverlay.style.clipPath = `circle(150% at 50% 50%)`;
+      }
+    }
 
     const self = this;
     svg.addEventListener('click', function(e) {
@@ -1372,7 +1375,7 @@ class DataComparisonMap extends HTMLElement {
         } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
           if (this._spinVelocity !== 0) {
             this._spinVelocity = 0;
-            needsRedraw = true; // Clean stop forces high-res redraw
+            needsRedraw = true; 
           }
         }
       }
@@ -1428,19 +1431,28 @@ class DataComparisonMap extends HTMLElement {
         this._applyTransform();
       }
     });
+
+    // ==========================================
+    // FIX FOR 3D CLICKING (SHADOW DOM PIERCING)
+    // ==========================================
     window.addEventListener('mouseup', (e) => {
       if (!this._isPanning) return;
       this._isPanning = false; wrap.style.cursor = ''; 
       if (this._is3D) {
+        let clickedCode = null, clickedName = null, clickTarget = null;
         if (!this._dragged) {
-          // Robust collision detection piercing the Shadow DOM
           const targets = this.shadowRoot.elementsFromPoint(e.clientX, e.clientY);
-          const target = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (target) {
-            this.openSidePanel(target.dataset.code, target.dataset.name, target, e);
+          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
+          if (clickTarget) {
+            clickedCode = clickTarget.dataset.code;
+            clickedName = clickTarget.dataset.name;
           }
         }
-        this.drawMap();
+        this.drawMap(); 
+        if (clickedCode) {
+           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
+           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e);
+        }
       } else {
         this._snapBack();
       }
@@ -1506,23 +1518,32 @@ class DataComparisonMap extends HTMLElement {
       }
     }, { passive: false });
 
+    // ==========================================
+    // FIX FOR 3D TOUCH (SHADOW DOM PIERCING)
+    // ==========================================
     wrap.addEventListener('touchend', (e) => { 
       this._isPanning = false; 
       if (this._is3D) {
+        let clickedCode = null, clickedName = null, clickTarget = null;
         if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
           const touch = e.changedTouches[0];
           const targets = this.shadowRoot.elementsFromPoint(touch.clientX, touch.clientY);
-          const target = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (target) {
-            this.openSidePanel(target.dataset.code, target.dataset.name, target, touch);
+          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
+          if (clickTarget) {
+            clickedCode = clickTarget.dataset.code;
+            clickedName = clickTarget.dataset.name;
           }
         }
         this.drawMap();
+        if (clickedCode) {
+           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
+           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e.changedTouches[0]);
+        }
       } else {
         this._snapBack(); 
       }
     });
-    
+
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
       this._autoSpinning = false;
@@ -1587,7 +1608,6 @@ class DataComparisonMap extends HTMLElement {
     const highResGroup = this.$('.euro-group.high-res');
     const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
     
-    // Safely fallback when high-res is temporarily removed during rapid 3D rotation
     if (!highResGroup) {
       if (lowResGroup) {
         lowResGroup.style.visibility = 'visible';
