@@ -1428,11 +1428,22 @@ class DataComparisonMap extends HTMLElement {
         this._applyTransform();
       }
     });
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', (e) => {
       if (!this._isPanning) return;
       this._isPanning = false; wrap.style.cursor = ''; 
-      if (this._is3D) this.drawMap();
-      else this._snapBack();
+      if (this._is3D) {
+        // --- FIX START ---
+        if (!this._dragged) {
+          const target = document.elementFromPoint(e.clientX, e.clientY);
+          if (target && target.classList.contains('cp')) {
+            this.openSidePanel(target.dataset.code, target.dataset.name, target, e);
+          }
+        }
+        // --- FIX END ---
+        this.drawMap();
+      } else {
+        this._snapBack();
+      }
     });
     wrap.addEventListener('dblclick', (e) => { 
       e.preventDefault(); 
@@ -1494,12 +1505,23 @@ class DataComparisonMap extends HTMLElement {
       }
     }, { passive: false });
 
-    wrap.addEventListener('touchend', () => { 
+    wrap.addEventListener('touchend', (e) => { 
       this._isPanning = false; 
-      if (this._is3D) this.drawMap();
-      else this._snapBack(); 
+      if (this._is3D) {
+        // --- FIX START ---
+        if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
+          const touch = e.changedTouches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          if (target && target.classList.contains('cp')) {
+            this.openSidePanel(target.dataset.code, target.dataset.name, target, touch);
+          }
+        }
+        // --- FIX END ---
+        this.drawMap();
+      } else {
+        this._snapBack(); 
+      }
     });
-
     const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
     if (zoomIn) zoomIn.addEventListener('click', () => {
       this._autoSpinning = false;
