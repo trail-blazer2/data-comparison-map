@@ -53,16 +53,25 @@
   </style>
 
   <!-- IMPORTANT: Google Analytics / Google Ads Tag -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-S77KP79EWL"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    
     gtag('consent', 'default', {
       'ad_storage': 'denied',
-      'analytics_storage': 'denied'
+      'analytics_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied'
     });
+    
     gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX');
+    
+    // Analytics
+    gtag('config', 'G-S77KP79EWL'); 
+    
+    // SEM POZDĚJI DOPLNÍTE KÓD GOOGLE ADS (AW-...)
+    // gtag('config', 'AW-XXXXXXXXX'); 
   </script>
 
   <script src="data-algo.js"></script>
