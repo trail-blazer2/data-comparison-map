@@ -333,7 +333,7 @@
 
     let db;
     let allAnswers = [];
-    window.usersArray = []; // Globally scoped for replay button
+    window.usersArray = []; 
 
     window.checkAuth = function() {
       const pass = document.getElementById('adminPass').value;
@@ -521,25 +521,37 @@
 
     // Morphable Shader for Nodes
     const nodeVertexShader = `
-      attribute float nodeSize;
+      attribute float targetSize;
+      attribute float logoSize;
       attribute vec3 targetPosition;
       uniform float uMorph;
       varying vec3 vColor;
+      varying float vAlpha;
       void main() {
-        vColor = vec3(0.22, 0.51, 0.96); // Blue 500
+        // Bright icy blue when logo, standard blue when network
+        vec3 brightColor = vec3(0.6, 0.85, 1.0);
+        vec3 normalColor = vec3(0.22, 0.51, 0.96); 
+        vColor = mix(brightColor, normalColor, uMorph);
+        
+        // Solid opaque when logo, slightly transparent when network
+        vAlpha = mix(1.0, 0.8, uMorph);
+        
         vec3 pos = mix(position, targetPosition, uMorph);
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-        gl_PointSize = nodeSize * (150.0 / -mvPosition.z);
+        
+        float currentSize = mix(logoSize, targetSize, uMorph);
+        gl_PointSize = currentSize * (150.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
       }
     `;
     const nodeFragmentShader = `
       varying vec3 vColor;
+      varying float vAlpha;
       void main() {
         float dist = length(2.0 * gl_PointCoord - 1.0);
         if (dist > 1.0) discard;
-        float alpha = 1.0 - smoothstep(0.5, 1.0, dist);
-        gl_FragColor = vec4(vColor, alpha * 0.8);
+        float alpha = 1.0 - smoothstep(0.4, 1.0, dist);
+        gl_FragColor = vec4(vColor, alpha * vAlpha);
       }
     `;
 
@@ -614,7 +626,7 @@
         }
     });
 
-    // Parse the PNG pixels into an array of strictly flat points
+    // Parse the PNG pixels preserving exact aspect ratio
     window.loadLogoAndBuildNetwork = function(users) {
         if(introPlayed) { window.buildUserNetwork(users, false); return; }
 
@@ -634,7 +646,8 @@
             logoPoints = [];
             for(let y=0; y<120; y++) {
                 for(let x=0; x<120; x++) {
-                    if(data[(y*120 + x)*4 + 3] > 128) { // Visible pixel
+                    if(data[(y*120 + x)*4 + 3] > 32) { // Lower threshold captures more edge pixels
+                        // map to 3D flat coordinate centered around 0,0
                         logoPoints.push(new THREE.Vector3((x - 60)*0.35, -(y - 60)*0.35, 0)); // Flat Z=0
                     }
                 }
@@ -642,7 +655,7 @@
             window.buildUserNetwork(users, false);
         };
         img.onerror = () => { 
-            logoPoints = [new THREE.Vector3(0,0,0)];
+            logoPoints = [new THREE.Vector3(0,0,0)]; // fallback empty
             window.buildUserNetwork(users, false); 
         };
         img.src = LOGO_PNG_URL;
@@ -695,10 +708,10 @@
             }
         }
 
-        // MASSIVE amount of ambient nodes for a solid, clear initial logo
-        const totalDesiredNodes = 1200;
-        if (nodes.length < totalDesiredNodes) {
-            const needed = totalDesiredNodes - nodes.length;
+        // MASSIVE amount of ambient nodes to exactly match logo pixels if needed
+        const minDesiredNodes = Math.max(2500, logoPoints.length);
+        if (nodes.length < minDesiredNodes) {
+            const needed = minDesiredNodes - nodes.length;
             for(let i=0; i < needed; i++) {
                 const pos = new THREE.Vector3(
                     THREE.MathUtils.randFloatSpread(50),
@@ -711,14 +724,16 @@
             }
         }
 
-        const startPositions = [], targetPositions = [], nodeSizes = [];
+        const startPositions = [], targetPositions = [], logoSizes = [], targetSizes = [];
         
         nodes.forEach((node, index) => {
             targetPositions.push(node.position.x, node.position.y, node.position.z);
-            nodeSizes.push(node.size);
+            targetSizes.push(node.size);
+            logoSizes.push(0.35); // Very crisp small, uniform dots for the logo
             
             if(logoPoints.length > 0) {
-                const lp = logoPoints[index % logoPoints.length];
+                // First nodes cover the logo 1-to-1. Any extra nodes just piggy-back randomly.
+                const lp = index < logoPoints.length ? logoPoints[index] : logoPoints[Math.floor(Math.random() * logoPoints.length)];
                 startPositions.push(lp.x, lp.y, lp.z); // Flat alignment, no 3D scatter
             } else {
                 startPositions.push(0,0,0);
@@ -728,7 +743,8 @@
         const nGeo = new THREE.BufferGeometry();
         nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); 
         nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); 
-        nGeo.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
+        nGeo.setAttribute('logoSize', new THREE.Float32BufferAttribute(logoSizes, 1));
+        nGeo.setAttribute('targetSize', new THREE.Float32BufferAttribute(targetSizes, 1));
         
         const nMat = new THREE.ShaderMaterial({
             uniforms: uniformsNodes,
