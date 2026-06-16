@@ -36,7 +36,7 @@
     
     /* Login Overlay */
     #loginOverlay { position: fixed; inset: 0; background: var(--bg-body); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.3s; }
-    .login-box { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); text-align: center; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+    .login-box { background: var(--bg-card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); text-align: center; width: 320px; box-sizing: border-box; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
     .login-box h2 { margin: 0 0 8px; font-weight: 700; font-size: 1.4rem; color: var(--text-main); letter-spacing: -0.02em; }
     .login-box p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
     .login-box input { width: 100%; box-sizing: border-box; padding: 12px 16px; margin-bottom: 20px; background: #0f172a; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
@@ -74,10 +74,10 @@
     .chart-wrapper { position: relative; width: 100%; height: 260px; margin-top: 16px; }
 
     /* Tables */
-    .table-container { overflow-x: auto; }
+    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; background: rgba(255,255,255,0.02); }
-    td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-main); }
+    th { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; background: rgba(255,255,255,0.02); white-space: nowrap; }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-main); white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
     .td-email { font-weight: 500; color: #e2e8f0; }
     .td-pts { font-weight: 700; color: var(--primary); }
@@ -94,7 +94,7 @@
     .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; cursor: pointer; }
     .integration-link:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-color: var(--primary); }
     .integration-header { display: flex; align-items: center; gap: 16px; }
-    .integration-icon { width: 40px; height: 40px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+    .integration-icon { width: 40px; height: 40px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); flex-shrink: 0; }
     .integration-icon svg { width: 22px; height: 22px; fill: currentColor; }
     .integration-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
     .integration-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
@@ -112,11 +112,59 @@
     #neural-network-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; }
 
     /* Network Loading Spinner Overlay */
-    .network-loader { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.85); padding: 10px 24px; border-radius: 30px; border: 1px solid var(--primary); backdrop-filter: blur(8px); box-shadow: 0 4px 24px rgba(0,0,0,0.5); transition: opacity 0.4s ease; z-index: 10; pointer-events: none; }
+    .network-loader { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.85); padding: 10px 24px; border-radius: 30px; border: 1px solid var(--primary); backdrop-filter: blur(8px); box-shadow: 0 4px 24px rgba(0,0,0,0.5); transition: opacity 0.4s ease; z-index: 10; pointer-events: none; white-space: nowrap; }
     .network-spinner { width: 16px; height: 16px; border: 2px solid rgba(59, 130, 246, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- RESPONSIVE OPTIMIZATION (MOBILE & TABLET) --- */
+    @media (max-width: 1024px) {
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      main { padding: 24px; }
+    }
+
+    @media (max-width: 768px) {
+      /* Turn layout into a vertical stack */
+      body { flex-direction: column; }
+      
+      /* Header/Sidebar adaptations */
+      aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex: 0 0 auto; z-index: 20; }
+      .logo { padding: 16px; justify-content: center; font-size: 1.2rem; }
+      
+      /* Make navigation horizontally scrollable on mobile */
+      nav { flex-direction: row; padding: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      nav::-webkit-scrollbar { display: none; }
+      .nav-item { flex: 0 0 auto; padding: 14px 20px; border-left: none; border-bottom: 3px solid transparent; }
+      .nav-item.active { border-left-color: transparent; border-bottom-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+
+      /* Main container adaptations */
+      main { padding: 16px; overflow-x: hidden; }
+      
+      /* Grid elements go full width */
+      .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
+      
+      /* Typography & Cards */
+      h1 { font-size: 1.4rem; margin-bottom: 16px; }
+      .section-title { margin-top: 24px; margin-bottom: 12px; }
+      .card { padding: 16px; }
+      .stat-value { font-size: 1.8rem; }
+      
+      /* Reduce chart wrapper heights slightly to save space */
+      .chart-wrapper { height: 220px !important; }
+      
+      /* Adjust Login overlay */
+      .login-box { width: 90%; max-width: 320px; padding: 30px 20px; }
+      
+      /* Ensure the 3D visualization container adapts to smaller height */
+      #view-visualization > div[style] { min-height: 60vh !important; }
+      
+      /* Smaller table padding to fit more content visually */
+      th, td { padding: 10px 12px; font-size: 0.8rem; }
+      
+      /* Adjust Debug replay button position */
+      #debugReplay { top: 10px; right: 10px; font-size: 0.7rem; padding: 6px 10px; }
+    }
   </style>
 </head>
 <body>
