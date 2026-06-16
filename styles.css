@@ -75,7 +75,7 @@
 
 .legend { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; font-size: 0.7rem; color: #8395a7; }
 @media (hover: hover) and (pointer: fine) { .legend { margin: 4px 0 2px; flex-shrink: 0; font-size: 0.65rem; } }
-.legend-bar { flex: 1; max-width: 220px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #c8d6e5, #8395a7, #576574, #222f3e, #0a1628); border: 1px solid rgba(0,0,0,0.06); position: relative; }
+.legend-bar { flex: 1; max-width: 220px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #bed7fa, #73a0dc, #4173b9, #19417d, #0a1e46); border: 1px solid rgba(0,0,0,0.06); position: relative; }
 .legend-marker { position: absolute; top: -3px; width: 4px; height: 16px; background: #fff; border-radius: 3px; border: 1.5px solid #1e3a5f; box-shadow: 0 1px 6px rgba(0,0,0,0.25); transform: translateX(-50%); opacity: 0; transition: left 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.15s ease; pointer-events: none; }
 .legend-marker.visible { opacity: 1; }
 
@@ -85,8 +85,8 @@
 
 .cp { stroke: rgba(255, 255, 255, 0.35); stroke-width: 0.5; cursor: pointer; transition: fill 0.3s ease, opacity 0.18s ease; opacity: 1; paint-order: stroke; }
 .cp:hover, .cp.touched { opacity: 1; }
-.cp.no-data { fill: #dfe6e9 !important; opacity: 0.35; cursor: default; }
-.globe-ocean { fill: rgba(200, 214, 229, 0.4); pointer-events: none; }
+.cp.no-data { fill: #d4e3f0 !important; opacity: 0.35; cursor: default; }
+.globe-ocean { fill: rgba(180, 210, 245, 0.4); pointer-events: none; }
 .overlay-hovered { stroke: #fff; stroke-width: 0.6; fill: none; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); pointer-events: none; }
 .overlay-selected { stroke: #1e3a5f; stroke-width: 0.7; fill: none; filter: drop-shadow(0 0 6px rgba(30,58,95,0.4)); pointer-events: none; }
 
