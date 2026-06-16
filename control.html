@@ -83,10 +83,12 @@
     .td-pts { font-weight: 700; color: var(--primary); }
 
     /* Badges */
-    .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; cursor: default; }
     .b-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
     .b-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
     .b-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+    .btn-debug { cursor: pointer; transition: all 0.2s ease; }
+    .btn-debug:hover { background: rgba(59,130,246,0.3); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
     /* Integration Links */
     .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; cursor: pointer; }
@@ -243,6 +245,8 @@
           <div class="network-spinner"></div>
           <span style="font-size:0.85rem; color:var(--primary); font-weight:600; letter-spacing:1px;">KALIBRACE SÍTĚ...</span>
         </div>
+        <!-- DEBUG REPLAY BUTTON -->
+        <button id="debugReplay" class="badge b-blue btn-debug" style="position:absolute; top:20px; right:20px; z-index:100; border:none; padding:8px 14px; font-family:inherit;">🔁 Přehrát intro</button>
       </div>
     </section>
 
@@ -294,7 +298,6 @@
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Rychlé odkazy na externí administrační konzole.</p>
       
       <div class="grid-3">
-        <!-- Integrations mapping -->
         <a href="https://console.firebase.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#FFCA28"><path d="M3.33 17.51l8.03-13.9c.28-.48.98-.48 1.25 0l2.36 4.09-8.49 14.67-3.15-4.86z"/><path fill="#FFA000" d="M15.42 16.59L11.83 22c-.28.48-.98.48-1.25 0l-7.25-12.54 12.09 7.13z"/><path fill="#F57C00" d="M15.42 16.59l5.24-9.08c.28-.48-.06-1.07-.62-.97l-4.62 1.63-8.49 14.67 8.49-6.25z"/></svg></div><div class="integration-title">Firebase</div></div><div class="integration-desc">Databáze a IAM autentizace. Real-time úložiště dokumentů pro uživatelské predikce.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">rwvtesting</span></div></a>
         <a href="https://ads.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#4285F4"><path d="M21.2 10.9l-8.5-8.5c-.8-.8-2.1-.8-2.8 0l-8.5 8.5c-.8.8-.8 2.1 0 2.8l8.5 8.5c.8.8 2.1.8 2.8 0l8.5-8.5c.8-.8.8-2.1 0-2.8zM12 18.5L5.5 12 12 5.5 18.5 12 12 18.5z"/><circle cx="12" cy="12" r="3" fill="#34A853"/></svg></div><div class="integration-title">Google Ads</div></div><div class="integration-desc">PPC kampaně a sledování konverzí. Konfigurováno pro Demand Gen a Display sítě.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">Ads Konzole</span></div></a>
         <a href="https://analytics.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F9AB00"><path d="M4 18h4V6H4v12zm6 0h4V10h-4v8zm6-12v12h4V12h-4z"/></svg></div><div class="integration-title">Google Analytics</div></div><div class="integration-desc">GA4 Tagging a sledování událostí. GDPR Consent Mode V2 je aktivní.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">GA4 Služba</span></div></a>
@@ -318,7 +321,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    // --- PASTE YOUR FIREBASE CONFIG HERE ---
     const firebaseConfig = {
       apiKey: "AIzaSyAocOPQSgjuaQFkQy1RAypWrXbnhAWbKRE",
       authDomain: "rwvtesting.firebaseapp.com",
@@ -333,14 +335,12 @@
     let allAnswers = [];
     let usersArray = [];
 
-    // Simple Frontend Password Logic
     window.checkAuth = function() {
       const pass = document.getElementById('adminPass').value;
       if (pass === 'Admin2024!') {
         document.getElementById('loginOverlay').style.opacity = '0';
         setTimeout(() => document.getElementById('loginOverlay').style.display = 'none', 300);
         
-        // Initialize App once authorized
         try {
           const app = initializeApp(firebaseConfig);
           db = getFirestore(app);
@@ -363,7 +363,6 @@
         if (e.key === 'Enter') window.checkAuth();
     });
 
-    // Navigation Logic
     document.querySelectorAll('.nav-item').forEach(nav => {
       nav.addEventListener('click', () => {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -371,7 +370,6 @@
         nav.classList.add('active');
         document.getElementById(nav.dataset.target).classList.add('active');
 
-        // Force resize for Three.js canvas when tab opens
         if(nav.dataset.target === 'view-visualization') {
             window.dispatchEvent(new Event('resize'));
         }
@@ -390,31 +388,14 @@
         const usersSnap = await getDocs(collection(db, "users"));
         const guestsSnap = await getDocs(collection(db, "guest_predictions"));
 
-        let users = [];
-        let guests = [];
-        usersArray = []; 
+        let users = []; let guests = []; usersArray = []; 
 
-        usersSnap.forEach(doc => {
-            const data = doc.data();
-            users.push(data);
-            usersArray.push(data);
-            if(data.answers) allAnswers.push(data.answers);
-        });
-
-        guestsSnap.forEach(doc => {
-            const data = doc.data();
-            guests.push(data);
-            usersArray.push(data);
-            if(data.answers) allAnswers.push(data.answers);
-        });
+        usersSnap.forEach(doc => { const data = doc.data(); users.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
+        guestsSnap.forEach(doc => { const data = doc.data(); guests.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
 
         const totalSubs = users.length + guests.length;
         const convRate = totalSubs > 0 ? Math.round((users.length / totalSubs) * 100) : 0;
-        
-        let complete3Topics = 0;
-        allAnswers.forEach(ansSet => { 
-            if(Object.keys(ansSet).length === 9) complete3Topics++; 
-        });
+        let complete3Topics = 0; allAnswers.forEach(ansSet => { if(Object.keys(ansSet).length === 9) complete3Topics++; });
 
         const elTotalSubs = document.getElementById('statTotalSubs');
         const elRegUsers = document.getElementById('statRegUsers');
@@ -441,12 +422,7 @@
                 combinedList.sort((a,b) => (b.points || 0) - (a.points || 0)).forEach(u => {
                     const tr = document.createElement('tr');
                     const badgeClass = u.type === 'Registrovaný' ? 'b-blue' : 'b-gray';
-                    tr.innerHTML = `
-                        <td class="td-email">${maskEmail(u.email)}</td>
-                        <td class="td-pts">${u.points || 0}</td>
-                        <td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td>
-                        <td><span class="badge ${badgeClass}">${u.type}</span></td>
-                    `;
+                    tr.innerHTML = `<td class="td-email">${maskEmail(u.email)}</td><td class="td-pts">${u.points || 0}</td><td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td><td><span class="badge ${badgeClass}">${u.type}</span></td>`;
                     tbody.appendChild(tr);
                 });
             }
@@ -467,48 +443,25 @@
     }
 
     function renderCharts(totalGuests, totalComplete, totalReg) {
-      Chart.defaults.color = '#64748b';
-      Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      Chart.defaults.color = '#64748b'; Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
       const funnelCanvas = document.getElementById('funnelChart');
-      if(funnelCanvas) {
-          new Chart(funnelCanvas, {
-            type: 'bar',
-            data: { labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'], datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }] },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } } }
-          });
-      }
+      if(funnelCanvas) { new Chart(funnelCanvas, { type: 'bar', data: { labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'], datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } } } }); }
 
-      const calcYesPercent = (qId) => {
-        let yes = 0, total = 0;
-        allAnswers.forEach(ans => { if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; } });
-        return total > 0 ? Math.round((yes / total) * 100) : 0;
-      };
+      const calcYesPercent = (qId) => { let yes = 0, total = 0; allAnswers.forEach(ans => { if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; } }); return total > 0 ? Math.round((yes / total) * 100) : 0; };
 
       const t1_avg = Math.round((calcYesPercent('q1_1') + calcYesPercent('q1_2') + calcYesPercent('q1_3')) / 3) || 0;
       const t2_avg = Math.round((calcYesPercent('q2_1') + calcYesPercent('q2_2') + calcYesPercent('q2_3')) / 3) || 0;
       const t3_avg = Math.round((calcYesPercent('q3_1') + calcYesPercent('q3_2') + calcYesPercent('q3_3')) / 3) || 0;
 
       const macroCanvas = document.getElementById('macroChart');
-      if(macroCanvas) {
-          new Chart(macroCanvas, {
-            type: 'polarArea',
-            data: { labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'], datasets: [{ data: [t1_avg, t2_avg, t3_avg], backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)'] }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
-          });
-      }
+      if(macroCanvas) { new Chart(macroCanvas, { type: 'polarArea', data: { labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'], datasets: [{ data: [t1_avg, t2_avg, t3_avg], backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)'] }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } } }); }
 
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
 
       const combinedCanvas = document.getElementById('combinedChart');
-      if(combinedCanvas) {
-          new Chart(combinedCanvas, {
-            type: 'doughnut',
-            data: { labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'], datasets: [{ data: [flightToSafety, statusQuo], backgroundColor: ['#f59e0b', '#1e293b'], borderWidth: 0, hoverOffset: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
-          });
-      }
+      if(combinedCanvas) { new Chart(combinedCanvas, { type: 'doughnut', data: { labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'], datasets: [{ data: [flightToSafety, statusQuo], backgroundColor: ['#f59e0b', '#1e293b'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } }); }
 
       const allQStats = [
         { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') }, { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') }, { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
@@ -547,7 +500,6 @@
                 if(key === '_meta') return;
                 let sourceNames = []; let latestYear = "N/A";
                 Object.values(val.sources).forEach(s => { sourceNames.push(s.label); if(s.year) latestYear = s.year; });
-                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td style="font-weight:600;">${val.label}</td><td style="color:var(--text-muted)">${val.category.toUpperCase()}</td><td>${sourceNames.join(', ')}</td><td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td><td><span class="badge b-green">Synch. OK</span></td>`;
                 tbody.appendChild(tr);
@@ -565,7 +517,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     // === CHANGE THIS URL TO YOUR LOGO (Black on Transparent PNG recommended) ===
-    const LOGO_PNG_URL = 'https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/logoblack.png'; 
+    const LOGO_PNG_URL = 'https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/logo.png'; 
 
     // Morphable Shader for Nodes
     const nodeVertexShader = `
@@ -637,7 +589,7 @@
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.autoRotate = true;
+    controls.autoRotate = false; // Turned off initially so the logo doesn't spin away!
     controls.autoRotateSpeed = 1.0;
     controls.enablePan = false;
 
@@ -651,7 +603,7 @@
     let uniformsNodes = { uMorph: { value: 0.0 } };
     let uniformsConns = { uAlphaMult: { value: 0.0 } };
 
-    // Function to parse the PNG pixels
+    // Function to parse the PNG pixels preserving exact aspect ratio
     window.loadLogoAndBuildNetwork = function(users) {
         if(introPlayed) { window.buildUserNetwork(users, false); return; }
 
@@ -661,13 +613,21 @@
             const tempCanvas = document.createElement('canvas');
             const ctx = tempCanvas.getContext('2d');
             tempCanvas.width = 120; tempCanvas.height = 120;
-            ctx.drawImage(img, 0, 0, 120, 120);
+            
+            // Draw preserving aspect ratio inside a 120x120 box
+            let w = 120, h = 120;
+            const aspect = img.width / img.height;
+            if(aspect > 1) { h = w / aspect; } else { w = h * aspect; }
+            ctx.drawImage(img, (120-w)/2, (120-h)/2, w, h);
+
             const data = ctx.getImageData(0,0,120,120).data;
+            logoPoints = [];
             for(let y=0; y<120; y++) {
                 for(let x=0; x<120; x++) {
                     if(data[(y*120 + x)*4 + 3] > 128) { // if pixel is visible
-                        // map to 3D coordinate centered around 0,0
-                        logoPoints.push(new THREE.Vector3((x - 60)*0.5, -(y - 60)*0.5, 0));
+                        // map to 3D flat coordinate centered around 0,0
+                        // Scaling factor applied here (0.35) so it fits nicely in camera view
+                        logoPoints.push(new THREE.Vector3((x - 60)*0.35, -(y - 60)*0.35, 0));
                     }
                 }
             }
@@ -729,8 +689,8 @@
             }
         }
 
-        // 3. Ambient nodes (Massively increased so the initial logo looks dense and clear!)
-        const totalDesiredNodes = 800;
+        // 3. Ambient nodes (Massively increased so the initial logo looks dense and solid)
+        const totalDesiredNodes = 1200;
         if (nodes.length < totalDesiredNodes) {
             const needed = totalDesiredNodes - nodes.length;
             for(let i=0; i < needed; i++) {
@@ -748,23 +708,22 @@
         // 4. Construct morphable Geometries
         const startPositions = [], targetPositions = [], nodeSizes = [];
         
-        nodes.forEach(node => {
+        nodes.forEach((node, index) => {
             targetPositions.push(node.position.x, node.position.y, node.position.z);
             nodeSizes.push(node.size);
             
             if(logoPoints.length > 0) {
-                // Grab random pixel from logo to assign this particle
-                const lp = logoPoints[Math.floor(Math.random() * logoPoints.length)];
-                // Add slight noise so it looks volumetric
-                startPositions.push(lp.x + (Math.random()-0.5)*0.8, lp.y + (Math.random()-0.5)*0.8, (Math.random()-0.5)*1.5);
+                // Map every single node directly onto the 2D logo shape cleanly
+                const lp = logoPoints[index % logoPoints.length];
+                startPositions.push(lp.x, lp.y, lp.z);
             } else {
                 startPositions.push(0,0,0);
             }
         });
 
         const nGeo = new THREE.BufferGeometry();
-        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); // Starting Logo
-        nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); // Final Network
+        nGeo.setAttribute('position', new THREE.Float32BufferAttribute(startPositions, 3)); // Starting Flat Logo
+        nGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(targetPositions, 3)); // Final 3D Network
         nGeo.setAttribute('nodeSize', new THREE.Float32BufferAttribute(nodeSizes, 1));
         
         const nMat = new THREE.ShaderMaterial({
@@ -772,6 +731,8 @@
             vertexShader: nodeVertexShader, fragmentShader: nodeFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         nodesMesh = new THREE.Points(nGeo, nMat);
+        // Force the logo to face the camera dead-on initially
+        nodesMesh.rotation.set(0,0,0);
         scene.add(nodesMesh);
 
         // Connections setup
@@ -799,22 +760,39 @@
             vertexShader: connVertexShader, fragmentShader: connFragmentShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
         });
         connectionsMesh = new THREE.LineSegments(cGeo, cMat);
+        connectionsMesh.rotation.set(0,0,0);
         scene.add(connectionsMesh);
 
         // Set state for intro (or skip if already played)
         if(!introPlayed) {
+            controls.autoRotate = false; // Lock camera while reading logo
             uniformsNodes.uMorph.value = 0.0;
             uniformsConns.uAlphaMult.value = 0.0;
-            morphStartTime = performance.now() + 1500; // Hold logo for 1.5 seconds for dramatic effect
+            
+            // Hold logo completely still with spinner for 1.5 seconds
+            morphStartTime = performance.now() + 1500; 
             introState = 0;
             introPlayed = true;
-            document.getElementById('networkLoader').style.display = 'flex'; // Show spinner
+            
+            const loader = document.getElementById('networkLoader');
+            loader.style.display = 'flex';
+            setTimeout(() => { loader.style.opacity = '1'; }, 10);
         } else {
             uniformsNodes.uMorph.value = 1.0;
             uniformsConns.uAlphaMult.value = 1.0;
+            controls.autoRotate = true; // Turn spinning back on immediately
             introState = 2;
         }
     };
+
+    // Debug Button Logic
+    document.getElementById('debugReplay').addEventListener('click', () => {
+        introPlayed = false;
+        // Fetch data globally or just build with whatever is currently locally stored
+        if(window.usersArray) {
+            window.loadLogoAndBuildNetwork(window.usersArray);
+        }
+    });
 
     function animate() {
         requestAnimationFrame(animate);
@@ -826,10 +804,15 @@
             if (introState === 0 && now > morphStartTime) {
                 introState = 1; // Start Morphing
                 document.getElementById('networkLoader').style.opacity = '0'; // Fade out spinner
+                setTimeout(() => { document.getElementById('networkLoader').style.display = 'none'; }, 400);
             }
             if (introState === 1) {
                 let p = (now - morphStartTime) / 2000.0; // Morph takes 2 seconds
-                if (p >= 1.0) { p = 1.0; introState = 2; }
+                if (p >= 1.0) { 
+                    p = 1.0; 
+                    introState = 2; 
+                    controls.autoRotate = true; // Engage orbit camera spin
+                }
                 
                 // Cubic Ease-in-out curve for smooth flow
                 const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
@@ -840,11 +823,11 @@
                 if (uniformsConns.uAlphaMult.value < 1.0) {
                     uniformsConns.uAlphaMult.value = Math.min(1.0, uniformsConns.uAlphaMult.value + 0.03);
                 }
+                
+                // Continuous gentle internal rotation
+                nodesMesh.rotation.y += 0.001;
+                connectionsMesh.rotation.y += 0.001;
             }
-            
-            // Continuous gentle rotation
-            nodesMesh.rotation.y += 0.001;
-            connectionsMesh.rotation.y += 0.001;
         }
 
         renderer.render(scene, camera);
