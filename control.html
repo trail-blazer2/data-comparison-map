@@ -70,7 +70,7 @@
     .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
     .stat-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
 
-    /* Chart Containers - FIX FOR STRETCHING BUG */
+    /* Chart Containers */
     .chart-wrapper { position: relative; width: 100%; height: 260px; margin-top: 16px; }
 
     /* Tables */
@@ -88,7 +88,7 @@
     .b-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
     .b-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
 
-    /* Integration Links (Infrastructure Tab) */
+    /* Integration Links */
     .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; cursor: pointer; }
     .integration-link:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-color: var(--primary); }
     .integration-header { display: flex; align-items: center; gap: 16px; }
@@ -98,7 +98,6 @@
     .integration-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
     .status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
 
-    /* Infrastructure Lists */
     .system-list { list-style: none; padding: 0; margin: 0; }
     .system-list li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
     .system-list li:last-child { border-bottom: none; }
@@ -109,6 +108,11 @@
 
     /* 3D Canvas Container */
     #neural-network-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; }
+
+    /* Network Loading Spinner Overlay */
+    .network-loader { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.85); padding: 10px 24px; border-radius: 30px; border: 1px solid var(--primary); backdrop-filter: blur(8px); box-shadow: 0 4px 24px rgba(0,0,0,0.5); transition: opacity 0.4s ease; z-index: 10; pointer-events: none; }
+    .network-spinner { width: 16px; height: 16px; border: 2px solid rgba(59, 130, 246, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -235,6 +239,10 @@
       </p>
       <div style="flex: 1; position: relative; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; min-height: 500px; background: #000;">
         <canvas id="neural-network-canvas"></canvas>
+        <div id="networkLoader" class="network-loader">
+          <div class="network-spinner"></div>
+          <span style="font-size:0.85rem; color:var(--primary); font-weight:600; letter-spacing:1px;">KALIBRACE SÍTĚ...</span>
+        </div>
       </div>
     </section>
 
@@ -286,55 +294,12 @@
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Rychlé odkazy na externí administrační konzole.</p>
       
       <div class="grid-3">
-        <!-- Firebase -->
-        <a href="https://console.firebase.google.com/" target="_blank" class="card integration-link">
-          <div class="integration-header">
-            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#FFCA28"><path d="M3.33 17.51l8.03-13.9c.28-.48.98-.48 1.25 0l2.36 4.09-8.49 14.67-3.15-4.86z"/><path fill="#FFA000" d="M15.42 16.59L11.83 22c-.28.48-.98.48-1.25 0l-7.25-12.54 12.09 7.13z"/><path fill="#F57C00" d="M15.42 16.59l5.24-9.08c.28-.48-.06-1.07-.62-.97l-4.62 1.63-8.49 14.67 8.49-6.25z"/></svg></div>
-            <div class="integration-title">Firebase</div>
-          </div>
-          <div class="integration-desc">Databáze a IAM autentizace. Real-time úložiště dokumentů pro uživatelské predikce.</div>
-          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">rwvtesting</span></div>
-        </a>
-
-        <!-- Google Ads -->
-        <a href="https://ads.google.com/" target="_blank" class="card integration-link">
-          <div class="integration-header">
-            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#4285F4"><path d="M21.2 10.9l-8.5-8.5c-.8-.8-2.1-.8-2.8 0l-8.5 8.5c-.8.8-.8 2.1 0 2.8l8.5 8.5c.8.8 2.1.8 2.8 0l8.5-8.5c.8-.8.8-2.1 0-2.8zM12 18.5L5.5 12 12 5.5 18.5 12 12 18.5z"/><circle cx="12" cy="12" r="3" fill="#34A853"/></svg></div>
-            <div class="integration-title">Google Ads</div>
-          </div>
-          <div class="integration-desc">PPC kampaně a sledování konverzí. Konfigurováno pro Demand Gen a Display sítě.</div>
-          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">Ads Konzole</span></div>
-        </a>
-
-        <!-- Google Analytics -->
-        <a href="https://analytics.google.com/" target="_blank" class="card integration-link">
-          <div class="integration-header">
-            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F9AB00"><path d="M4 18h4V6H4v12zm6 0h4V10h-4v8zm6-12v12h4V12h-4z"/></svg></div>
-            <div class="integration-title">Google Analytics</div>
-          </div>
-          <div class="integration-desc">GA4 Tagging a sledování událostí. GDPR Consent Mode V2 je aktivní.</div>
-          <div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">GA4 Služba</span></div>
-        </a>
-
-        <!-- Cloudflare -->
-        <a href="https://dash.cloudflare.com/" target="_blank" class="card integration-link">
-          <div class="integration-header">
-            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F38020"><path d="M19.34 10.63c-.15-3.08-2.68-5.51-5.84-5.51-2.48 0-4.62 1.54-5.46 3.73-.24-.07-.49-.1-.75-.1-1.66 0-3 1.34-3 3 0 .17.03.33.06.49-1.33.56-2.27 1.87-2.27 3.39 0 2.04 1.66 3.7 3.7 3.7h13.31c2.14 0 3.88-1.74 3.88-3.88 0-1.92-1.41-3.52-3.34-3.82z"/></svg></div>
-            <div class="integration-title">Cloudflare</div>
-          </div>
-          <div class="integration-desc">Registrátor domény a DNS směrování. Skryto za proxy s ochranou proti DDoS útokům.</div>
-          <div class="status-row"><span class="badge b-green">Přes proxy</span><span style="font-size:0.75rem;color:var(--text-muted)">Exp: 06/2027</span></div>
-        </a>
-
-        <!-- GitHub -->
-        <a href="https://github.com/" target="_blank" class="card integration-link">
-          <div class="integration-header">
-            <div class="integration-icon"><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></div>
-            <div class="integration-title">GitHub Pages</div>
-          </div>
-          <div class="integration-desc">Frontend hosting a nasazení. Implementace čistého JavaScriptu a webových komponent.</div>
-          <div class="status-row"><span class="badge b-green">Nasazeno</span><span style="font-size:0.75rem;color:var(--text-muted)">Pro úroveň (Zdarma)</span></div>
-        </a>
+        <!-- Integrations mapping -->
+        <a href="https://console.firebase.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#FFCA28"><path d="M3.33 17.51l8.03-13.9c.28-.48.98-.48 1.25 0l2.36 4.09-8.49 14.67-3.15-4.86z"/><path fill="#FFA000" d="M15.42 16.59L11.83 22c-.28.48-.98.48-1.25 0l-7.25-12.54 12.09 7.13z"/><path fill="#F57C00" d="M15.42 16.59l5.24-9.08c.28-.48-.06-1.07-.62-.97l-4.62 1.63-8.49 14.67 8.49-6.25z"/></svg></div><div class="integration-title">Firebase</div></div><div class="integration-desc">Databáze a IAM autentizace. Real-time úložiště dokumentů pro uživatelské predikce.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">rwvtesting</span></div></a>
+        <a href="https://ads.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#4285F4"><path d="M21.2 10.9l-8.5-8.5c-.8-.8-2.1-.8-2.8 0l-8.5 8.5c-.8.8-.8 2.1 0 2.8l8.5 8.5c.8.8 2.1.8 2.8 0l8.5-8.5c.8-.8.8-2.1 0-2.8zM12 18.5L5.5 12 12 5.5 18.5 12 12 18.5z"/><circle cx="12" cy="12" r="3" fill="#34A853"/></svg></div><div class="integration-title">Google Ads</div></div><div class="integration-desc">PPC kampaně a sledování konverzí. Konfigurováno pro Demand Gen a Display sítě.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">Ads Konzole</span></div></a>
+        <a href="https://analytics.google.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F9AB00"><path d="M4 18h4V6H4v12zm6 0h4V10h-4v8zm6-12v12h4V12h-4z"/></svg></div><div class="integration-title">Google Analytics</div></div><div class="integration-desc">GA4 Tagging a sledování událostí. GDPR Consent Mode V2 je aktivní.</div><div class="status-row"><span class="badge b-green">Aktivní</span><span style="font-size:0.75rem;color:var(--text-muted)">GA4 Služba</span></div></a>
+        <a href="https://dash.cloudflare.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#F38020"><path d="M19.34 10.63c-.15-3.08-2.68-5.51-5.84-5.51-2.48 0-4.62 1.54-5.46 3.73-.24-.07-.49-.1-.75-.1-1.66 0-3 1.34-3 3 0 .17.03.33.06.49-1.33.56-2.27 1.87-2.27 3.39 0 2.04 1.66 3.7 3.7 3.7h13.31c2.14 0 3.88-1.74 3.88-3.88 0-1.92-1.41-3.52-3.34-3.82z"/></svg></div><div class="integration-title">Cloudflare</div></div><div class="integration-desc">Registrátor domény a DNS směrování. Skryto za proxy s ochranou proti DDoS útokům.</div><div class="status-row"><span class="badge b-green">Přes proxy</span><span style="font-size:0.75rem;color:var(--text-muted)">Exp: 06/2027</span></div></a>
+        <a href="https://github.com/" target="_blank" class="card integration-link"><div class="integration-header"><div class="integration-icon"><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></div><div class="integration-title">GitHub Pages</div></div><div class="integration-desc">Frontend hosting a nasazení. Implementace čistého JavaScriptu a webových komponent.</div><div class="status-row"><span class="badge b-green">Nasazeno</span><span style="font-size:0.75rem;color:var(--text-muted)">Pro úroveň (Zdarma)</span></div></a>
       </div>
       
       <div class="card" style="margin-top: 24px;">
@@ -489,7 +454,7 @@
 
         renderCharts(totalSubs, complete3Topics, users.length);
         
-        // Load the logo coordinates and then build network
+        // Trigger 3D logo fetch and sequence build
         if(window.loadLogoAndBuildNetwork) {
             window.loadLogoAndBuildNetwork(usersArray);
         }
@@ -509,10 +474,7 @@
       if(funnelCanvas) {
           new Chart(funnelCanvas, {
             type: 'bar',
-            data: {
-              labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
-              datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }]
-            },
+            data: { labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'], datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }] },
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } } }
           });
       }
@@ -691,7 +653,7 @@
 
     // Function to parse the PNG pixels
     window.loadLogoAndBuildNetwork = function(users) {
-        if(introPlayed) { window.buildUserNetwork(users); return; }
+        if(introPlayed) { window.buildUserNetwork(users, false); return; }
 
         const img = new Image();
         img.crossOrigin = "Anonymous";
@@ -709,16 +671,17 @@
                     }
                 }
             }
-            window.buildUserNetwork(users);
+            window.buildUserNetwork(users, false);
         };
         img.onerror = () => { 
             logoPoints = [new THREE.Vector3(0,0,0)]; // fallback empty
-            window.buildUserNetwork(users); 
+            window.buildUserNetwork(users, false); 
         };
         img.src = LOGO_PNG_URL;
     }
 
-    window.buildUserNetwork = function(users) {
+    window.buildUserNetwork = function(users, isInitEmptyDraw = false) {
+        if (isInitEmptyDraw) return; // Do not touch state variables or draw on boot
         if(!users) users = [];
         
         if (nodesMesh) { scene.remove(nodesMesh); nodesMesh.geometry.dispose(); nodesMesh.material.dispose(); }
@@ -842,9 +805,10 @@
         if(!introPlayed) {
             uniformsNodes.uMorph.value = 0.0;
             uniformsConns.uAlphaMult.value = 0.0;
-            morphStartTime = performance.now() + 1000; // Hold logo for 1 second
+            morphStartTime = performance.now() + 1500; // Hold logo for 1.5 seconds for dramatic effect
             introState = 0;
             introPlayed = true;
+            document.getElementById('networkLoader').style.display = 'flex'; // Show spinner
         } else {
             uniformsNodes.uMorph.value = 1.0;
             uniformsConns.uAlphaMult.value = 1.0;
@@ -861,6 +825,7 @@
             const now = performance.now();
             if (introState === 0 && now > morphStartTime) {
                 introState = 1; // Start Morphing
+                document.getElementById('networkLoader').style.opacity = '0'; // Fade out spinner
             }
             if (introState === 1) {
                 let p = (now - morphStartTime) / 2000.0; // Morph takes 2 seconds
@@ -895,7 +860,7 @@
     window.addEventListener('resize', onWindowResize);
     
     // Init with empty empty data before Firebase loads
-    window.buildUserNetwork([]);
+    window.buildUserNetwork([], true);
     animate();
 
   </script>
