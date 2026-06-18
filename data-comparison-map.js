@@ -422,9 +422,35 @@ class DataComparisonMap extends HTMLElement {
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
+    // 1. Prepare the map for the swoop animation
+    const mapWrap = this.$('.map-wrap');
+    if (mapWrap) {
+        mapWrap.style.opacity = '0';
+        mapWrap.style.transform = 'scale(1.15)';
+    }
+
+    // 2. Hide loader and reveal main layout
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
 
+    // 3. Trigger the swoop animation after a tiny delay to ensure the layout has rendered
+    if (mapWrap) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                mapWrap.style.transition = 'opacity 0.4s ease-in, transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1)';
+                mapWrap.style.opacity = '1';
+                mapWrap.style.transform = 'scale(1)';
+                
+                // Clean up transition properties after animation completes
+                setTimeout(() => { 
+                    mapWrap.style.transition = ''; 
+                    mapWrap.style.transform = ''; 
+                }, 600);
+            });
+        });
+    }
+
+    // 4. Handle the ads target URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('promo') === 'true') {
       setTimeout(() => this.openWizard(1), 500);
@@ -1876,7 +1902,12 @@ class DataComparisonMap extends HTMLElement {
   }
 
   html() {
-    return `<div class="app">
+    return `<style>
+  /* Prevents FOUC (Flash of Unstyled Content) while external CSS loads */
+  .modal-overlay { opacity: 0; pointer-events: none; visibility: hidden; }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; visibility: visible; }
+  </style>
+  <div class="app">
   <nav class="top-nav">
     <div class="nav-logo" onclick="location.reload();" style="cursor: pointer;">
       <div class="nav-logo-icon">
