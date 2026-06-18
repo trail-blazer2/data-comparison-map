@@ -396,8 +396,21 @@
         const canvas = document.getElementById('liquidityCanvas');
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
-        let w = canvas.width = canvas.parentElement.clientWidth;
+        
+        // Set a fallback width, but let the observer handle the real sizing
+        let w = canvas.width = canvas.parentElement.clientWidth || 800;
         let h = canvas.height = 400;
+
+        // FIX: ResizeObserver automatically recalculates the width when the hidden tab is opened
+        const observer = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.contentRect.width > 0) {
+                    w = canvas.width = entry.contentRect.width;
+                    h = canvas.height = 400;
+                }
+            }
+        });
+        observer.observe(canvas.parentElement);
 
         if(liquidityAnimFrame) cancelAnimationFrame(liquidityAnimFrame);
 
@@ -406,7 +419,8 @@
 
         for(let i=0; i<NUM_PARTICLES; i++) {
             particles.push({
-                x: Math.random() * w, y: Math.random() * h,
+                x: Math.random() * (w || 800), // Prevent spawning at 0 if tab is hidden
+                y: Math.random() * h,
                 vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
                 type: Math.random() < flightRatio ? 1 : 0, 
                 size: Math.random() * 1.5 + 0.5,
@@ -415,6 +429,12 @@
         }
 
         function animateFlow() {
+            // Pause drawing computations if the tab is still hidden
+            if (w === 0) {
+                liquidityAnimFrame = requestAnimationFrame(animateFlow);
+                return;
+            }
+
             ctx.globalCompositeOperation = 'source-over';
             ctx.fillStyle = 'rgba(2, 6, 23, 0.15)'; 
             ctx.fillRect(0, 0, w, h);
@@ -477,8 +497,9 @@
             liquidityAnimFrame = requestAnimationFrame(animateFlow);
         }
         animateFlow();
-        window.addEventListener('resize', () => { if(canvas.parentElement) w = canvas.width = canvas.parentElement.clientWidth; });
     }
+
+        
 
     // Musí tu být 'async' před 'function' !
     window.checkAuth = async function() {
