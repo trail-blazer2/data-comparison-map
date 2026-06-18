@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RealWorldView - Řídicí centrum</title>
   
-  <!-- Importmap for Three.js (Required for the 3D Network) -->
   <script type="importmap">
   {
     "imports": {
@@ -169,7 +168,6 @@
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
   <div id="loginOverlay">
     <div class="login-box">
       <h2>RealWorldView</h2>
@@ -180,7 +178,6 @@
     </div>
   </div>
 
-  <!-- DASHBOARD UI -->
   <aside>
     <div class="logo"><div class="logo-dot"></div> RWV Admin</div>
     <nav>
@@ -194,7 +191,6 @@
   </aside>
 
   <main>
-    <!-- OVERVIEW -->
     <section id="view-overview" class="view active">
       <h1>Přehled platformy</h1>
       <div class="grid-3">
@@ -230,7 +226,6 @@
       </div>
     </section>
 
-    <!-- PREDICTION ANALYTICS -->
     <section id="view-predictions" class="view">
       <h1>Analýza sentimentu algoritmu</h1>
       
@@ -254,8 +249,18 @@
       <div class="card" style="margin-bottom: 24px;">
         <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Metriky s nejvyšší shodou napříč databází.</p>
         <div id="convictionList" style="margin-top: 10px;">
-          <!-- Generated via JS -->
+          </div>
+      </div>
+
+      <div class="section-title">Kvantový model toku tržní likvidity (Real-Time Flow)</div>
+      <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden; border: 1px solid rgba(59, 130, 246, 0.4); box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); position: relative;">
+        <div style="position: absolute; padding: 24px; z-index: 2; pointer-events: none;">
+          <h3 style="margin:0; color:#fff; font-size:1.2rem; text-shadow: 0 2px 10px rgba(0,0,0,1);">Fyzika přesunu kapitálu</h3>
+          <p style="margin:5px 0 0; color:var(--text-muted); font-size:0.85rem; max-width: 400px; line-height:1.5; text-shadow: 0 2px 5px rgba(0,0,0,1);">
+            Algoritmická vizualizace. Částice simulují institucionální kapitál přesouvající se z tradičních trhů (Fiat) do bezpečných přístavů (Tvrdá aktiva) na základě agregovaného uživatelského sentimentu.
+          </p>
         </div>
+        <canvas id="liquidityCanvas" style="width: 100%; height: 400px; display: block; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);"></canvas>
       </div>
 
       <div class="section-title">Kvadrant tržního konsenzu a makro rizik</div>
@@ -265,7 +270,7 @@
           <canvas id="quadrantChart"></canvas>
         </div>
       </div>
-      
+
       <div class="section-title">Rozpad témat (% predikujících ANO)</div>
       <div class="grid-3">
         <div class="card">
@@ -289,7 +294,6 @@
       </div>
     </section>
 
-    <!-- 3D VISUALIZATION -->
     <section id="view-visualization" class="view">
       <h1>Živá síť uživatelů</h1>
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:16px;">
@@ -301,12 +305,10 @@
           <div class="network-spinner"></div>
           <span style="font-size:0.85rem; color:var(--primary); font-weight:600; letter-spacing:1px;">KALIBRACE SÍTĚ...</span>
         </div>
-        <!-- DEBUG REPLAY BUTTON -->
         <button id="debugReplay" class="badge b-blue btn-debug" style="position:absolute; top:20px; right:20px; z-index:100; border:none; padding:8px 14px; font-family:inherit;">🔁 Přehrát intro</button>
       </div>
     </section>
 
-    <!-- USERS -->
     <section id="view-users" class="view">
       <h1>Adresář uživatelů</h1>
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Poznámka: E-maily jsou maskovány v souladu s protokoly ochrany dat GDPR.</p>
@@ -327,7 +329,6 @@
       </div>
     </section>
 
-    <!-- DATA SOURCES -->
     <section id="view-sources" class="view">
       <h1>Integrace API dat</h1>
       <div class="card table-container" style="padding: 0;">
@@ -348,7 +349,6 @@
       </div>
     </section>
 
-    <!-- SYSTEM & INFRASTRUCTURE -->
     <section id="view-system" class="view">
       <h1>Infrastruktura a hosting</h1>
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:24px;">Rychlé odkazy na externí administrační konzole.</p>
@@ -372,7 +372,6 @@
     </section>
   </main>
 
-  <!-- FIREBASE IMPORTS & LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -391,6 +390,95 @@
     let app, db, auth;
     let allAnswers = [];
     let usersArray = [];
+
+    let liquidityAnimFrame = null;
+    function startLiquidityFlow(flightRatio) {
+        const canvas = document.getElementById('liquidityCanvas');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = canvas.parentElement.clientWidth;
+        let h = canvas.height = 400;
+
+        if(liquidityAnimFrame) cancelAnimationFrame(liquidityAnimFrame);
+
+        const particles = [];
+        const NUM_PARTICLES = 900; 
+
+        for(let i=0; i<NUM_PARTICLES; i++) {
+            particles.push({
+                x: Math.random() * w, y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
+                type: Math.random() < flightRatio ? 1 : 0, 
+                size: Math.random() * 1.5 + 0.5,
+                life: Math.random() * 150
+            });
+        }
+
+        function animateFlow() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.15)'; 
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalCompositeOperation = 'lighter';
+
+            const a1 = { x: w * 0.28, y: h * 0.5, mass: 1 - flightRatio };
+            const a2 = { x: w * 0.72, y: h * 0.5, mass: flightRatio };
+            const time = Date.now() / 1000;
+            
+            // Draw Fiat Attractor
+            ctx.beginPath(); ctx.arc(a1.x, a1.y, 40 + Math.sin(time*2)*8, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.08)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(a1.x, a1.y, 8, 0, Math.PI*2);
+            ctx.fillStyle = '#3b82f6'; ctx.fill();
+
+            // Draw Hard Assets Attractor
+            ctx.beginPath(); ctx.arc(a2.x, a2.y, 40 + Math.cos(time*2)*8, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.08)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(a2.x, a2.y, 8, 0, Math.PI*2);
+            ctx.fillStyle = '#f59e0b'; ctx.fill();
+
+            // Energy Bridge
+            ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
+
+            particles.forEach(p => {
+                const target = p.type === 1 ? a2 : a1;
+                const dx = target.x - p.x; const dy = target.y - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist > 20) {
+                    const force = (target.mass * 300) / dist;
+                    const orbit = force * 2.8; 
+                    p.vx += (dx / dist) * force + (-dy / dist) * orbit;
+                    p.vy += (dy / dist) * force + (dx / dist) * orbit;
+                }
+                // Friction & Noise
+                p.vx += (Math.random() - 0.5) * 0.4; p.vy += (Math.random() - 0.5) * 0.4;
+                p.vx *= 0.93; p.vy *= 0.93;
+                p.x += p.vx; p.y += p.vy;
+
+                // Cycle life to simulate active shifts
+                p.life--;
+                if(p.life <= 0) { p.type = Math.random() < flightRatio ? 1 : 0; p.life = 100 + Math.random() * 100; }
+
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fillStyle = p.type === 1 ? '#fbbf24' : '#60a5fa'; ctx.fill();
+            });
+
+            // Text Overlays
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.textAlign = 'center'; ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText('TRADIČNÍ AKTIVA (Fiat)', a1.x, a1.y + 70);
+            ctx.fillText('TVRDÁ AKTIVA (Komodity)', a2.x, a2.y + 70);
+            ctx.font = '900 28px sans-serif';
+            ctx.fillStyle = '#60a5fa'; ctx.fillText(((1-flightRatio)*100).toFixed(0) + '%', a1.x, a1.y - 50);
+            ctx.fillStyle = '#fbbf24'; ctx.fillText((flightRatio*100).toFixed(0) + '%', a2.x, a2.y - 50);
+
+            liquidityAnimFrame = requestAnimationFrame(animateFlow);
+        }
+        animateFlow();
+        window.addEventListener('resize', () => { if(canvas.parentElement) w = canvas.width = canvas.parentElement.clientWidth; });
+    }
 
     // Musí tu být 'async' před 'function' !
     window.checkAuth = async function() {
@@ -519,6 +607,7 @@
 
         renderCharts(totalSubs, complete3Topics, users.length);
         
+        // Use loadLogoAndBuildNetwork instead of just buildUserNetwork
         if(window.loadLogoAndBuildNetwork) {
             window.loadLogoAndBuildNetwork(usersArray);
         }
@@ -584,6 +673,9 @@
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
 
+      // Start the Quantum Liquidity physics engine
+      startLiquidityFlow(flightToSafety / 100);
+
       const combinedCanvas = document.getElementById('combinedChart');
       if(combinedCanvas) {
           new Chart(combinedCanvas, {
@@ -631,27 +723,7 @@
           }
       }
 
-      const barOpt = {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } },
-            y: { grid: { display: false }, ticks: { font: {size: 11} } }
-        }
-      };
-
-      const cT1 = document.getElementById('chartT1');
-      if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
-
-      const cT2 = document.getElementById('chartT2');
-      if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
-
-      const cT3 = document.getElementById('chartT3');
-      if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
-    
       // --- MACRO CONSENSUS QUADRANT ---
-      
-      // Custom plugin to draw the quadrant crosshairs and labels
       const quadrantPlugin = {
         id: 'quadrantPlugin',
         beforeDraw: (chart) => {
@@ -664,11 +736,9 @@
           ctx.lineWidth = 2;
           ctx.setLineDash([4, 4]);
           
-          // Crosshairs
           ctx.beginPath(); ctx.moveTo(midX, top); ctx.lineTo(midX, bottom); ctx.stroke();
           ctx.beginPath(); ctx.moveTo(left, midY); ctx.lineTo(right, midY); ctx.stroke();
           
-          // Zone Labels
           ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
           ctx.font = 'bold 11px sans-serif';
           ctx.fillText('ČERNÉ LABUTĚ (Ignorováno)', left + 15, top + 20);
@@ -679,19 +749,16 @@
         }
       };
 
-      // Helper to generate bubble data from your specific questions
       const getQData = (qId, impactScore, label) => {
           let yes = 0, total = 0;
           allAnswers.forEach(ans => {
               if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; }
           });
           const yesPct = total > 0 ? Math.round((yes / total) * 100) : 0;
-          // Scale bubble radius based on response volume (min 4, max 20)
           const r = total > 0 ? 4 + Math.min(total, 50) / 3 : 4;
           return { x: yesPct, y: impactScore, r: r, label: label, total: total };
       };
 
-      // Map the 9 questions to their systemic impact score (1-10)
       const bubbleData = [
           getQData('q1_1', 3, 'Omezení masa'),
           getQData('q1_2', 7, 'Zlato > Hotovost'),
@@ -764,8 +831,24 @@
               }
           });
       }
-    
-    
+
+      const barOpt = {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } },
+            y: { grid: { display: false }, ticks: { font: {size: 11} } }
+        }
+      };
+
+      const cT1 = document.getElementById('chartT1');
+      if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
+
+      const cT2 = document.getElementById('chartT2');
+      if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
+
+      const cT3 = document.getElementById('chartT3');
+      if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
     }
 
     async function fetchDataJson() {
@@ -801,7 +884,6 @@
     }
   </script>
 
-  <!-- THREE.JS 3D NETWORK LOGIC WITH PNG MORPH INTRO -->
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -817,12 +899,10 @@
       varying vec3 vColor;
       varying float vAlpha;
       void main() {
-        // Bright icy blue when logo, standard blue when network
         vec3 brightColor = vec3(0.6, 0.85, 1.0);
         vec3 normalColor = vec3(0.22, 0.51, 0.96); 
         vColor = mix(brightColor, normalColor, uMorph);
         
-        // Solid opaque when logo, fades to specific targetAlpha when network
         vAlpha = mix(1.0, targetAlpha, uMorph);
         
         vec3 pos = mix(position, targetPosition, uMorph);
@@ -846,10 +926,13 @@
 
     const connVertexShader = `
       attribute float connectionStrength;
+      attribute vec3 targetPosition;
+      uniform float uMorph;
       varying float vAlpha;
       void main() {
         vAlpha = connectionStrength;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vec3 pos = mix(position, targetPosition, uMorph);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
     const connFragmentShader = `
@@ -867,6 +950,7 @@
             this.size = 1.0;
             this.targetAlpha = 0.8; 
             this.userData = null;
+            this.startPos = null;
         }
         addConnection(node, strength = 1.0) {
             if (!this.isConnectedTo(node)) {
@@ -901,7 +985,7 @@
     let morphStartTime = 0;
     let introState = 0; 
     let uniformsNodes = { uMorph: { value: 0.0 } };
-    let uniformsConns = { uAlphaMult: { value: 0.0 } };
+    let uniformsConns = { uAlphaMult: { value: 0.0 }, uMorph: uniformsNodes.uMorph };
 
     document.getElementById('debugReplay').addEventListener('click', () => {
         introPlayed = false;
@@ -1015,12 +1099,14 @@
             targetAlphas.push(node.targetAlpha);
             logoSizes.push(0.35); 
             
+            let lp;
             if(logoPoints.length > 0) {
-                const lp = index < logoPoints.length ? logoPoints[index] : logoPoints[Math.floor(Math.random() * logoPoints.length)];
-                startPositions.push(lp.x, lp.y, lp.z); 
+                lp = index < logoPoints.length ? logoPoints[index] : logoPoints[Math.floor(Math.random() * logoPoints.length)];
             } else {
-                startPositions.push(0,0,0);
+                lp = new THREE.Vector3(0,0,0);
             }
+            node.startPos = lp;
+            startPositions.push(lp.x, lp.y, lp.z); 
         });
 
         const nGeo = new THREE.BufferGeometry();
@@ -1038,7 +1124,7 @@
         nodesMesh.rotation.set(0,0,0); 
         scene.add(nodesMesh);
 
-        const connPositions = [], connStrengths = [];
+        const connPositions = [], connTargetPositions = [], connStrengths = [];
         const processed = new Set();
         nodes.forEach((node, nodeIndex) => {
             node.connections.forEach(conn => {
@@ -1047,8 +1133,12 @@
                 const key = [Math.min(nodeIndex, connectedIndex), Math.max(nodeIndex, connectedIndex)].join('-');
                 if (!processed.has(key)) {
                     processed.add(key);
-                    connPositions.push(node.position.x, node.position.y, node.position.z);
-                    connPositions.push(conn.node.position.x, conn.node.position.y, conn.node.position.z);
+                    connPositions.push(node.startPos.x, node.startPos.y, node.startPos.z);
+                    connPositions.push(conn.node.startPos.x, conn.node.startPos.y, conn.node.startPos.z);
+                    
+                    connTargetPositions.push(node.position.x, node.position.y, node.position.z);
+                    connTargetPositions.push(conn.node.position.x, conn.node.position.y, conn.node.position.z);
+                    
                     connStrengths.push(conn.strength, conn.strength);
                 }
             });
@@ -1056,6 +1146,7 @@
 
         const cGeo = new THREE.BufferGeometry();
         cGeo.setAttribute('position', new THREE.Float32BufferAttribute(connPositions, 3));
+        cGeo.setAttribute('targetPosition', new THREE.Float32BufferAttribute(connTargetPositions, 3));
         cGeo.setAttribute('connectionStrength', new THREE.Float32BufferAttribute(connStrengths, 1));
         const cMat = new THREE.ShaderMaterial({
             uniforms: uniformsConns,
@@ -1105,11 +1196,9 @@
                 }
                 const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
                 uniformsNodes.uMorph.value = ease;
+                uniformsConns.uAlphaMult.value = ease;
             }
             if (introState === 2) {
-                if (uniformsConns.uAlphaMult.value < 1.0) {
-                    uniformsConns.uAlphaMult.value = Math.min(1.0, uniformsConns.uAlphaMult.value + 0.03);
-                }
                 nodesMesh.rotation.y += 0.001;
                 connectionsMesh.rotation.y += 0.001;
             }
