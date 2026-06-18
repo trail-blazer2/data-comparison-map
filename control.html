@@ -258,6 +258,14 @@
         </div>
       </div>
 
+      <div class="section-title">Kvadrant tržního konsenzu a makro rizik</div>
+      <div class="card" style="margin-bottom: 24px;">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">Osa X: Očekávání retailu (% ANO) | Osa Y: Odhadovaný dopad na trh (1-10) | Velikost: Objem dat. <br><strong style="color:var(--primary)">Pomáhá identifikovat "Černé labutě" (vysoký dopad, nízké očekávání) a "Započítaná rizika".</strong></p>
+        <div class="chart-wrapper" style="height: 380px;">
+          <canvas id="quadrantChart"></canvas>
+        </div>
+      </div>
+      
       <div class="section-title">Rozpad témat (% predikujících ANO)</div>
       <div class="grid-3">
         <div class="card">
@@ -511,8 +519,8 @@
 
         renderCharts(totalSubs, complete3Topics, users.length);
         
-        if(window.buildUserNetwork) {
-            window.buildUserNetwork(usersArray);
+        if(window.loadLogoAndBuildNetwork) {
+            window.loadLogoAndBuildNetwork(usersArray);
         }
 
       } catch (e) {
@@ -640,6 +648,124 @@
 
       const cT3 = document.getElementById('chartT3');
       if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
+    
+      // --- MACRO CONSENSUS QUADRANT ---
+      
+      // Custom plugin to draw the quadrant crosshairs and labels
+      const quadrantPlugin = {
+        id: 'quadrantPlugin',
+        beforeDraw: (chart) => {
+          const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+          const midX = x.getPixelForValue(50);
+          const midY = y.getPixelForValue(5);
+          
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          
+          // Crosshairs
+          ctx.beginPath(); ctx.moveTo(midX, top); ctx.lineTo(midX, bottom); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(left, midY); ctx.lineTo(right, midY); ctx.stroke();
+          
+          // Zone Labels
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillText('ČERNÉ LABUTĚ (Ignorováno)', left + 15, top + 20);
+          ctx.fillText('ZAPOČÍTANÁ RIZIKA (Očekáváno)', midX + 15, top + 20);
+          ctx.fillText('TRŽNÍ ŠUM', left + 15, midY + 20);
+          ctx.fillText('LIFESTYLE TRENDY', midX + 15, midY + 20);
+          ctx.restore();
+        }
+      };
+
+      // Helper to generate bubble data from your specific questions
+      const getQData = (qId, impactScore, label) => {
+          let yes = 0, total = 0;
+          allAnswers.forEach(ans => {
+              if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; }
+          });
+          const yesPct = total > 0 ? Math.round((yes / total) * 100) : 0;
+          // Scale bubble radius based on response volume (min 4, max 20)
+          const r = total > 0 ? 4 + Math.min(total, 50) / 3 : 4;
+          return { x: yesPct, y: impactScore, r: r, label: label, total: total };
+      };
+
+      // Map the 9 questions to their systemic impact score (1-10)
+      const bubbleData = [
+          getQData('q1_1', 3, 'Omezení masa'),
+          getQData('q1_2', 7, 'Zlato > Hotovost'),
+          getQData('q1_3', 6, 'Těžební rizika'),
+          getQData('q2_1', 8, 'Opuštění EU aktiv'),
+          getQData('q2_2', 9, 'Odstávka průmyslu'),
+          getQData('q2_3', 7, 'Komodity > Akcie'),
+          getQData('q3_1', 6, 'Nahrazení Východu'),
+          getQData('q3_2', 8, 'Růst cen ropy'),
+          getQData('q3_3', 9, 'Nedostatek tech.')
+      ];
+
+      const quadCanvas = document.getElementById('quadrantChart');
+      if(quadCanvas) {
+          new Chart(quadCanvas, {
+              type: 'bubble',
+              data: {
+                  datasets: [{
+                      label: 'Datové body',
+                      data: bubbleData,
+                      backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                      borderColor: '#60a5fa',
+                      borderWidth: 1,
+                      hoverBackgroundColor: 'rgba(52, 211, 153, 0.8)',
+                      hoverBorderColor: '#34d399'
+                  }]
+              },
+              plugins: [quadrantPlugin],
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  layout: { padding: { top: 10, right: 20 } },
+                  plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                          titleColor: '#fff',
+                          bodyColor: '#cbd5e1',
+                          borderColor: 'rgba(255,255,255,0.1)',
+                          borderWidth: 1,
+                          padding: 12,
+                          callbacks: {
+                              label: function(ctx) {
+                                  const raw = ctx.raw;
+                                  if (raw.total === 0) return raw.label + ': Čekání na data...';
+                                  return [
+                                      raw.label,
+                                      'Konsenzus: ' + raw.x + '%',
+                                      'Síla dopadu: ' + raw.y + '/10',
+                                      'Vzorek: ' + raw.total + ' relací'
+                                  ];
+                              }
+                          }
+                      }
+                  },
+                  scales: {
+                      x: {
+                          min: 0, max: 100,
+                          title: { display: true, text: 'Očekávání trhu (% odpovědí ANO)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } },
+                          grid: { color: 'rgba(255,255,255,0.03)' },
+                          ticks: { color: 'rgba(255,255,255,0.5)', callback: v => v + '%' }
+                      },
+                      y: {
+                          min: 0, max: 10,
+                          title: { display: true, text: 'Závažnost makro dopadu (1-10)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } },
+                          grid: { color: 'rgba(255,255,255,0.03)' },
+                          ticks: { color: 'rgba(255,255,255,0.5)' }
+                      }
+                  }
+              }
+          });
+      }
+    
+    
     }
 
     async function fetchDataJson() {
