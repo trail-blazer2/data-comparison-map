@@ -42,6 +42,7 @@
     .login-box input:focus { border-color: var(--primary); }
     .login-box button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; }
     .login-box button:hover { background: var(--primary-hover); }
+    .login-hints { margin-top: 16px; font-size: 0.75rem; color: var(--text-muted); }
 
     /* Layout */
     aside { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
@@ -131,9 +132,11 @@
     .col-count { background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
     .kanban-cards { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
     
-    .k-card { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 14px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
-    .k-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.2); }
-    .k-card:active { cursor: grabbing; }
+    .k-card { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 14px; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+    /* Draggable specific cursor applied via JS based on Role */
+    .k-card.draggable { cursor: grab; }
+    .k-card.draggable:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.2); }
+    .k-card.draggable:active { cursor: grabbing; }
     
     /* Color Tags for Kanban Cards */
     .k-card.c-blue { border-left: 4px solid #3b82f6; background: rgba(59,130,246,0.05); }
@@ -160,7 +163,7 @@
     .k-field label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .k-field input, .k-field textarea, .k-field select { background: var(--bg-sidebar); border: 1px solid var(--border); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; width: 100%; box-sizing: border-box; transition: 0.2s; }
     .k-field input:focus, .k-field textarea:focus, .k-field select:focus { border-color: var(--primary); outline: none; }
-    .k-field input[readonly], .k-field textarea[readonly], .k-field select[disabled] { background: transparent; border-color: transparent; padding-left: 0; color: #fff; cursor: default; }
+    .k-field input[readonly], .k-field textarea[readonly], .k-field select[disabled] { background: transparent; border-color: transparent; padding-left: 0; color: #fff; cursor: default; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     
     .k-field-row { display: flex; gap: 16px; }
     .k-field-row .k-field { flex: 1; }
@@ -219,6 +222,9 @@
       <input type="password" id="adminPass" placeholder="Zadejte heslo" autofocus>
       <button onclick="checkAuth()">Přihlásit se</button>
       <p id="loginErr" style="color:var(--danger); font-size:0.8rem; margin-top:12px; display:none; font-weight:600;">Nesprávné heslo</p>
+      <div class="login-hints">
+        Admin: <strong>Admin2024!</strong> | Čtenář: <strong>View2024!</strong>
+      </div>
     </div>
   </div>
 
@@ -342,7 +348,7 @@
     <section id="view-meetings" class="view">
       <div class="board-header">
         <h1 style="margin:0;">Schůzky a události</h1>
-        <button class="btn-primary" onclick="window.openMeetingModal()">+ Přidat kartu</button>
+        <button id="addMeetingBtn" class="btn-primary" onclick="window.openMeetingModal()">+ Přidat kartu</button>
       </div>
       
       <div class="kanban-board">
@@ -535,8 +541,8 @@
       <div class="k-modal-footer">
         <!-- Default State -->
         <div id="kmViewActions" style="display:flex; gap:12px; width:100%; justify-content:flex-end;">
-          <button class="btn-danger" id="kmDeleteBtn" style="margin-right:auto;" onclick="deleteMeeting()">Smazat</button>
-          <button class="btn-primary" onclick="toggleEditMeeting(true)">Upravit</button>
+          <button class="btn-danger" id="kmDeleteBtn" style="margin-right:auto; display:none;" onclick="deleteMeeting()">Smazat</button>
+          <button class="btn-primary" id="kmEditInitBtn" onclick="toggleEditMeeting(true)">Upravit</button>
         </div>
         <!-- Edit State -->
         <div id="kmEditActions" style="display:none; gap:12px; width:100%; justify-content:flex-end;">
@@ -550,7 +556,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, onSnapshot, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDX1ESWqv-k2ogI8h0hVDvtWdJ3HoL35pE",
@@ -565,6 +571,9 @@
     let app, db, auth;
     let allAnswers = [];
     let usersArray = [];
+    
+    // Auth Role Setup
+    window.isAdmin = false;
     
     // Kanban State
     let meetingsMap = new Map();
@@ -681,33 +690,43 @@
 
     window.checkAuth = async function() {
       const pass = document.getElementById('adminPass').value;
+      
+      // Determine Role
       if (pass === 'Admin2024!') {
-        
-        document.getElementById('loginOverlay').style.opacity = '0';
-        setTimeout(() => document.getElementById('loginOverlay').style.display = 'none', 300);
-        
-        try {
-          app = initializeApp(firebaseConfig);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          
-          await signInWithEmailAndPassword(auth, "realworldview@mailfence.com", "Vanomasidite8");
-          console.log("Secure DB access granted.");
-          
-          fetchData();
-          fetchDataJson();
-          initMeetings(); // Initialize Kanban Board
-        } catch(e) {
-          console.error("Auth/DB Error:", e);
-          const el = document.getElementById('dbStatus');
-          if(el) {
-              el.textContent = "Chyba připojení";
-              el.className = "system-val";
-              el.style.color = "var(--danger)";
-          }
-        }
+          window.isAdmin = true;
+      } else if (pass === 'View2024!') {
+          window.isAdmin = false;
       } else {
-        document.getElementById('loginErr').style.display = 'block';
+          document.getElementById('loginErr').style.display = 'block';
+          return;
+      }
+      
+      // Apply Role Restrictions
+      if (!window.isAdmin) {
+          document.getElementById('addMeetingBtn').style.display = 'none';
+      }
+
+      document.getElementById('loginOverlay').style.opacity = '0';
+      setTimeout(() => document.getElementById('loginOverlay').style.display = 'none', 300);
+      
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        
+        await signInWithEmailAndPassword(auth, "realworldview@mailfence.com", "Vanomasidite8");
+        
+        fetchData();
+        fetchDataJson();
+        initMeetings(); 
+      } catch(e) {
+        console.error("Auth/DB Error:", e);
+        const el = document.getElementById('dbStatus');
+        if(el) {
+            el.textContent = "Chyba připojení";
+            el.className = "system-val";
+            el.style.color = "var(--danger)";
+        }
       }
     };
     
@@ -715,7 +734,6 @@
         if (e.key === 'Enter') window.checkAuth();
     });
 
-    // Navigation Logic
     document.querySelectorAll('.nav-item').forEach(nav => {
       nav.addEventListener('click', () => {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -737,15 +755,19 @@
     }
 
     // ==========================================
-    // MEETINGS KANBAN LOGIC
+    // MEETINGS KANBAN LOGIC (Workaround DB Store)
     // ==========================================
+    const MEETINGS_DOC_PATH = "admin_kanban_state"; // We hide it inside guest_predictions
 
     function initMeetings() {
-        onSnapshot(collection(db, "meetings"), (snapshot) => {
+        onSnapshot(doc(db, "guest_predictions", MEETINGS_DOC_PATH), (docSnap) => {
             meetingsMap.clear();
-            snapshot.forEach(doc => {
-                meetingsMap.set(doc.id, { id: doc.id, ...doc.data() });
-            });
+            if (docSnap.exists()) {
+                const data = docSnap.data().meetings || {};
+                Object.entries(data).forEach(([id, m]) => {
+                    meetingsMap.set(id, { id, ...m });
+                });
+            }
             renderKanbanBoard();
         });
     }
@@ -759,7 +781,6 @@
         };
         const counts = { 'odeslane': 0, 'odpovedeli': 0, 'zajem': 0, 'domluveno': 0 };
 
-        // Clear columns
         Object.values(cols).forEach(col => col.innerHTML = '');
 
         meetingsMap.forEach(m => {
@@ -768,9 +789,9 @@
                 counts[colId]++;
                 
                 const card = document.createElement('div');
-                card.className = `k-card c-${m.color || 'blue'}`;
-                card.draggable = true;
-                card.ondragstart = (e) => drag(e, m.id);
+                card.className = `k-card c-${m.color || 'blue'} ${window.isAdmin ? 'draggable' : ''}`;
+                card.draggable = window.isAdmin;
+                if(window.isAdmin) card.ondragstart = (e) => drag(e, m.id);
                 card.onclick = () => window.openMeetingModal(m.id);
 
                 card.innerHTML = `
@@ -785,34 +806,35 @@
             }
         });
 
-        // Update counts
         for (const [id, count] of Object.entries(counts)) {
             document.getElementById(`count-${id}`).textContent = count;
         }
     }
 
     window.allowDrop = function(ev) {
-        ev.preventDefault();
+        if(window.isAdmin) ev.preventDefault();
     }
 
     window.drag = function(ev, id) {
-        ev.dataTransfer.setData("text", id);
+        if(window.isAdmin) ev.dataTransfer.setData("text", id);
     }
 
     window.drop = async function(ev) {
+        if(!window.isAdmin) return;
         ev.preventDefault();
         const id = ev.dataTransfer.getData("text");
-        // Find closest column container
         const targetCol = ev.target.closest('.kanban-col');
-        if (targetCol && id) {
+        
+        if (targetCol && id && meetingsMap.has(id)) {
             const newColId = targetCol.getAttribute('data-col');
+            const currentData = Object.fromEntries(meetingsMap);
+            currentData[id].column = newColId;
             try {
-                await updateDoc(doc(db, "meetings", id), { column: newColId });
+                await setDoc(doc(db, "guest_predictions", MEETINGS_DOC_PATH), { meetings: currentData }, { merge: true });
             } catch(e) { console.error("Error moving card: ", e); }
         }
     }
 
-    // Modal Logic
     const kmModal = document.getElementById('kModalOverlay');
     const kmTitle = document.getElementById('kmTitle');
     const kmDesc = document.getElementById('kmDesc');
@@ -839,19 +861,18 @@
             kmRadios.forEach(r => r.checked = (r.value === (m.color || 'blue')));
             
             toggleEditMeeting(false);
-            document.getElementById('kmDeleteBtn').style.display = 'block';
+            if (window.isAdmin) document.getElementById('kmDeleteBtn').style.display = 'block';
         } else {
-            // New Card
-            kmTitle.value = '';
-            kmDesc.value = '';
-            kmInvest.value = '';
-            kmImportant.checked = false;
-            kmAddress.value = '';
-            kmDatetime.value = '';
-            kmColumn.value = 'odeslane';
-            kmRadios[0].checked = true; // Default to Blue
+            kmTitle.value = ''; kmDesc.value = ''; kmInvest.value = '';
+            kmImportant.checked = false; kmAddress.value = ''; kmDatetime.value = '';
+            kmColumn.value = 'odeslane'; kmRadios[0].checked = true;
             
             toggleEditMeeting(true);
+            document.getElementById('kmDeleteBtn').style.display = 'none';
+        }
+
+        if (!window.isAdmin) {
+            document.getElementById('kmEditInitBtn').style.display = 'none';
             document.getElementById('kmDeleteBtn').style.display = 'none';
         }
     }
@@ -861,6 +882,8 @@
     }
 
     window.toggleEditMeeting = function(isEditing) {
+        if (!window.isAdmin && isEditing) return; // Failsafe
+        
         const els = [kmTitle, kmDesc, kmInvest, kmAddress, kmDatetime];
         els.forEach(el => el.readOnly = !isEditing);
         kmImportant.disabled = !isEditing;
@@ -872,7 +895,9 @@
     }
 
     window.saveMeeting = async function() {
-        const data = {
+        if (!window.isAdmin) return;
+        
+        const newData = {
             title: kmTitle.value,
             description: kmDesc.value,
             investment: kmInvest.value,
@@ -883,12 +908,14 @@
             color: document.querySelector('input[name="kmColor"]:checked').value
         };
 
+        const currentData = Object.fromEntries(meetingsMap);
+        if (!currentMeetingId) {
+            currentMeetingId = 'm_' + Date.now();
+        }
+        currentData[currentMeetingId] = newData;
+
         try {
-            if (currentMeetingId) {
-                await updateDoc(doc(db, "meetings", currentMeetingId), data);
-            } else {
-                await addDoc(collection(db, "meetings"), data);
-            }
+            await setDoc(doc(db, "guest_predictions", MEETINGS_DOC_PATH), { meetings: currentData }, { merge: true });
             closeMeetingModal();
         } catch(e) {
             console.error("Error saving meeting: ", e);
@@ -897,49 +924,33 @@
     }
 
     window.deleteMeeting = async function() {
-        if (!currentMeetingId) return;
+        if (!window.isAdmin || !currentMeetingId) return;
         if (confirm("Opravdu chcete tuto kartu smazat?")) {
+            const currentData = Object.fromEntries(meetingsMap);
+            delete currentData[currentMeetingId];
             try {
-                await deleteDoc(doc(db, "meetings", currentMeetingId));
+                await setDoc(doc(db, "guest_predictions", MEETINGS_DOC_PATH), { meetings: currentData }, { merge: true });
                 closeMeetingModal();
             } catch(e) { console.error("Error deleting: ", e); }
         }
     }
-
-    // ==========================================
-    // OTHER ANALYTICS & THREEJS
-    // ==========================================
 
     async function fetchData() {
       try {
         const usersSnap = await getDocs(collection(db, "users"));
         const guestsSnap = await getDocs(collection(db, "guest_predictions"));
 
-        let users = [];
-        let guests = [];
-        usersArray = []; 
+        let users = []; let guests = []; usersArray = []; 
 
-        usersSnap.forEach(doc => {
-            const data = doc.data();
-            users.push(data);
-            usersArray.push(data);
-            if(data.answers) allAnswers.push(data.answers);
-        });
-
-        guestsSnap.forEach(doc => {
-            const data = doc.data();
-            guests.push(data);
-            usersArray.push(data);
-            if(data.answers) allAnswers.push(data.answers);
+        usersSnap.forEach(doc => { const data = doc.data(); users.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); });
+        guestsSnap.forEach(doc => { 
+            if (doc.id === MEETINGS_DOC_PATH) return; // Skip our hidden Kanban file from stats
+            const data = doc.data(); guests.push(data); usersArray.push(data); if(data.answers) allAnswers.push(data.answers); 
         });
 
         const totalSubs = users.length + guests.length;
         const convRate = totalSubs > 0 ? Math.round((users.length / totalSubs) * 100) : 0;
-        
-        let complete3Topics = 0;
-        allAnswers.forEach(ansSet => { 
-            if(Object.keys(ansSet).length === 9) complete3Topics++; 
-        });
+        let complete3Topics = 0; allAnswers.forEach(ansSet => { if(Object.keys(ansSet).length === 9) complete3Topics++; });
 
         const elTotalSubs = document.getElementById('statTotalSubs');
         const elRegUsers = document.getElementById('statRegUsers');
@@ -966,12 +977,7 @@
                 combinedList.sort((a,b) => (b.points || 0) - (a.points || 0)).forEach(u => {
                     const tr = document.createElement('tr');
                     const badgeClass = u.type === 'Registrovaný' ? 'b-blue' : 'b-gray';
-                    tr.innerHTML = `
-                        <td class="td-email">${maskEmail(u.email)}</td>
-                        <td class="td-pts">${u.points || 0}</td>
-                        <td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td>
-                        <td><span class="badge ${badgeClass}">${u.type}</span></td>
-                    `;
+                    tr.innerHTML = `<td class="td-email">${maskEmail(u.email)}</td><td class="td-pts">${u.points || 0}</td><td>${u.completedTopics ? u.completedTopics.length : 0} / 3</td><td><span class="badge ${badgeClass}">${u.type}</span></td>`;
                     tbody.appendChild(tr);
                 });
             }
@@ -991,55 +997,19 @@
     }
 
     function renderCharts(totalGuests, totalComplete, totalReg) {
-      Chart.defaults.color = '#64748b';
-      Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      Chart.defaults.color = '#64748b'; Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
       const funnelCanvas = document.getElementById('funnelChart');
-      if(funnelCanvas) {
-          new Chart(funnelCanvas, {
-            type: 'bar',
-            data: {
-              labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'],
-              datasets: [{
-                data: [totalGuests, totalComplete, totalReg],
-                backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'],
-                borderRadius: 6
-              }]
-            },
-            options: {
-              indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } }
-            }
-          });
-      }
+      if(funnelCanvas) { new Chart(funnelCanvas, { type: 'bar', data: { labels: ['Vytvořené profily', 'Dokončena všechna témata', 'Registrované účty'], datasets: [{ data: [totalGuests, totalComplete, totalReg], backgroundColor: ['#e2e8f0', '#38bdf8', '#2563eb'], borderRadius: 6 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: {weight: '600'} } } } } }); }
 
-      const calcYesPercent = (qId) => {
-        let yes = 0, total = 0;
-        allAnswers.forEach(ans => {
-            if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; }
-        });
-        return total > 0 ? Math.round((yes / total) * 100) : 0;
-      };
+      const calcYesPercent = (qId) => { let yes = 0, total = 0; allAnswers.forEach(ans => { if (ans[qId]) { total++; if (ans[qId] === 'yes') yes++; } }); return total > 0 ? Math.round((yes / total) * 100) : 0; };
 
       const t1_avg = Math.round((calcYesPercent('q1_1') + calcYesPercent('q1_2') + calcYesPercent('q1_3')) / 3) || 0;
       const t2_avg = Math.round((calcYesPercent('q2_1') + calcYesPercent('q2_2') + calcYesPercent('q2_3')) / 3) || 0;
       const t3_avg = Math.round((calcYesPercent('q3_1') + calcYesPercent('q3_2') + calcYesPercent('q3_3')) / 3) || 0;
 
       const macroCanvas = document.getElementById('macroChart');
-      if(macroCanvas) {
-          new Chart(macroCanvas, {
-            type: 'polarArea',
-            data: {
-              labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'],
-              datasets: [{
-                data: [t1_avg, t2_avg, t3_avg],
-                backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)']
-              }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } }
-          });
-      }
+      if(macroCanvas) { new Chart(macroCanvas, { type: 'polarArea', data: { labels: ['Zdraví a demo', 'Regulace a politiky', 'Dodavatelské řetězce'], datasets: [{ data: [t1_avg, t2_avg, t3_avg], backgroundColor: ['rgba(56, 189, 248, 0.7)', 'rgba(52, 211, 153, 0.7)', 'rgba(225, 29, 72, 0.7)'] }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { max: 100, min: 0, grid: {color: 'rgba(255,255,255,0.1)'} } } } }); }
 
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
@@ -1047,48 +1017,22 @@
       startLiquidityFlow(flightToSafety / 100);
 
       const combinedCanvas = document.getElementById('combinedChart');
-      if(combinedCanvas) {
-          new Chart(combinedCanvas, {
-            type: 'doughnut',
-            data: {
-              labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'],
-              datasets: [{
-                data: [flightToSafety, statusQuo],
-                backgroundColor: ['#f59e0b', '#1e293b'],
-                borderWidth: 0,
-                hoverOffset: 4
-              }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
-          });
-      }
+      if(combinedCanvas) { new Chart(combinedCanvas, { type: 'doughnut', data: { labels: ['Přesun k tvrdým aktivům', 'Zachovat status quo'], datasets: [{ data: [flightToSafety, statusQuo], backgroundColor: ['#f59e0b', '#1e293b'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%' } }); }
 
       const allQStats = [
-        { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') },
-        { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') },
-        { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
-        { name: "Opuštění EU aktiv (Q4)", val: calcYesPercent('q2_1') },
-        { name: "Odstávka průmyslu (Q5)", val: calcYesPercent('q2_2') },
-        { name: "Komodity > Akcie (Q6)", val: calcYesPercent('q2_3') },
-        { name: "Nahrazení Východu (Q7)", val: calcYesPercent('q3_1') },
-        { name: "Růst cen ropy (Q8)", val: calcYesPercent('q3_2') },
-        { name: "Nedostatek tech. (Q9)", val: calcYesPercent('q3_3') }
+        { name: "Omezení masa (Q1)", val: calcYesPercent('q1_1') }, { name: "Zlato > Hotovost (Q2)", val: calcYesPercent('q1_2') }, { name: "Těžební rizika (Q3)", val: calcYesPercent('q1_3') },
+        { name: "Opuštění EU aktiv (Q4)", val: calcYesPercent('q2_1') }, { name: "Odstávka průmyslu (Q5)", val: calcYesPercent('q2_2') }, { name: "Komodity > Akcie (Q6)", val: calcYesPercent('q2_3') },
+        { name: "Nahrazení Východu (Q7)", val: calcYesPercent('q3_1') }, { name: "Růst cen ropy (Q8)", val: calcYesPercent('q3_2') }, { name: "Nedostatek tech. (Q9)", val: calcYesPercent('q3_3') }
       ];
       allQStats.sort((a, b) => Math.abs(50 - b.val) - Math.abs(50 - a.val));
       
       const convList = document.getElementById('convictionList');
       if(convList) {
-          if (allAnswers.length === 0) {
-            convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>';
-          } else {
+          if (allAnswers.length === 0) { convList.innerHTML = '<p style="color:var(--text-muted)">Čekání na data...</p>'; } 
+          else {
             allQStats.slice(0, 3).forEach(item => {
                 const isHigh = item.val >= 50;
-                convList.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
-                    <span style="font-weight:500; color:var(--text-main);">${item.name}</span>
-                    <span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span>
-                  </div>
-                `;
+                convList.innerHTML += `<div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border);"><span style="font-weight:500; color:var(--text-main);">${item.name}</span><span style="font-weight:bold; color:${isHigh ? 'var(--success)' : 'var(--danger)'};">${item.val}% ${isHigh ? 'ANO' : 'NE'}</span></div>`;
             });
           }
       }
