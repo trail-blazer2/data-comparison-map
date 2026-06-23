@@ -81,13 +81,15 @@
     .td-email { font-weight: 500; color: #e2e8f0; }
     .td-pts { font-weight: 700; color: var(--primary); }
 
-    /* Badges */
+    /* Badges & Buttons */
     .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-block; cursor: default; }
     .b-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
     .b-green { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
     .b-gray { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
     .btn-debug { cursor: pointer; transition: all 0.2s ease; }
     .btn-debug:hover { background: rgba(59,130,246,0.3); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 0.9rem;}
+    .btn-primary:hover { background: var(--primary-hover); }
 
     /* Integration Links */
     .integration-link { display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; cursor: pointer; }
@@ -117,6 +119,63 @@
 
     @keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* =========================================
+       TRELLO-LIKE KANBAN BOARD (SCHŮZKY)
+       ========================================= */
+    .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; height: calc(100vh - 140px); align-items: flex-start; scrollbar-width: thin; }
+    .kanban-board::-webkit-scrollbar { height: 8px; }
+    .kanban-board::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .kanban-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; width: 300px; min-width: 300px; max-height: 100%; }
+    .kanban-col-header { padding: 16px; font-weight: 600; font-size: 0.95rem; border-bottom: 1px solid var(--border); color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+    .col-count { background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+    .kanban-cards { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
+    
+    .k-card { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 14px; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+    .k-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.2); }
+    .k-card:active { cursor: grabbing; }
+    
+    /* Color Tags for Kanban Cards */
+    .k-card.c-blue { border-left: 4px solid #3b82f6; background: rgba(59,130,246,0.05); }
+    .k-card.c-green { border-left: 4px solid #10b981; background: rgba(16,185,129,0.05); }
+    .k-card.c-red { border-left: 4px solid #f43f5e; background: rgba(244,63,94,0.05); }
+    
+    .k-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .k-card-title { font-weight: 600; font-size: 0.9rem; color: var(--text-main); line-height: 1.3; }
+    .k-tag-important { color: #f59e0b; font-size: 1rem; margin-left: 8px; flex-shrink: 0; }
+    .k-card-desc { font-size: 0.8rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+    .k-card-meta { font-size: 0.75rem; font-weight: 600; color: #e2e8f0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; display: inline-block;}
+
+    /* KANBAN MODAL */
+    .k-modal-overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.8); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 10000; }
+    .k-modal { background: var(--bg-card); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-height: 90vh; }
+    .k-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .k-modal-header h2 { margin: 0; font-size: 1.2rem; }
+    .k-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    .k-close:hover { color: #fff; }
+    .k-modal-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    .k-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: rgba(0,0,0,0.2); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+    
+    .k-field { display: flex; flex-direction: column; gap: 6px; }
+    .k-field label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .k-field input, .k-field textarea, .k-field select { background: var(--bg-sidebar); border: 1px solid var(--border); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; width: 100%; box-sizing: border-box; transition: 0.2s; }
+    .k-field input:focus, .k-field textarea:focus, .k-field select:focus { border-color: var(--primary); outline: none; }
+    .k-field input[readonly], .k-field textarea[readonly], .k-field select[disabled] { background: transparent; border-color: transparent; padding-left: 0; color: #fff; cursor: default; }
+    
+    .k-field-row { display: flex; gap: 16px; }
+    .k-field-row .k-field { flex: 1; }
+    
+    .k-color-opts { display: flex; gap: 12px; }
+    .k-color-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+    .k-color-opt input { display: none; }
+    .k-color-circle { width: 16px; height: 16px; border-radius: 50%; border: 2px solid transparent; }
+    .k-color-opt input:checked + .k-color-circle { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.2); }
+    
+    .btn-secondary { background: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.05); }
+    .btn-danger { background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-danger:hover { background: rgba(244,63,94,0.2); }
+
     /* --- RESPONSIVE OPTIMIZATION (MOBILE & TABLET) --- */
     @media (max-width: 1024px) {
       .grid-3 { grid-template-columns: repeat(2, 1fr); }
@@ -124,45 +183,30 @@
     }
 
     @media (max-width: 768px) {
-      /* Turn layout into a vertical stack */
       body { flex-direction: column; }
-      
-      /* Header/Sidebar adaptations */
       aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex: 0 0 auto; z-index: 20; }
       .logo { padding: 16px; justify-content: center; font-size: 1.2rem; }
-      
-      /* Make navigation horizontally scrollable on mobile */
       nav { flex-direction: row; padding: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
       nav::-webkit-scrollbar { display: none; }
       .nav-item { flex: 0 0 auto; padding: 14px 20px; border-left: none; border-bottom: 3px solid transparent; }
       .nav-item.active { border-left-color: transparent; border-bottom-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
 
-      /* Main container adaptations */
       main { padding: 16px; overflow-x: hidden; }
-      
-      /* Grid elements go full width */
       .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
-      
-      /* Typography & Cards */
       h1 { font-size: 1.4rem; margin-bottom: 16px; }
       .section-title { margin-top: 24px; margin-bottom: 12px; }
       .card { padding: 16px; }
       .stat-value { font-size: 1.8rem; }
-      
-      /* Reduce chart wrapper heights slightly to save space */
       .chart-wrapper { height: 220px !important; }
-      
-      /* Adjust Login overlay */
       .login-box { width: 90%; max-width: 320px; padding: 30px 20px; }
-      
-      /* Ensure the 3D visualization container adapts to smaller height */
       #view-visualization > div[style] { min-height: 60vh !important; }
-      
-      /* Smaller table padding to fit more content visually */
       th, td { padding: 10px 12px; font-size: 0.8rem; }
-      
-      /* Adjust Debug replay button position */
       #debugReplay { top: 10px; right: 10px; font-size: 0.7rem; padding: 6px 10px; }
+
+      /* Mobile Kanban Tweaks */
+      .kanban-board { padding-bottom: 24px; scroll-snap-type: x mandatory; }
+      .kanban-col { scroll-snap-align: start; min-width: 85vw; max-width: 85vw; }
+      .k-field-row { flex-direction: column; gap: 16px; }
     }
   </style>
 </head>
@@ -183,6 +227,7 @@
     <nav>
       <div class="nav-item active" data-target="view-overview">Přehled</div>
       <div class="nav-item" data-target="view-predictions">Analytika predikcí</div>
+      <div class="nav-item" data-target="view-meetings">Schůzky</div>
       <div class="nav-item" data-target="view-visualization">3D Síť uživatelů</div>
       <div class="nav-item" data-target="view-users">Adresář uživatelů</div>
       <div class="nav-item" data-target="view-sources">Zdroje dat</div>
@@ -293,6 +338,49 @@
       </div>
     </section>
 
+    <!-- NEW MEETINGS KANBAN VIEW -->
+    <section id="view-meetings" class="view">
+      <div class="board-header">
+        <h1 style="margin:0;">Schůzky a události</h1>
+        <button class="btn-primary" onclick="window.openMeetingModal()">+ Přidat kartu</button>
+      </div>
+      
+      <div class="kanban-board">
+        <!-- Col 1 -->
+        <div class="kanban-col" data-col="odeslane" ondragover="allowDrop(event)" ondrop="drop(event)">
+          <div class="kanban-col-header">
+            <span>Odeslané nabídky</span>
+            <span class="col-count" id="count-odeslane">0</span>
+          </div>
+          <div class="kanban-cards" id="col-odeslane"></div>
+        </div>
+        <!-- Col 2 -->
+        <div class="kanban-col" data-col="odpovedeli" ondragover="allowDrop(event)" ondrop="drop(event)">
+          <div class="kanban-col-header">
+            <span>Odpověděli</span>
+            <span class="col-count" id="count-odpovedeli">0</span>
+          </div>
+          <div class="kanban-cards" id="col-odpovedeli"></div>
+        </div>
+        <!-- Col 3 -->
+        <div class="kanban-col" data-col="zajem" ondragover="allowDrop(event)" ondrop="drop(event)">
+          <div class="kanban-col-header">
+            <span>Zájem o schůzku</span>
+            <span class="col-count" id="count-zajem">0</span>
+          </div>
+          <div class="kanban-cards" id="col-zajem"></div>
+        </div>
+        <!-- Col 4 -->
+        <div class="kanban-col" data-col="domluveno" ondragover="allowDrop(event)" ondrop="drop(event)">
+          <div class="kanban-col-header">
+            <span>Domluvená schůzka</span>
+            <span class="col-count" id="count-domluveno">0</span>
+          </div>
+          <div class="kanban-cards" id="col-domluveno"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="view-visualization" class="view">
       <h1>Živá síť uživatelů</h1>
       <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:16px;">
@@ -371,10 +459,98 @@
     </section>
   </main>
 
+  <!-- KANBAN CARD MODAL -->
+  <div id="kModalOverlay" class="k-modal-overlay">
+    <div class="k-modal">
+      <div class="k-modal-header">
+        <h2 id="kmTitleHead">Detail schůzky</h2>
+        <button class="k-close" onclick="closeMeetingModal()">✕</button>
+      </div>
+      <div class="k-modal-body">
+        
+        <div class="k-field">
+          <label>Název</label>
+          <input type="text" id="kmTitle" readonly>
+        </div>
+        
+        <div class="k-field">
+          <label>Popis</label>
+          <textarea id="kmDesc" rows="3" readonly></textarea>
+        </div>
+
+        <div class="k-field-row">
+          <div class="k-field">
+            <label>Potenciální investice</label>
+            <input type="text" id="kmInvest" placeholder="např. 50 000 Eur" readonly>
+          </div>
+          <div class="k-field" style="align-items: flex-start; justify-content: center;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text-main); margin-top:16px;">
+              <input type="checkbox" id="kmImportant" disabled style="width:auto; margin:0;">
+              Důležité 🔺
+            </label>
+          </div>
+        </div>
+
+        <div class="k-field-row">
+          <div class="k-field">
+            <label>Místo / Adresa</label>
+            <input type="text" id="kmAddress" readonly>
+          </div>
+          <div class="k-field">
+            <label>Datum a Čas</label>
+            <input type="text" id="kmDatetime" placeholder="DD.MM.YYYY HH:MM" readonly>
+          </div>
+        </div>
+
+        <div class="k-field-row">
+          <div class="k-field">
+            <label>Stav (Sloupec)</label>
+            <select id="kmColumn" disabled>
+              <option value="odeslane">Odeslané nabídky</option>
+              <option value="odpovedeli">Odpověděli</option>
+              <option value="zajem">Zájem o schůzku</option>
+              <option value="domluveno">Domluvená schůzka</option>
+            </select>
+          </div>
+          <div class="k-field">
+            <label>Typ (Barva)</label>
+            <div class="k-color-opts">
+              <label class="k-color-opt" title="Státní sektor">
+                <input type="radio" name="kmColor" value="blue" disabled>
+                <div class="k-color-circle" style="background:#3b82f6;"></div> Státní
+              </label>
+              <label class="k-color-opt" title="Soukromé fondy">
+                <input type="radio" name="kmColor" value="green" disabled>
+                <div class="k-color-circle" style="background:#10b981;"></div> Fondy
+              </label>
+              <label class="k-color-opt" title="Samostatní investoři">
+                <input type="radio" name="kmColor" value="red" disabled>
+                <div class="k-color-circle" style="background:#f43f5e;"></div> Individuální
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="k-modal-footer">
+        <!-- Default State -->
+        <div id="kmViewActions" style="display:flex; gap:12px; width:100%; justify-content:flex-end;">
+          <button class="btn-danger" id="kmDeleteBtn" style="margin-right:auto;" onclick="deleteMeeting()">Smazat</button>
+          <button class="btn-primary" onclick="toggleEditMeeting(true)">Upravit</button>
+        </div>
+        <!-- Edit State -->
+        <div id="kmEditActions" style="display:none; gap:12px; width:100%; justify-content:flex-end;">
+          <button class="btn-secondary" onclick="toggleEditMeeting(false)">Zrušit</button>
+          <button class="btn-primary" onclick="saveMeeting()">Uložit změny</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDX1ESWqv-k2ogI8h0hVDvtWdJ3HoL35pE",
@@ -389,6 +565,10 @@
     let app, db, auth;
     let allAnswers = [];
     let usersArray = [];
+    
+    // Kanban State
+    let meetingsMap = new Map();
+    let currentMeetingId = null;
 
     let liquidityAnimFrame = null;
     function startLiquidityFlow(flightRatio) {
@@ -396,11 +576,9 @@
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
         
-        // Set a fallback width, but let the observer handle the real sizing
         let w = canvas.width = canvas.parentElement.clientWidth || 800;
         let h = canvas.height = 400;
 
-        // FIX: ResizeObserver automatically recalculates the width when the hidden tab is opened
         const observer = new ResizeObserver(entries => {
             for (let entry of entries) {
                 if (entry.contentRect.width > 0) {
@@ -418,7 +596,7 @@
 
         for(let i=0; i<NUM_PARTICLES; i++) {
             particles.push({
-                x: Math.random() * (w || 800), // Prevent spawning at 0 if tab is hidden
+                x: Math.random() * (w || 800),
                 y: Math.random() * h,
                 vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4,
                 type: Math.random() < flightRatio ? 1 : 0, 
@@ -428,7 +606,6 @@
         }
 
         function animateFlow() {
-            // Pause drawing computations if the tab is still hidden
             if (w === 0) {
                 liquidityAnimFrame = requestAnimationFrame(animateFlow);
                 return;
@@ -443,19 +620,16 @@
             const a2 = { x: w * 0.72, y: h * 0.5, mass: flightRatio };
             const time = Date.now() / 1000;
             
-            // Draw Fiat Attractor
             ctx.beginPath(); ctx.arc(a1.x, a1.y, 40 + Math.sin(time*2)*8, 0, Math.PI*2);
             ctx.fillStyle = 'rgba(59, 130, 246, 0.08)'; ctx.fill();
             ctx.beginPath(); ctx.arc(a1.x, a1.y, 8, 0, Math.PI*2);
             ctx.fillStyle = '#3b82f6'; ctx.fill();
 
-            // Draw Hard Assets Attractor
             ctx.beginPath(); ctx.arc(a2.x, a2.y, 40 + Math.cos(time*2)*8, 0, Math.PI*2);
             ctx.fillStyle = 'rgba(245, 158, 11, 0.08)'; ctx.fill();
             ctx.beginPath(); ctx.arc(a2.x, a2.y, 8, 0, Math.PI*2);
             ctx.fillStyle = '#f59e0b'; ctx.fill();
 
-            // Energy Bridge
             ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y);
             ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
 
@@ -465,15 +639,12 @@
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 
                 if (dist > 15) {
-                    // 1. Softened gravity and orbit
                     const force = (target.mass * 80) / dist; 
-                    const orbit = force * 0.6; // Reduced from 2.8 to stop the crazy spinning
-                    
+                    const orbit = force * 0.6; 
                     p.vx += (dx / dist) * force + (-dy / dist) * orbit;
                     p.vy += (dy / dist) * force + (dx / dist) * orbit;
                 }
 
-                // 2. Add a terminal velocity limit (Elegance over speed)
                 const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
                 const maxSpeed = 2.5; 
                 if (speed > maxSpeed) {
@@ -481,16 +652,12 @@
                     p.vy = (p.vy / speed) * maxSpeed;
                 }
 
-                // 3. Smoother friction and gentler random noise
                 p.vx += (Math.random() - 0.5) * 0.15; 
                 p.vy += (Math.random() - 0.5) * 0.15;
                 p.vx *= 0.96; 
                 p.vy *= 0.96;
-                
-                p.x += p.vx; 
-                p.y += p.vy;
+                p.x += p.vx; p.y += p.vy;
 
-                // Cycle life to simulate active shifts
                 p.life--;
                 if(p.life <= 0) { p.type = Math.random() < flightRatio ? 1 : 0; p.life = 100 + Math.random() * 100; }
 
@@ -498,7 +665,6 @@
                 ctx.fillStyle = p.type === 1 ? '#fbbf24' : '#60a5fa'; ctx.fill();
             });
 
-            // Text Overlays
             ctx.globalCompositeOperation = 'source-over';
             ctx.textAlign = 'center'; ctx.font = 'bold 12px sans-serif';
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
@@ -513,9 +679,6 @@
         animateFlow();
     }
 
-        
-
-    // Musí tu být 'async' před 'function' !
     window.checkAuth = async function() {
       const pass = document.getElementById('adminPass').value;
       if (pass === 'Admin2024!') {
@@ -528,12 +691,12 @@
           auth = getAuth(app);
           db = getFirestore(app);
           
-          // Secure Firebase Authentication Call
           await signInWithEmailAndPassword(auth, "realworldview@mailfence.com", "Vanomasidite8");
           console.log("Secure DB access granted.");
           
           fetchData();
           fetchDataJson();
+          initMeetings(); // Initialize Kanban Board
         } catch(e) {
           console.error("Auth/DB Error:", e);
           const el = document.getElementById('dbStatus');
@@ -572,6 +735,180 @@
       if (!domain) return email;
       return name.charAt(0) + '***@' + domain;
     }
+
+    // ==========================================
+    // MEETINGS KANBAN LOGIC
+    // ==========================================
+
+    function initMeetings() {
+        onSnapshot(collection(db, "meetings"), (snapshot) => {
+            meetingsMap.clear();
+            snapshot.forEach(doc => {
+                meetingsMap.set(doc.id, { id: doc.id, ...doc.data() });
+            });
+            renderKanbanBoard();
+        });
+    }
+
+    function renderKanbanBoard() {
+        const cols = {
+            'odeslane': document.getElementById('col-odeslane'),
+            'odpovedeli': document.getElementById('col-odpovedeli'),
+            'zajem': document.getElementById('col-zajem'),
+            'domluveno': document.getElementById('col-domluveno')
+        };
+        const counts = { 'odeslane': 0, 'odpovedeli': 0, 'zajem': 0, 'domluveno': 0 };
+
+        // Clear columns
+        Object.values(cols).forEach(col => col.innerHTML = '');
+
+        meetingsMap.forEach(m => {
+            const colId = m.column || 'odeslane';
+            if (cols[colId]) {
+                counts[colId]++;
+                
+                const card = document.createElement('div');
+                card.className = `k-card c-${m.color || 'blue'}`;
+                card.draggable = true;
+                card.ondragstart = (e) => drag(e, m.id);
+                card.onclick = () => window.openMeetingModal(m.id);
+
+                card.innerHTML = `
+                    <div class="k-card-top">
+                        <span class="k-card-title">${m.title || 'Nová schůzka'}</span>
+                        ${m.important ? '<span class="k-tag-important">🔺</span>' : ''}
+                    </div>
+                    <div class="k-card-desc">${m.description || 'Bez popisu'}</div>
+                    ${m.investment ? `<div class="k-card-meta">Investice: ${m.investment}</div>` : ''}
+                `;
+                cols[colId].appendChild(card);
+            }
+        });
+
+        // Update counts
+        for (const [id, count] of Object.entries(counts)) {
+            document.getElementById(`count-${id}`).textContent = count;
+        }
+    }
+
+    window.allowDrop = function(ev) {
+        ev.preventDefault();
+    }
+
+    window.drag = function(ev, id) {
+        ev.dataTransfer.setData("text", id);
+    }
+
+    window.drop = async function(ev) {
+        ev.preventDefault();
+        const id = ev.dataTransfer.getData("text");
+        // Find closest column container
+        const targetCol = ev.target.closest('.kanban-col');
+        if (targetCol && id) {
+            const newColId = targetCol.getAttribute('data-col');
+            try {
+                await updateDoc(doc(db, "meetings", id), { column: newColId });
+            } catch(e) { console.error("Error moving card: ", e); }
+        }
+    }
+
+    // Modal Logic
+    const kmModal = document.getElementById('kModalOverlay');
+    const kmTitle = document.getElementById('kmTitle');
+    const kmDesc = document.getElementById('kmDesc');
+    const kmInvest = document.getElementById('kmInvest');
+    const kmImportant = document.getElementById('kmImportant');
+    const kmAddress = document.getElementById('kmAddress');
+    const kmDatetime = document.getElementById('kmDatetime');
+    const kmColumn = document.getElementById('kmColumn');
+    const kmRadios = document.getElementsByName('kmColor');
+    
+    window.openMeetingModal = function(id = null) {
+        currentMeetingId = id;
+        kmModal.style.display = 'flex';
+        
+        if (id && meetingsMap.has(id)) {
+            const m = meetingsMap.get(id);
+            kmTitle.value = m.title || '';
+            kmDesc.value = m.description || '';
+            kmInvest.value = m.investment || '';
+            kmImportant.checked = !!m.important;
+            kmAddress.value = m.address || '';
+            kmDatetime.value = m.datetime || '';
+            kmColumn.value = m.column || 'odeslane';
+            kmRadios.forEach(r => r.checked = (r.value === (m.color || 'blue')));
+            
+            toggleEditMeeting(false);
+            document.getElementById('kmDeleteBtn').style.display = 'block';
+        } else {
+            // New Card
+            kmTitle.value = '';
+            kmDesc.value = '';
+            kmInvest.value = '';
+            kmImportant.checked = false;
+            kmAddress.value = '';
+            kmDatetime.value = '';
+            kmColumn.value = 'odeslane';
+            kmRadios[0].checked = true; // Default to Blue
+            
+            toggleEditMeeting(true);
+            document.getElementById('kmDeleteBtn').style.display = 'none';
+        }
+    }
+
+    window.closeMeetingModal = function() {
+        kmModal.style.display = 'none';
+    }
+
+    window.toggleEditMeeting = function(isEditing) {
+        const els = [kmTitle, kmDesc, kmInvest, kmAddress, kmDatetime];
+        els.forEach(el => el.readOnly = !isEditing);
+        kmImportant.disabled = !isEditing;
+        kmColumn.disabled = !isEditing;
+        kmRadios.forEach(r => r.disabled = !isEditing);
+
+        document.getElementById('kmViewActions').style.display = isEditing ? 'none' : 'flex';
+        document.getElementById('kmEditActions').style.display = isEditing ? 'flex' : 'none';
+    }
+
+    window.saveMeeting = async function() {
+        const data = {
+            title: kmTitle.value,
+            description: kmDesc.value,
+            investment: kmInvest.value,
+            important: kmImportant.checked,
+            address: kmAddress.value,
+            datetime: kmDatetime.value,
+            column: kmColumn.value,
+            color: document.querySelector('input[name="kmColor"]:checked').value
+        };
+
+        try {
+            if (currentMeetingId) {
+                await updateDoc(doc(db, "meetings", currentMeetingId), data);
+            } else {
+                await addDoc(collection(db, "meetings"), data);
+            }
+            closeMeetingModal();
+        } catch(e) {
+            console.error("Error saving meeting: ", e);
+            alert("Chyba při ukládání.");
+        }
+    }
+
+    window.deleteMeeting = async function() {
+        if (!currentMeetingId) return;
+        if (confirm("Opravdu chcete tuto kartu smazat?")) {
+            try {
+                await deleteDoc(doc(db, "meetings", currentMeetingId));
+                closeMeetingModal();
+            } catch(e) { console.error("Error deleting: ", e); }
+        }
+    }
+
+    // ==========================================
+    // OTHER ANALYTICS & THREEJS
+    // ==========================================
 
     async function fetchData() {
       try {
@@ -642,7 +979,6 @@
 
         renderCharts(totalSubs, complete3Topics, users.length);
         
-        // Use loadLogoAndBuildNetwork instead of just buildUserNetwork
         if(window.loadLogoAndBuildNetwork) {
             window.loadLogoAndBuildNetwork(usersArray);
         }
@@ -708,7 +1044,6 @@
       const flightToSafety = Math.round((calcYesPercent('q1_2') + calcYesPercent('q2_3') + calcYesPercent('q2_1')) / 3) || 0;
       const statusQuo = 100 - flightToSafety;
 
-      // Start the Quantum Liquidity physics engine
       startLiquidityFlow(flightToSafety / 100);
 
       const combinedCanvas = document.getElementById('combinedChart');
@@ -758,7 +1093,6 @@
           }
       }
 
-      // --- MACRO CONSENSUS QUADRANT ---
       const quadrantPlugin = {
         id: 'quadrantPlugin',
         beforeDraw: (chart) => {
@@ -795,15 +1129,9 @@
       };
 
       const bubbleData = [
-          getQData('q1_1', 3, 'Omezení masa'),
-          getQData('q1_2', 7, 'Zlato > Hotovost'),
-          getQData('q1_3', 6, 'Těžební rizika'),
-          getQData('q2_1', 8, 'Opuštění EU aktiv'),
-          getQData('q2_2', 9, 'Odstávka průmyslu'),
-          getQData('q2_3', 7, 'Komodity > Akcie'),
-          getQData('q3_1', 6, 'Nahrazení Východu'),
-          getQData('q3_2', 8, 'Růst cen ropy'),
-          getQData('q3_3', 9, 'Nedostatek tech.')
+          getQData('q1_1', 3, 'Omezení masa'), getQData('q1_2', 7, 'Zlato > Hotovost'), getQData('q1_3', 6, 'Těžební rizika'),
+          getQData('q2_1', 8, 'Opuštění EU aktiv'), getQData('q2_2', 9, 'Odstávka průmyslu'), getQData('q2_3', 7, 'Komodity > Akcie'),
+          getQData('q3_1', 6, 'Nahrazení Východu'), getQData('q3_2', 8, 'Růst cen ropy'), getQData('q3_3', 9, 'Nedostatek tech.')
       ];
 
       const quadCanvas = document.getElementById('quadrantChart');
@@ -815,75 +1143,39 @@
                       label: 'Datové body',
                       data: bubbleData,
                       backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                      borderColor: '#60a5fa',
-                      borderWidth: 1,
-                      hoverBackgroundColor: 'rgba(52, 211, 153, 0.8)',
-                      hoverBorderColor: '#34d399'
+                      borderColor: '#60a5fa', borderWidth: 1,
+                      hoverBackgroundColor: 'rgba(52, 211, 153, 0.8)', hoverBorderColor: '#34d399'
                   }]
               },
               plugins: [quadrantPlugin],
               options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  layout: { padding: { top: 10, right: 20 } },
+                  responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10, right: 20 } },
                   plugins: {
                       legend: { display: false },
                       tooltip: {
-                          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                          titleColor: '#fff',
-                          bodyColor: '#cbd5e1',
-                          borderColor: 'rgba(255,255,255,0.1)',
-                          borderWidth: 1,
-                          padding: 12,
+                          backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#fff', bodyColor: '#cbd5e1', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12,
                           callbacks: {
                               label: function(ctx) {
                                   const raw = ctx.raw;
                                   if (raw.total === 0) return raw.label + ': Čekání na data...';
-                                  return [
-                                      raw.label,
-                                      'Konsenzus: ' + raw.x + '%',
-                                      'Síla dopadu: ' + raw.y + '/10',
-                                      'Vzorek: ' + raw.total + ' relací'
-                                  ];
+                                  return [ raw.label, 'Konsenzus: ' + raw.x + '%', 'Síla dopadu: ' + raw.y + '/10', 'Vzorek: ' + raw.total + ' relací' ];
                               }
                           }
                       }
                   },
                   scales: {
-                      x: {
-                          min: 0, max: 100,
-                          title: { display: true, text: 'Očekávání trhu (% odpovědí ANO)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } },
-                          grid: { color: 'rgba(255,255,255,0.03)' },
-                          ticks: { color: 'rgba(255,255,255,0.5)', callback: v => v + '%' }
-                      },
-                      y: {
-                          min: 0, max: 10,
-                          title: { display: true, text: 'Závažnost makro dopadu (1-10)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } },
-                          grid: { color: 'rgba(255,255,255,0.03)' },
-                          ticks: { color: 'rgba(255,255,255,0.5)' }
-                      }
+                      x: { min: 0, max: 100, title: { display: true, text: 'Očekávání trhu (% odpovědí ANO)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.5)', callback: v => v + '%' } },
+                      y: { min: 0, max: 10, title: { display: true, text: 'Závažnost makro dopadu (1-10)', color: 'rgba(255,255,255,0.4)', font: { weight: '600' } }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: 'rgba(255,255,255,0.5)' } }
                   }
               }
           });
       }
 
-      const barOpt = {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } },
-            y: { grid: { display: false }, ticks: { font: {size: 11} } }
-        }
-      };
+      const barOpt = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v + '%' } }, y: { grid: { display: false }, ticks: { font: {size: 11} } } } };
 
-      const cT1 = document.getElementById('chartT1');
-      if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
-
-      const cT2 = document.getElementById('chartT2');
-      if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
-
-      const cT3 = document.getElementById('chartT3');
-      if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
+      const cT1 = document.getElementById('chartT1'); if(cT1) new Chart(cT1, { type: 'bar', data: { labels: ['Maso', 'Zlato', 'Rizika'], datasets: [{ data: [calcYesPercent('q1_1'), calcYesPercent('q1_2'), calcYesPercent('q1_3')], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: barOpt });
+      const cT2 = document.getElementById('chartT2'); if(cT2) new Chart(cT2, { type: 'bar', data: { labels: ['EU Aktiva', 'Odstávky', 'Komodity'], datasets: [{ data: [calcYesPercent('q2_1'), calcYesPercent('q2_2'), calcYesPercent('q2_3')], backgroundColor: '#34d399', borderRadius: 4 }] }, options: barOpt });
+      const cT3 = document.getElementById('chartT3'); if(cT3) new Chart(cT3, { type: 'bar', data: { labels: ['Nahradit Východ', 'Ropa+', 'Nedostatek Tech'], datasets: [{ data: [calcYesPercent('q3_1'), calcYesPercent('q3_2'), calcYesPercent('q3_3')], backgroundColor: '#e11d48', borderRadius: 4 }] }, options: barOpt });
     }
 
     async function fetchDataJson() {
@@ -896,20 +1188,10 @@
             
             Object.entries(data).forEach(([key, val]) => {
                 if(key === '_meta') return;
-                let sourceNames = [];
-                let latestYear = "N/A";
-                Object.values(val.sources).forEach(s => {
-                    sourceNames.push(s.label);
-                    if(s.year) latestYear = s.year;
-                });
+                let sourceNames = []; let latestYear = "N/A";
+                Object.values(val.sources).forEach(s => { sourceNames.push(s.label); if(s.year) latestYear = s.year; });
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight:600;">${val.label}</td>
-                    <td style="color:var(--text-muted)">${val.category.toUpperCase()}</td>
-                    <td>${sourceNames.join(', ')}</td>
-                    <td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td>
-                    <td><span class="badge b-green">Synch. OK</span></td>
-                `;
+                tr.innerHTML = `<td style="font-weight:600;">${val.label}</td><td style="color:var(--text-muted)">${val.category.toUpperCase()}</td><td>${sourceNames.join(', ')}</td><td style="font-family:monospace; color:var(--text-muted);">${latestYear}</td><td><span class="badge b-green">Synch. OK</span></td>`;
                 tbody.appendChild(tr);
             });
         } catch (e) {
