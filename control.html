@@ -862,70 +862,87 @@
     }
 
     function renderCalendar() {
-        const year = calDate.getFullYear();
-        const month = calDate.getMonth();
-        document.getElementById('calMonthYear').textContent = `${monthNames[month]} ${year}`;
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    document.getElementById('calMonthYear').textContent = `${monthNames[month]} ${year}`;
 
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const prevMonthDays = new Date(year, month, 0).getDate();
-        
-        let startDay = firstDay - 1;
-        if(startDay === -1) startDay = 6; // Starts on Monday
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    
+    let startDay = firstDay - 1;
+    if(startDay === -1) startDay = 6; 
 
-        let html = '';
-        let dateNum = 1;
-        let nextMonthDateNum = 1;
+    let html = '';
+    let dateNum = 1;
+    let nextMonthDateNum = 1;
 
-        const today = new Date();
-        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-        const todayDate = today.getDate();
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+    const todayDate = today.getDate();
 
-        for(let i = 0; i < 6; i++) {
-            let rowHtml = '<div class="cal-row">';
-            for(let j = 0; j < 7; j++) {
-                let cellClass = 'cal-cell';
-                let numClass = 'cal-day-num';
-                let dayLabel = '';
-                let fullDateStr = '';
+    for(let i = 0; i < 6; i++) {
+        let rowHtml = '<div class="cal-row">';
+        for(let j = 0; j < 7; j++) {
+            let cellClass = 'cal-cell';
+            let numClass = 'cal-day-num';
+            let dayLabel = '';
+            
+            // Explicitně si nastavíme celá čísla, pro perfektní a blbuvzdorné porovnání s databází
+            let cellD, cellM, cellY;
 
-                if(i === 0 && j < startDay) {
-                    dayLabel = prevMonthDays - startDay + j + 1;
-                    numClass += ' muted';
-                    let prevM = month === 0 ? 12 : month;
-                    let prevY = month === 0 ? year - 1 : year;
-                    fullDateStr = `${dayLabel.toString().padStart(2,'0')}.${prevM.toString().padStart(2,'0')}.${prevY}`;
-                } else if(dateNum > daysInMonth) {
-                    dayLabel = nextMonthDateNum++;
-                    numClass += ' muted';
-                    let nextM = month === 11 ? 1 : month + 2;
-                    let nextY = month === 11 ? year + 1 : year;
-                    fullDateStr = `${dayLabel.toString().padStart(2,'0')}.${nextM.toString().padStart(2,'0')}.${nextY}`;
-                } else {
-                    dayLabel = dateNum;
-                    if(isCurrentMonth && dateNum === todayDate) numClass += ' today';
-                    let curM = month + 1;
-                    fullDateStr = `${dayLabel.toString().padStart(2,'0')}.${curM.toString().padStart(2,'0')}.${year}`;
-                    dateNum++;
-                }
-
-                let eventsHtml = '';
-                meetingsMap.forEach(m => {
-                    if(m.datetime && m.datetime.startsWith(fullDateStr)) {
-                        let timeStr = m.datetime.split(' ')[1] || '';
-                        let title = timeStr ? `${timeStr} ${m.title}` : m.title;
-                        eventsHtml += `<div class="cal-event ${m.color || 'blue'}" onclick="openMeetingModal('${m.id}')">${title}</div>`;
-                    }
-                });
-
-                rowHtml += `<div class="${cellClass}"><div class="${numClass}">${dayLabel}</div>${eventsHtml}</div>`;
+            if(i === 0 && j < startDay) {
+                dayLabel = prevMonthDays - startDay + j + 1;
+                numClass += ' muted';
+                cellD = dayLabel;
+                cellM = month === 0 ? 12 : month;
+                cellY = month === 0 ? year - 1 : year;
+            } else if(dateNum > daysInMonth) {
+                dayLabel = nextMonthDateNum++;
+                numClass += ' muted';
+                cellD = dayLabel;
+                cellM = month === 11 ? 1 : month + 2;
+                cellY = month === 11 ? year + 1 : year;
+            } else {
+                dayLabel = dateNum;
+                if(isCurrentMonth && dateNum === todayDate) numClass += ' today';
+                cellD = dateNum;
+                cellM = month + 1;
+                cellY = year;
+                dateNum++;
             }
-            rowHtml += '</div>';
-            html += rowHtml;
-            if(dateNum > daysInMonth && i >= 4) break; 
+
+            let eventsHtml = '';
+            meetingsMap.forEach(m => {
+                if(m.datetime) {
+                    // Normalizace mezer - např: "5. 1. 2024" se změní na "5.1.2024"
+                    let cleanStr = m.datetime.replace(/\.\s+/g, '.').trim();
+                    const dtParts = cleanStr.split(' ')[0].split('.');
+                    
+                    if (dtParts.length >= 3) {
+                        const md = parseInt(dtParts[0], 10);
+                        const mm = parseInt(dtParts[1], 10);
+                        const my = parseInt(dtParts[2], 10);
+                        
+                        // Porovnáváme čisté číselné hodnoty, ne texty
+                        if (md === cellD && mm === cellM && my === cellY) {
+                            let timeStr = cleanStr.split(' ').slice(1).join(' ') || '';
+                            let title = timeStr ? `${timeStr} ${m.title}` : m.title;
+                            // Použití window.openMeetingModal zaručí globální kontext spuštění
+                            eventsHtml += `<div class="cal-event ${m.color || 'blue'}" onclick="window.openMeetingModal('${m.id}')">${title}</div>`;
+                        }
+                    }
+                }
+            });
+
+            rowHtml += `<div class="${cellClass}"><div class="${numClass}">${dayLabel}</div>${eventsHtml}</div>`;
         }
-        document.getElementById('calGridBody').innerHTML = html;
+        rowHtml += '</div>';
+        html += rowHtml;
+        if(dateNum > daysInMonth && i >= 4) break; 
     }
+    document.getElementById('calGridBody').innerHTML = html;
+}
 
     // --- DRAG & DROP ---
     window.allowDrop = function(ev) {
@@ -1046,7 +1063,7 @@
             const currentData = Object.fromEntries(meetingsMap);
             delete currentData[currentMeetingId];
             try {
-                await setDoc(doc(db, "guest_predictions", MEETINGS_DOC_PATH), { meetings: currentData }, { merge: true });
+                await setDoc(doc(db, "guest_predictions", MEETINGS_DOC_PATH), { meetings: currentData });
                 closeMeetingModal();
             } catch(e) { console.error("Error deleting: ", e); }
         }
