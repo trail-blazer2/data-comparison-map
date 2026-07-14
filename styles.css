@@ -108,6 +108,8 @@
 .cat-btn { display: flex; align-items: center; gap: 8px; padding: 12px 12px; border: 1.5px solid rgba(200, 214, 229, 0.35); border-radius: 14px; background: rgb(255 255 255 / 12%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); cursor: pointer; font-family: inherit; transition: all 0.22s ease; text-align: left; }
 .cat-btn:hover { background: rgb(255 255 255 / 28%); border-color: rgba(30, 58, 95, 0.2); box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
 .cat-btn.active { background: linear-gradient(135deg, #1e3a5f, #0a1628); border-color: transparent; box-shadow: 0 6px 24px rgba(10, 22, 40, 0.2); }
+
+/* WIDE BUTTON FOR COMMODITIES */
 .cat-btn-wide { grid-column: 1 / -1; justify-content: center; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1)); border-color: rgba(245, 158, 11, 0.4); }
 .cat-btn-wide:hover { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.6); }
 .cat-btn-wide.active { background: linear-gradient(135deg, #d97706, #b45309); box-shadow: 0 6px 24px rgba(217, 119, 6, 0.3); }
@@ -148,8 +150,11 @@
 .mode-btn { flex: 1; border: none; border-radius: 12px; background: rgba(255,255,255,0.7); box-shadow: 0 4px 16px rgba(0,0,0,0.1); cursor: pointer; color: #576574; font-weight: 700; letter-spacing: 0.1em; font-size: 0.8rem; writing-mode: vertical-rl; transform: rotate(180deg); transition: all 0.2s; }
 .mode-btn:hover:not(:disabled) { background: #fff; color: #1e3a5f; }
 .mode-btn.active:not(:disabled) { background: linear-gradient(180deg, #1e3a5f, #0a1628); color: #fff; box-shadow: 0 4px 16px rgba(10,22,40,0.3); }
+
+/* Commodity Mode specific */
 .mode-btn[data-mode="commodity"] { display: none; }
 .mode-btn[data-mode="commodity"].active { background: linear-gradient(180deg, #d97706, #78350f); color: #fff; box-shadow: 0 4px 16px rgba(217,119,6,0.3); }
+
 .mode-btn:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(255,255,255,0.4); box-shadow: none; color: #a1aab3; }
 
 .side-panel.left { position: relative; top: 0; left: 0; bottom: 0; width: 320px; display: flex; flex-direction: column; gap: 16px; padding: 20px; box-sizing: border-box; box-shadow: 0 12px 48px rgba(0,0,0,0.15); transform: translateX(calc(-100% - 60px)); opacity: 0; pointer-events: auto; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; overflow-y: auto; }
@@ -157,7 +162,7 @@
 .panel-view { display: none; flex-direction: column; height: 100%; }
 .panel-view.active { display: flex; }
 .history-header { font-size: 1.1rem; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; }
-.history-sub { font-size: 0.75rem; color: #576574; font-weight: 500; display: flex; align-items: center; justify-content: space-between; gap: 8px;}
+.history-sub { font-size: 0.75rem; color: #576574; font-weight: 500; }
 .close-btn { position: absolute; z-index: 100; top: 16px; right: 16px; background: rgba(30,58,95,0.1); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: #1e3a5f; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
 .close-btn:hover { background: rgba(30,58,95,0.2); }
 
@@ -200,15 +205,25 @@
 .future-result { background: rgba(52, 211, 153, 0.15); padding: 14px; border-radius: 12px; text-align: center; color: #0a1628; font-size: 0.9rem; border: 1px solid rgba(52, 211, 153, 0.4); margin-top: 10px; }
 .fut-point { fill: #34d399; stroke: #fff; }
 
-/* User Sentiment Badge */
-.user-sentiment-badge { font-size: 0.65rem; background: rgba(245,158,11,0.15); color: #d97706; padding: 3px 8px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(245,158,11,0.3); display: none; }
+/* =========================================
+   COMMODITY SPECIFIC STYLES
+   ========================================= */
+.user-sentiment-badge { font-size: 0.65rem; background: rgba(245,158,11,0.15); color: #d97706; padding: 3px 8px; border-radius: 6px; font-weight: 700; border: 1px solid rgba(245,158,11,0.3); display: none; margin-bottom:8px; width: fit-content; }
 .user-sentiment-badge.active { display: inline-block; }
 
-/* Proof Section */
 .proof-section { background: rgba(255,255,255,0.4); border: 1.5px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 14px; margin-top: 16px; }
 .proof-section .sec-title { color: #b45309; margin-bottom: 10px; }
 
-/* AI FEATURES */
+/* Right Panel Accordion (General Proof) */
+.proof-accordion { background: rgba(245,158,11,0.1); border: 1.5px solid rgba(245,158,11,0.3); border-radius: 12px; overflow: hidden; margin-top: 10px; }
+.proof-acc-btn { width: 100%; text-align: left; padding: 12px 14px; background: transparent; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: inherit; }
+.proof-acc-body { padding: 0 14px 14px; display: none; }
+.proof-accordion.open .proof-acc-body { display: block; }
+.proof-accordion.open .proof-acc-btn svg { transform: rotate(180deg); }
+
+/* =========================================
+   AI FEATURES (Typing, Explanation Boxes)
+   ========================================= */
 .ai-wrap { margin-top: 16px; position: relative; z-index: 10; padding-right: 5px; }
 .btn-ai {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
@@ -231,7 +246,10 @@
 .ai-cursor { display: inline-block; width: 6px; height: 1em; background-color: #3b82f6; vertical-align: middle; margin-left: 2px; animation: aiBlink 1s step-end infinite; }
 @keyframes aiBlink { 50% { opacity: 0; } }
 
-/* PREMIUM FEATURES, POINTS & MODALS */
+/* =========================================
+   PREMIUM FEATURES, POINTS & MODALS
+   ========================================= */
+
 .nav-actions { display: flex; align-items: center; gap: 12px; margin-left: 16px; border-left: 1px solid rgba(30, 58, 95, 0.1); padding-left: 16px; }
 
 .btn-action {
