@@ -103,6 +103,11 @@ const I18N = {
     emailPlaceholder: "Email Address",
     passPlaceholder: "Password",
     authGdpr: `I agree to the <a href="terms.html" target="_blank" class="legal-link">Terms of Service</a> and <a href="privacy.html" target="_blank" class="legal-link">Privacy Policy</a>.`,
+    askAI: "Why this number? Ask our AI",
+    aiThinking: "AI is thinking...",
+    aiAgain: "Ask AI again",
+    aiAnalysis: "🤖 AI Analysis",
+    aiError: "AI service is currently unavailable. Please try again.",
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
     "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
@@ -151,6 +156,11 @@ const I18N = {
     emailPlaceholder: "E-mailová adresa",
     passPlaceholder: "Heslo",
     authGdpr: `Souhlasím s <a href="terms.html" target="_blank" class="legal-link">Podmínkami služby</a> a <a href="privacy.html" target="_blank" class="legal-link">Zásadami ochrany osobních údajů</a>.`,
+    askAI: "Proč toto číslo? Zeptejte se naší AI",
+    aiThinking: "AI přemýšlí...",
+    aiAgain: "Zeptat se AI znovu",
+    aiAnalysis: "🤖 AI Analýza",
+    aiError: "Služba AI je momentálně nedostupná. Zkuste to prosím znovu.",
     "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem", "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
     "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití", "Immigration": "Imigrace", "Net migration": "Čistá migrace",
     "Inflation": "Inflace", "Population": "Populace", "Life expectancy": "Naděje dožití", "Fertility": "Plodnost",
@@ -303,6 +313,8 @@ class DataComparisonMap extends HTMLElement {
     this._wizardStep = 1;
     this._isLoginMode = false;
     this._guestId = null;
+    
+    this._typingInterval = null;
   }
 
   t(key) {
@@ -422,18 +434,15 @@ class DataComparisonMap extends HTMLElement {
     if (firstCat) this.selectCategory(firstCat);
     this.initZoomPan();
 
-    // 1. Prepare the map for the swoop animation
     const mapWrap = this.$('.map-wrap');
     if (mapWrap) {
         mapWrap.style.opacity = '0';
         mapWrap.style.transform = 'scale(1.15)';
     }
 
-    // 2. Hide loader and reveal main layout
     this.$('#initLoader').style.display = 'none';
     this.$('#mainContent').style.opacity = '1';
 
-    // 3. Trigger the swoop animation after a tiny delay to ensure the layout has rendered
     if (mapWrap) {
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -441,7 +450,6 @@ class DataComparisonMap extends HTMLElement {
                 mapWrap.style.opacity = '1';
                 mapWrap.style.transform = 'scale(1)';
                 
-                // Clean up transition properties after animation completes
                 setTimeout(() => { 
                     mapWrap.style.transition = ''; 
                     mapWrap.style.transform = ''; 
@@ -450,9 +458,8 @@ class DataComparisonMap extends HTMLElement {
         });
     }
 
-    // 4. Handle the ads target URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('promo') === 'true') {
+    const promoParams = new URLSearchParams(window.location.search);
+    if (promoParams.get('promo') === 'true') {
       setTimeout(() => this.openWizard(1), 500);
     }
   }
@@ -1000,7 +1007,6 @@ class DataComparisonMap extends HTMLElement {
     overlayG.appendChild(hPath); overlayG.appendChild(sPath);
     svg.appendChild(overlayG);
 
-    // RESTORE THE BLUE SELECTION HIGHLIGHT IN 3D
     if (this._selectedCountryCode) {
       const allPaths = this.$$(`.cp[data-code="${this._selectedCountryCode}"]`);
       allPaths.forEach(p => p.classList.add('selected'));
@@ -1177,6 +1183,24 @@ class DataComparisonMap extends HTMLElement {
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
   }
 
+  // Helper for typing AI effect
+  _typeText(el, text, speed = 15) {
+    if (this._typingInterval) clearInterval(this._typingInterval);
+    el.innerHTML = '<span class="text-content"></span><span class="ai-cursor"></span>';
+    const contentEl = el.querySelector('.text-content');
+    const cursorEl = el.querySelector('.ai-cursor');
+    let i = 0;
+    this._typingInterval = setInterval(() => {
+      if (i < text.length) {
+        contentEl.textContent += text.charAt(i);
+        i++;
+      } else {
+        clearInterval(this._typingInterval);
+        if (cursorEl) cursorEl.remove();
+      }
+    }, speed);
+  }
+
   updateHistoryView(year) {
     const metricData = window.HISTORY_DATA[this.currentDataType][this._activeHistoryCode];
     if (!metricData) return;
@@ -1232,13 +1256,19 @@ class DataComparisonMap extends HTMLElement {
       valContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     }
     this._lastHistVal = targetVal;
-    this.$('#histInfoTxt').innerHTML = `<strong>${year} ${this.t('context')}</strong><br/>${txt}`;
+    
+    this.$('#histInfoTxt').innerHTML = `<strong>${year} ${this.t('context')}</strong><br/><div class="typing-container"></div>`;
+    this._typeText(this.$('#histInfoTxt').querySelector('.typing-container'), txt, 20);
   }
 
   buildFutureView(code) {
     const futData = window.FUTURE_DATA[this.currentDataType] && window.FUTURE_DATA[this.currentDataType][code];
     const container = this.$('#futFactors');
     container.innerHTML = '';
+    
+    // Clear AI box if it exists
+    const existingAiWrap = this.$('#futAiWrap');
+    if (existingAiWrap) existingAiWrap.style.display = 'none';
     
     if (!futData) {
       this.$('#futDesc').textContent = this.t('noProj');
@@ -1278,6 +1308,71 @@ class DataComparisonMap extends HTMLElement {
                      <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
                      <text x="268" y="118" class="fut-axis-label" text-anchor="end">2029</text>`;
     
+    // Add AI Explanation Box structure if not present
+    let aiWrap = this.$('#futAiWrap');
+    if (!aiWrap) {
+        aiWrap = document.createElement('div');
+        aiWrap.className = 'ai-wrap';
+        aiWrap.id = 'futAiWrap';
+        aiWrap.innerHTML = `
+            <button class="btn-ai" id="futAiBtn">
+                <span class="ai-icon">✨</span> <span class="btn-text">${this.t('askAI')}</span>
+            </button>
+            <div class="ai-explanation-box" id="futAiBox" style="display:none;">
+                <div class="ai-header">${this.t('aiAnalysis')}</div>
+                <div class="ai-content"></div>
+            </div>
+        `;
+        this.$('#viewFuture').appendChild(aiWrap);
+    }
+    
+    aiWrap.style.display = 'block';
+    this.$('#futAiBox').style.display = 'none';
+    const aiBtn = this.$('#futAiBtn');
+    aiBtn.disabled = false;
+    aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+    
+    aiBtn.onclick = async () => {
+        aiBtn.disabled = true;
+        aiBtn.querySelector('.btn-text').textContent = this.t('aiThinking');
+        
+        const checked = [];
+        this.$$('.factor-cb:checked').forEach(cb => {
+             const factor = futData.factors.find(f => f.id === cb.dataset.id);
+             if(factor) checked.push(factor.yes.en); 
+        });
+        const unchecked = [];
+        this.$$('.factor-cb:not(:checked)').forEach(cb => {
+             const factor = futData.factors.find(f => f.id === cb.dataset.id);
+             if(factor) unchecked.push(factor.no.en);
+        });
+        
+        let factorsText = "Factors happening: " + (checked.join(', ') || "None") + ". Factors NOT happening: " + (unchecked.join(', ') || "None");
+        const metricName = this.DATA[this.currentDataType] ? this.DATA[this.currentDataType].label : this.currentDataType;
+        const targetValFmt = this.$('#futResultVal').textContent;
+        const countryName = this._selectedCountryName;
+        
+        const langInstruction = this._lang === 'cs' ? "Reply completely in Czech language." : "Reply completely in English language.";
+        const prompt = `Act as an expert financial/macro-economic analyst. Explain briefly (max 3 short sentences) why ${metricName} in ${countryName} is projected to reach ${targetValFmt} by 2029. Take into account these specific driving factors that the user selected: ${factorsText}. Be professional, analytical, and concise. ${langInstruction}`;
+        
+        try {
+            const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+            if(!res.ok) throw new Error('API Error');
+            const aiText = await res.text();
+            
+            this.$('#futAiBox').style.display = 'block';
+            this._typeText(this.$('#futAiBox').querySelector('.ai-content'), aiText, 30);
+            
+            aiBtn.querySelector('.btn-text').textContent = this.t('aiAgain');
+            aiBtn.disabled = false;
+        } catch(e) {
+            this.$('#futAiBox').style.display = 'block';
+            this.$('#futAiBox').querySelector('.ai-content').textContent = this.t('aiError');
+            aiBtn.disabled = false;
+            aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+        }
+    };
+
     this.updateFutureChart(code, futData, true);
   }
 
@@ -1362,6 +1457,15 @@ class DataComparisonMap extends HTMLElement {
     if (this._lastFutVal !== undefined && !isNaN(this._lastFutVal) && !isNaN(targetVal)) animateValue(resultContainer, this._lastFutVal, targetVal, dt.unit, 300, k=>this.t(k));
     else resultContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     this._lastFutVal = targetVal;
+    
+    // Reset AI Box when a new scenario factor is clicked
+    const aiBox = this.$('#futAiBox');
+    if (aiBox) aiBox.style.display = 'none';
+    const aiBtn = this.$('#futAiBtn');
+    if (aiBtn) {
+       aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+       aiBtn.disabled = false;
+    }
   }
 
   initZoomPan() {
@@ -1458,9 +1562,6 @@ class DataComparisonMap extends HTMLElement {
       }
     });
 
-    // ==========================================
-    // FIX FOR 3D CLICKING (SHADOW DOM PIERCING)
-    // ==========================================
     window.addEventListener('mouseup', (e) => {
       if (!this._isPanning) return;
       this._isPanning = false; wrap.style.cursor = ''; 
@@ -1544,9 +1645,6 @@ class DataComparisonMap extends HTMLElement {
       }
     }, { passive: false });
 
-    // ==========================================
-    // FIX FOR 3D TOUCH (SHADOW DOM PIERCING)
-    // ==========================================
     wrap.addEventListener('touchend', (e) => { 
       this._isPanning = false; 
       if (this._is3D) {
