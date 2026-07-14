@@ -106,7 +106,7 @@ const I18N = {
     askAI: "Why this number? Ask our AI",
     aiThinking: "AI is thinking...",
     aiAgain: "Ask AI again",
-    aiAnalysis: "🤖 AI Analysis",
+    aiAnalysis: "AI Analysis",
     aiError: "AI service is currently unavailable. Please try again.",
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
@@ -164,7 +164,7 @@ const I18N = {
     askAI: "Proč toto číslo? Zeptejte se naší AI",
     aiThinking: "AI přemýšlí...",
     aiAgain: "Zeptat se AI znovu",
-    aiAnalysis: "🤖 AI Analýza",
+    aiAnalysis: "AI Analýza",
     aiError: "Služba AI je momentálně nedostupná. Zkuste to prosím znovu.",
     "Unemployment rate - Total": "Míra nezaměstnanosti - Celkem", "Unemployment rate - Youth": "Míra nezaměstnanosti - Mládež",
     "Earnings": "Příjmy", "Intentional homicide": "Úmyslné zabití", "Immigration": "Imigrace", "Net migration": "Čistá migrace",
@@ -415,6 +415,7 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
     
+    // Inject the special Commodities category manually
     this.categories['commodities'] = []; 
 
     this.setupModalsAndNav();
@@ -1366,7 +1367,7 @@ class DataComparisonMap extends HTMLElement {
         aiWrap.id = 'futAiWrap';
         aiWrap.innerHTML = `
             <button class="btn-ai" id="futAiBtn">
-                <span class="ai-icon">✨</span> <span class="btn-text">${this.t('askAI')}</span>
+                <span class="btn-text">${this.t('askAI')}</span>
             </button>
             <div class="ai-explanation-box" id="futAiBox" style="display:none;">
                 <div class="ai-header">${this.t('aiAnalysis')}</div>
@@ -1442,8 +1443,14 @@ class DataComparisonMap extends HTMLElement {
     const years = [2024, 2025, 2026, 2027, 2028, 2029];
     const calcValues = (rates) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] * (1 + rates[i])); return v; };
     const minValues = calcValues(minRates), maxValues = calcValues(maxRates), currentValues = calcValues(currentRates);
-    const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
-    const range = maxBound === minBound ? 1 : maxBound - minBound;
+    
+    let minBound = Math.min(...minValues, ...maxValues, baseVal);
+    let maxBound = Math.max(...minValues, ...maxValues, baseVal);
+    if (minBound === maxBound) {
+        minBound = baseVal * 0.9;
+        maxBound = baseVal * 1.1;
+    }
+    const range = maxBound - minBound;
 
     const svg = this.$('#futChart'); if (!svg) return;
     const w = 280, h = 120, pad = 12;
@@ -1508,7 +1515,6 @@ class DataComparisonMap extends HTMLElement {
     else resultContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     this._lastFutVal = targetVal;
     
-    // Reset AI Box when a new scenario factor is clicked
     const aiBox = this.$('#futAiBox');
     if (aiBox) aiBox.style.display = 'none';
     const aiBtn = this.$('#futAiBtn');
@@ -1581,7 +1587,7 @@ class DataComparisonMap extends HTMLElement {
       aiWrap.id = 'commAiWrap';
       aiWrap.innerHTML = `
           <button class="btn-ai" id="commAiBtn">
-              <span class="ai-icon">✨</span> <span class="btn-text">${this.t('askAI')}</span>
+              <span class="btn-text">${this.t('askAI')}</span>
           </button>
           <div class="ai-explanation-box" id="commAiBox" style="display:none;">
               <div class="ai-header">${this.t('aiAnalysis')}</div>
@@ -1696,8 +1702,13 @@ class DataComparisonMap extends HTMLElement {
       const calcValues = (impArr) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] + impArr[i]); return v; };
       
       const minValues = calcValues(minImpacts), maxValues = calcValues(maxImpacts), currentValues = calcValues(impacts);
-      const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
-      const range = maxBound === minBound ? 1 : maxBound - minBound;
+      let minBound = Math.min(...minValues, ...maxValues, baseVal);
+      let maxBound = Math.max(...minValues, ...maxValues, baseVal);
+      if (minBound === maxBound) {
+          minBound = baseVal * 0.9;
+          maxBound = baseVal * 1.1;
+      }
+      const range = maxBound - minBound;
 
       const svg = this.$('#commChart'); if (!svg) return;
       const w = 280, h = 120, pad = 12;
@@ -1768,7 +1779,8 @@ class DataComparisonMap extends HTMLElement {
               if (baseVal + v > maxB) maxB = baseVal + v;
           });
       });
-      const range = maxB === minB ? 1 : maxB - minB;
+      if (minB === maxB) { minB = baseVal * 0.9; maxB = baseVal * 1.1; }
+      const range = maxB - minB;
 
       const svg = this.$('#countryProofChart'); if (!svg) return;
       const w = 250, h = 70, pad = 8;
@@ -1797,7 +1809,6 @@ class DataComparisonMap extends HTMLElement {
   buildGeneralProof() {
       let dtWrapper = this.$('#dtWrapper');
       if (!dtWrapper) {
-          // Restructure controls slightly to hide dtBtns and srcBtns
           const dtDiv = this.$('#dtBtns').parentElement;
           const srcDiv = this.$('#srcBtns').parentElement;
           
@@ -1824,7 +1835,7 @@ class DataComparisonMap extends HTMLElement {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
               </button>
               <div class="proof-acc-body">
-                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})</div>
+                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc">...</div>
                   <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
                   <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
                   <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
@@ -1856,8 +1867,11 @@ class DataComparisonMap extends HTMLElement {
           pSvg.innerHTML = `<path class="chart-line" id="genProofLine" style="stroke: #d97706; stroke-width: 2;" />
                            <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
                            <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
-          this.updateGeneralProofChart();
       }
+      
+      const pData = window.PROOF_DATA;
+      this.$('#genProofDesc').textContent = `${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})`;
+      this.updateGeneralProofChart();
 
       if (this.currentCategory === 'commodities') {
           this.$('#dtWrapper').style.display = 'none';
@@ -1884,8 +1898,9 @@ class DataComparisonMap extends HTMLElement {
       }
       
       const currentValues = years.map((y, i) => baseVal + impacts[i]);
-      const minBound = 5; 
-      const maxBound = 40; 
+      let minBound = 5; 
+      let maxBound = 40; 
+      if (minBound === maxBound) { minBound = baseVal * 0.9; maxBound = baseVal * 1.1; }
       const range = maxBound - minBound;
 
       const svg = this.$('#genProofChart'); if (!svg) return;
@@ -1912,582 +1927,6 @@ class DataComparisonMap extends HTMLElement {
   }
   
   // ============================================================
-
-  initZoomPan() {
-    const svg = this.$('#mapSvg');
-    const wrap = this.$('.map-wrap');
-    if (!svg || !wrap) return;
-    this._origVB = { ...WORLD_VIEWBOX };
-    this._contentBBox = { ...WORLD_CONTENT_BBOX };
-    
-    if (!this._isDesktop) {
-      this._zoom = 1.8; 
-      const vw = this._origVB.w / this._zoom;
-      const vh = this._origVB.h / this._zoom;
-      this._panX = 260; 
-      this._panY = -20;
-    } else {
-      this._zoom = 1; this._panX = 0; this._panY = -10;
-    }
-    this._applyTransform();
-
-    const getScale = () => {
-      const rect = svg.getBoundingClientRect();
-      const vb = this._getViewBox();
-      const scaleX = rect.width / vb.w;
-      const scaleY = rect.height / vb.h;
-      return (svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') 
-        ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
-    };
-
-    const animLoop = () => {
-      let needsRedraw = false;
-      if (this._is3D) {
-        if (this._autoSpinning && !this._isPanning) {
-          this._globeRotation[0] += 0.15; needsRedraw = true;
-        } else if (!this._isPanning && Math.abs(this._spinVelocity) > 0.01) {
-          this._globeRotation[0] += this._spinVelocity; this._spinVelocity *= 0.95; needsRedraw = true;
-        } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
-          if (this._spinVelocity !== 0) {
-            this._spinVelocity = 0;
-            needsRedraw = true; 
-          }
-        }
-      }
-      if (needsRedraw) this.drawMap();
-      requestAnimationFrame(animLoop);
-    };
-    requestAnimationFrame(animLoop);
-
-    wrap.addEventListener('wheel', (e) => {
-      e.preventDefault(); 
-      this._autoSpinning = false;
-      const delta = e.deltaY > 0 ? -0.12 : 0.12;
-      const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
-      const rect = svg.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) / rect.width;
-      const my = (e.clientY - rect.top) / rect.height;
-      const oldW = this._origVB.w / this._zoom, newW = this._origVB.w / newZoom;
-      const oldH = this._origVB.h / this._zoom, newH = this._origVB.h / newZoom;
-      this._panX += (oldW - newW) * mx; this._panY += (oldH - newH) * my;
-      this._zoom = newZoom; this._clampAndApply();
-    }, { passive: false });
-
-    wrap.addEventListener('mousedown', (e) => {
-      if (e.button !== 0) return;
-      this._isPanning = true; this._dragged = false; this._autoSpinning = false;
-      this._panStartX = e.clientX; this._panStartY = e.clientY;
-      this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-      this._panStartRotation = [...this._globeRotation];
-      this._spinVelocity = 0; this._lastSpinTime = performance.now();
-      wrap.style.cursor = 'grabbing'; e.preventDefault();
-    });
-    
-    window.addEventListener('mousemove', (e) => {
-      if (!this._isPanning) return;
-      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
-        this._dragged = true;
-      }
-      const dx = (e.clientX - this._panStartX);
-      const dy = (e.clientY - this._panStartY);
-      if (this._is3D) {
-        const sensitivity = 0.25 / this._zoom;
-        const now = performance.now();
-        const dt = now - this._lastSpinTime;
-        if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
-        this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
-        this._globeRotation[1] = Math.max(-90, Math.min(90, this._panStartRotation[1] - dy * sensitivity));
-        this._lastSpinTime = now;
-        this.drawMap();
-      } else {
-        const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
-        this._panX = this._panStartPanX - dx * (vb.w / rect.width);
-        this._panY = this._panStartPanY - dy * (vb.h / rect.height);
-        this._applyTransform();
-      }
-    });
-
-    window.addEventListener('mouseup', (e) => {
-      if (!this._isPanning) return;
-      this._isPanning = false; wrap.style.cursor = ''; 
-      if (this._is3D) {
-        let clickedCode = null, clickedName = null, clickTarget = null;
-        if (!this._dragged) {
-          const targets = this.shadowRoot.elementsFromPoint(e.clientX, e.clientY);
-          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (clickTarget) {
-            clickedCode = clickTarget.dataset.code;
-            clickedName = clickTarget.dataset.name;
-          }
-        }
-        this.drawMap(); 
-        if (clickedCode) {
-           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
-           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
-           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e);
-        }
-      } else {
-        this._snapBack();
-      }
-    });
-
-    wrap.addEventListener('dblclick', (e) => { 
-      e.preventDefault(); 
-      this._animateTo(1, 0, 0); 
-    });
-
-    let initialDist = 0, initialMidX = 0, initialMidY = 0, startZoom = 1;
-
-    wrap.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        this._isPanning = true; this._dragged = false; this._autoSpinning = false;
-        this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
-        this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-        this._panStartRotation = [...this._globeRotation];
-        this._spinVelocity = 0; this._lastSpinTime = performance.now();
-      } else if (e.touches.length === 2) {
-        this._isPanning = false; this._autoSpinning = false;
-        const t1 = e.touches[0], t2 = e.touches[1];
-        initialDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        initialMidX = (t1.clientX + t2.clientX) / 2; initialMidY = (t1.clientY + t2.clientY) / 2;
-        startZoom = this._zoom; this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-      }
-    }, { passive: true });
-
-    wrap.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1 && this._isPanning) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - this._panStartX;
-        const dy = e.touches[0].clientY - this._panStartY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
-        if (this._is3D) {
-          const sensitivity = 0.35 / this._zoom;
-          const now = performance.now();
-          const dt = now - this._lastSpinTime;
-          if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
-          this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
-          this._globeRotation[1] = Math.max(-90, Math.min(90, this._panStartRotation[1] - dy * sensitivity));
-          this._lastSpinTime = now;
-          this.drawMap();
-        } else {
-          const scale = getScale();
-          this._panX = this._panStartPanX - dx / scale;
-          this._panY = this._panStartPanY - dy / scale;
-          this._applyTransform();
-        }
-      } else if (e.touches.length === 2) {
-        this._dragged = true; e.preventDefault();
-        const t1 = e.touches[0], t2 = e.touches[1];
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * (dist / initialDist)));
-        const rect = svg.getBoundingClientRect();
-        const mx = (initialMidX - rect.left) / rect.width;
-        const my = (initialMidY - rect.top) / rect.height;
-        const oldW = this._origVB.w / startZoom, newW = this._origVB.w / newZoom;
-        const oldH = this._origVB.h / startZoom, newH = this._origVB.h / newZoom;
-        this._panX = this._panStartPanX + (oldW - newW) * mx; 
-        this._panY = this._panStartPanY + (oldH - newH) * my;
-        this._zoom = newZoom; this._clampAndApply();
-      }
-    }, { passive: false });
-
-    wrap.addEventListener('touchend', (e) => { 
-      this._isPanning = false; 
-      if (this._is3D) {
-        let clickedCode = null, clickedName = null, clickTarget = null;
-        if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
-          const touch = e.changedTouches[0];
-          const targets = this.shadowRoot.elementsFromPoint(touch.clientX, touch.clientY);
-          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (clickTarget) {
-            clickedCode = clickTarget.dataset.code;
-            clickedName = clickTarget.dataset.name;
-          }
-        }
-        this.drawMap();
-        if (clickedCode) {
-           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
-           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
-           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e.changedTouches[0]);
-        }
-      } else {
-        this._snapBack(); 
-      }
-    });
-
-    const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
-    if (zoomIn) zoomIn.addEventListener('click', () => {
-      this._autoSpinning = false;
-      const nz = Math.min(this._maxZoom, this._zoom + 0.3);
-      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
-      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
-      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-    });
-    if (zoomOut) zoomOut.addEventListener('click', () => {
-      this._autoSpinning = false;
-      const nz = Math.max(this._minZoom, this._zoom - 0.3);
-      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
-      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
-      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-    });
-    if (zoomReset) zoomReset.addEventListener('click', () => { 
-      this._animateTo(1, 0, 0); 
-    });
-
-    const toggle3D = this.$('#toggle3D');
-    if (toggle3D) {
-      toggle3D.addEventListener('click', () => {
-        const wrap = this.$('.map-wrap'); 
-        wrap.style.transition = 'opacity 0.15s ease-out';
-        wrap.style.opacity = '0';
-        
-        setTimeout(() => {
-          this._is3D = !this._is3D;
-          toggle3D.classList.toggle('active-3d', this._is3D);
-          
-          if (this._is3D) {
-            this._zoom = 1; this._panX = 0; this._panY = 0;
-            this._applyTransform();
-            wrap.style.transform = 'scale(0.85)';
-          } else {
-            wrap.style.transform = 'scale(1.15)';
-          }
-          this.drawMap();
-          void wrap.offsetHeight; 
-          
-          wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1)';
-          wrap.style.opacity = '1';
-          wrap.style.transform = 'scale(1)';
-          
-          setTimeout(() => { wrap.style.transition = ''; wrap.style.transform = ''; }, 450);
-        }, 150);
-      });
-    }
-  }
-
-  _getViewBox() {
-    const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom;
-    return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
-  }
-  _applyTransform() {
-    const svg = this.$('#mapSvg'); if (!svg) return;
-    const vb = this._getViewBox();
-    svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
-  }
-  _syncDetailLayerVisibility() {
-    const lowResGroup = this.$('.euro-group.low-res');
-    const highResGroup = this.$('.euro-group.high-res');
-    const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
-    
-    if (!highResGroup) {
-      if (lowResGroup) {
-        lowResGroup.style.visibility = 'visible';
-        lowResGroup.style.opacity = '1';
-        lowResGroup.style.pointerEvents = 'auto';
-      }
-      this._isHighResVisible = false;
-      return;
-    }
-
-    if (this._isHighResVisible === showHighRes) return;
-    this._isHighResVisible = showHighRes;
-    
-    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
-    lowResGroup.style.opacity = showHighRes ? '0' : '1';
-    lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
-    
-    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden';
-    highResGroup.style.opacity = showHighRes ? '1' : '0';
-    highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
-  }
-  _getPanBounds() {
-    const svg = this.$('#mapSvg');
-    let vw = this._origVB.w / this._zoom;
-    let vh = this._origVB.h / this._zoom;
-    let isMobile = false;
-    
-    if (svg && svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') {
-      isMobile = true;
-      const rect = svg.getBoundingClientRect();
-      const vb = this._getViewBox();
-      const scaleX = rect.width / vb.w;
-      const scaleY = rect.height / vb.h;
-      const scale = Math.max(scaleX, scaleY);
-      if (scale > 0) {
-        vw = rect.width / scale;
-        vh = rect.height / scale;
-      }
-    }
-    const cb = this._contentBBox;
-    const overX = isMobile ? (this._origVB.w * 0.7) : (vw * 0.05); 
-    const overY = vh * 0.05; 
-    
-    return {
-      minX: Math.min(cb.x - this._origVB.x - overX, 0),
-      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
-      minY: Math.min(cb.y - this._origVB.y - overY, 0),
-      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0)
-    };
-  }
-  _clampPan() {
-    const b = this._getPanBounds();
-    this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
-  }
-  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); this.buildGeneralProof(); }
-  _snapBack() {
-    const b = this._getPanBounds();
-    const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
-    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) {
-      this._panX = tx; this._panY = ty; this._applyTransform(); return;
-    }
-    this._animateTo(this._zoom, tx, ty, 350);
-  }
-  _animateTo(targetZoom, targetPanX, targetPanY, duration) {
-    duration = duration || 400;
-    if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    const sz = this._zoom, sx = this._panX, sy = this._panY;
-    
-    const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
-    const overX = tvw * 0.15, overY = tvh * 0.15;
-    
-    targetPanX = Math.max(Math.min(cb.x - this._origVB.x - overX, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw + overX, 0), targetPanX));
-    targetPanY = Math.max(Math.min(cb.y - this._origVB.y - overY, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh + overY, 0), targetPanY));
-    
-    const st = performance.now();
-    const tick = (now) => {
-      const p = Math.min((now - st) / duration, 1);
-      const c1 = 1.70158, c3 = c1 + 1;
-      const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
-      this._zoom = sz + (targetZoom - sz) * ease;
-      this._panX = sx + (targetPanX - sx) * ease;
-      this._panY = sy + (targetPanY - sy) * ease;
-      this._applyTransform();
-      
-      if (p < 1) this._animFrame = requestAnimationFrame(tick);
-      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
-    };
-    this._animFrame = requestAnimationFrame(tick);
-  }
-
-  _appendPathPoint(path, command, point, precision) { path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`); }
-
-  _ringToPath(ring, proj, precision) {
-    if (!ring.length) return '';
-    const path = [];
-    let currentLon = ring[0][0];
-    const firstPoint = proj([currentLon, ring[0][1]]);
-    this._appendPathPoint(path, 'M', firstPoint, precision);
-
-    for (let i = 1; i < ring.length; i += 1) {
-      let lon = ring[i][0];
-      let lat = ring[i][1];
-      if (lon - currentLon > 180) lon -= 360;
-      else if (currentLon - lon > 180) lon += 360;
-      currentLon = lon;
-      this._appendPathPoint(path, 'L', proj([lon, lat]), precision);
-    }
-    path.push('Z');
-    return path.join(' ');
-  }
-
-  geoPaths(geom, proj, precision) {
-    const ring = r => this._ringToPath(r, proj, precision);
-    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
-    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
-    return [];
-  }
-
-  moveSlider(container, activeBtn) {
-    let slider = container.querySelector('.slider');
-    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
-    if (!activeBtn) { slider.classList.remove('visible'); return; }
-    slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible');
-  }
-
-  buildCategoryButtons() {
-    const c = this.$('#catBtns'); c.innerHTML = '';
-    Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', labelKey: catKey };
-      const b = document.createElement('button'); 
-      b.className = 'cat-btn' + (meta.isWide ? ' cat-btn-wide' : ''); 
-      b.dataset.key = catKey;
-      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + this.t(meta.labelKey) + '</span>';
-      b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
-    });
-  }
-
-  selectCategory(catKey) {
-    this.currentCategory = catKey;
-    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
-    this._lastTtVal = null; this._lastTtDataType = null;
-    
-    if (catKey === 'commodities') {
-        this.$('#dtBtns').innerHTML = `<div style="text-align:center; padding: 20px; font-size: 0.8rem; color: #8395a7;">${this._lang==='cs'?'Vyberte zemi z mapy (USA, Čína, CZ, SK, DE)':'Select a country from the map (US, China, CZ, SK, DE)'}</div>`;
-        this.$('#srcBtns').innerHTML = '';
-        this.closeSidePanel();
-        this.buildGeneralProof(); 
-        this.paint();
-        return;
-    }
-
-    this.buildGeneralProof(); 
-    this.buildDataTypeButtons(catKey);
-    const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
-  }
-
-  buildDataTypeButtons(catKey) {
-    const c = this.$('#dtBtns'); c.innerHTML = '';
-    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
-    (this.categories[catKey] || []).forEach(key => {
-      const dt = this.DATA[key]; if (!dt) return;
-      const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      const validSources = Object.entries(dt.sources).filter(([sk, s]) => sk !== 'who');
-      const srcCount = validSources.length;
-      const okCount = validSources.filter(([, s]) => Object.keys(s.countries).length > 0).length;
-      
-      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + this.t(dt.label) + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
-      b.onclick = () => this.selectDataType(key); c.appendChild(b);
-    });
-  }
-
-  buildSourceButtons(dtKey) {
-    const c = this.$('#srcBtns'); c.innerHTML = '';
-    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
-    const dt = this.DATA[dtKey]; if (!dt) return;
-    Object.entries(dt.sources).forEach(([key, src]) => {
-      if (key === 'who') return; 
-      const count = Object.keys(src.countries).length; const isEmpty = count === 0;
-      const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
-      if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
-      else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
-      c.appendChild(b);
-    });
-  }
-
-  selectDataType(k) {
-    this.currentDataType = k;
-    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-    const dtc = this.$('#dtBtns'), ab = dtc.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
-    this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
-    const dt = this.DATA[k]; if (!dt) return;
-    const firstOk = Object.entries(dt.sources).find(([sk, s]) => sk !== 'who' && Object.keys(s.countries).length > 0);
-    if (firstOk) {
-      this.selectSource(firstOk[0]);
-    } else {
-      this.currentSource = null; this.$('#mapTitle').textContent = this.t(dt.label);
-      this.$('#mapSub').textContent = this.t('noDataSrc');
-      this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); });
-    }
-    
-    if (this._selectedCountryCode) {
-      this.openSidePanel(this._selectedCountryCode, this._selectedCountryName);
-    }
-  }
-
-  selectSource(k) {
-    this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
-    const sc = this.$('#srcBtns'), ab = sc.querySelector('.btn.active');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(sc, ab)); });
-    this.paint();
-  }
-
-  paint() {
-    if (this.currentCategory === 'commodities') {
-        this.$('#mapTitle').textContent = this.t('Commodities');
-        this.$('#mapSub').textContent = 'Global Projections & Scenarios';
-        this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
-        
-        this.$$('.cp').forEach(p => {
-            const isSupported = !!window.COMMODITY_DATA[p.dataset.code];
-            if (isSupported) {
-                p.classList.remove('no-data');
-                p.setAttribute('fill', '#f59e0b'); 
-            } else {
-                p.classList.add('no-data');
-                p.setAttribute('fill', '#d4e3f0');
-            }
-        });
-        return;
-    }
-
-    const dt = this.DATA[this.currentDataType]; if (!dt) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    this.$('#mapTitle').textContent = this.t(dt.label);
-    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + this.t(dt.unit);
-    const vals = Object.values(src.countries).filter(v => v != null);
-    if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); }); return; }
-    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    this.$('#legMin').textContent = fmt(min, dt.unit, key => this.t(key)); this.$('#legMax').textContent = fmt(max, dt.unit, key => this.t(key));
-    this.$$('.cp').forEach(p => {
-      const v = src.countries[p.dataset.code];
-      if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
-      else { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); }
-    });
-  }
-
-  ttShow(e) {
-    const code = e.target.dataset.code;
-    
-    if (this.currentCategory === 'commodities') {
-        const cData = window.COMMODITY_DATA[code];
-        if(!cData) return;
-        this.$('#ttName').textContent = e.target.dataset.name;
-        this.$('#ttUnit').textContent = cData.unit;
-        this.$('#ttSrc').textContent = 'Live projection parameters';
-        this.$('#ttVal').textContent = '$' + cData.base_price.toFixed(2);
-        this.$('#tt').classList.add('visible');
-        return;
-    }
-
-    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-    this.$('#ttName').textContent = e.target.dataset.name;
-    this.$('#ttUnit').textContent = newVal != null ? this.t(dt.unit) : '';
-    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
-    const valEl = this.$('#ttVal');
-    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
-      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300, key => this.t(key));
-    else valEl.textContent = fmt(newVal, dt.unit, key => this.t(key));
-    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
-    this.checkDiscrepancy(code);
-    const marker = this.$('#legMarker');
-    if (newVal != null) {
-      const vs = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
-      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%'; marker.classList.add('visible');
-    } else marker.classList.remove('visible');
-    this.$('#tt').classList.add('visible');
-  }
-  ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
-  ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
-  
-  checkDiscrepancy(code) {
-    const el = this.$('#ttDisc');
-    const dt = this.DATA[this.currentDataType];
-    if (!dt) return;
-    const vals = [];
-    Object.entries(dt.sources).forEach(([sk, s]) => {
-      if (sk === 'who') return; 
-      if (s.countries[code] != null) vals.push(s.countries[code]);
-    });
-    if (vals.length >= 2) {
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-      if (diff > 10) {
-        el.style.display = 'block'; 
-        el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + (this._lang === 'cs' ? '% rozptyl mezi ' : '% variance across ') + vals.length + (this._lang === 'cs' ? ' zdroji' : ' sources'); 
-        return;
-      }
-    }
-    el.style.display = 'none';
-  }
 
   html() {
     return `<style>
@@ -2551,6 +1990,7 @@ class DataComparisonMap extends HTMLElement {
         <div class="mode-bar" id="modeBar">
           <button class="mode-btn" data-mode="history" data-i18n="history" disabled>HISTORY</button>
           <button class="mode-btn" data-mode="future" data-i18n="future" disabled>FUTURE</button>
+          <button class="mode-btn" data-mode="commodity" data-i18n="Commodities" style="display:none;" disabled>COMMODITIES</button>
         </div>
         <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
@@ -2574,7 +2014,6 @@ class DataComparisonMap extends HTMLElement {
             <div class="future-result" id="futResult"></div>
           </div>
 
-          <!-- DYNAMIC COMMODITY VIEW PLACEHOLDER -->
           <div id="viewCommodity" class="panel-view"></div>
         </div>
       </div>
@@ -2584,6 +2023,21 @@ class DataComparisonMap extends HTMLElement {
       <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
       <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
       <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
+      
+      <!-- Right Panel Accordion (General Proof) -->
+      <div id="generalProofAcc" class="proof-accordion open" style="display:none;">
+        <button class="proof-acc-btn">
+          <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="proof-acc-body">
+          <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
+          <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
+          <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
+          <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
+        </div>
+      </div>
+
     </div>
   </div>
   <div class="footer" id="lastUpdated" data-i18n="updated">Data updated via Eurostat & World Bank APIs</div>
