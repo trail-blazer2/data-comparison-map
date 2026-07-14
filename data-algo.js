@@ -556,7 +556,17 @@ window.COMMODITY_DATA = {
     factors: [
       { id: "comm_us_1", title: { en: "Massive AI Data Center buildout", cs: "Masivní výstavba AI datových center" }, info: { en: "AI needs 3x more power and conductive metals.", cs: "AI potřebuje 3x více energie a mědi." }, yes: { en: "Demand skyrockets.", cs: "Poptávka prudce roste." }, no: { en: "Demand falls.", cs: "Poptávka klesá." }, impact: [0.1, 0.3, 0.5, 0.8, 1.2] },
       { id: "comm_us_2", title: { en: "Stagnant US Grid modernization", cs: "Zpoždění modernizace americké sítě" }, info: { en: "Grid needs massive copper wire upgrades.", cs: "Síť potřebuje masivní modernizaci měděného vedení." }, yes: { en: "Supply bottleneck pushes prices.", cs: "Omezení nabídky tlačí ceny." }, no: { en: "Smooth upgrades keep prices steady.", cs: "Hladká modernizace udrží ceny stabilní." }, impact: [0.05, 0.15, 0.25, 0.4, 0.5] }
-    ]
+    ],
+    proof: {
+        scenario: { en: "2006-2007 China Boom", cs: "2006-2007 Čínský Boom" },
+        commodity: { en: "Copper", cs: "Měď" },
+        unit: "$/lb",
+        base_price: 1.50,
+        factors: [
+            { id: "proof_us_1", title: { en: "China consumes 40% of global copper", cs: "Čína spotřebovává 40% globální mědi" }, isTrue: true, impact: [0.5, 1.2, 2.0, 2.5] },
+            { id: "proof_us_2", title: { en: "Global recession hits early", cs: "Brzký příchod globální recese" }, isTrue: false, impact: [-0.2, -0.5, -0.6, -0.8] }
+        ]
+    }
   },
   CN: {
     commodity: { en: "Lithium & Nickel", cs: "Lithium a Nikl" },
@@ -566,7 +576,77 @@ window.COMMODITY_DATA = {
     factors: [
       { id: "comm_cn_1", title: { en: "Global EV tariff wars escalate", cs: "Eskalace globálních celních válek o EV" }, info: { en: "Tariffs on Chinese cars hurt their production.", cs: "Cla na čínská auta poškozují jejich výrobu." }, yes: { en: "Less production = lower metal demand.", cs: "Méně výroby = nižší poptávka po kovech." }, no: { en: "Unchecked production drives metal shortage.", cs: "Nekontrolovaná výroba vede k nedostatku kovů." }, impact: [-0.5, -1.0, -1.5, -2.5, -3.5] },
       { id: "comm_cn_2", title: { en: "Breakthrough in solid-state batteries", cs: "Průlom v solid-state bateriích" }, info: { en: "New tech requires different metal mixes.", cs: "Nová technologie vyžaduje jiné složení kovů." }, yes: { en: "Demand drops for legacy lithium.", cs: "Poptávka po klasickém lithiu klesá." }, no: { en: "Traditional batteries dominate.", cs: "Tradiční baterie dominují." }, impact: [-0.2, -0.5, -0.8, -1.2, -2.0] }
-    ]
+    ],
+    proof: {
+        scenario: { en: "2021 EV Battery Boom", cs: "2021 Bateriový Boom" },
+        commodity: { en: "Lithium", cs: "Lithium" },
+        unit: "$/kg",
+        base_price: 6.00,
+        factors: [
+            { id: "proof_cn_1", title: { en: "EV sales triple globally", cs: "Prodeje EV se globálně ztrojnásobí" }, isTrue: true, impact: [2.0, 8.0, 35.0, 70.0] },
+            { id: "proof_cn_2", title: { en: "Massive new mines open", cs: "Otevření masivních nových dolů" }, isTrue: false, impact: [-1.0, -2.0, -2.5, -3.0] }
+        ]
+    }
+  },
+  DE: {
+    commodity: { en: "Natural Gas & Aluminum", cs: "Zemní plyn a Hliník" },
+    desc: { en: "German industrial transition impact on energy and metals.", cs: "Vliv německé průmyslové tranzice na energie a kovy." },
+    base_price: 35.00,
+    unit: "€/MWh",
+    factors: [
+      { id: "comm_de_1", title: { en: "Green transition stalling", cs: "Zpomalení zelené tranzice" }, info: { en: "Delays in renewables force reliance on gas.", cs: "Zpoždění OZE vynutí závislost na plynu." }, yes: { en: "Gas demand and prices stay high.", cs: "Poptávka a ceny plynu zůstanou vysoko." }, no: { en: "Renewables crash gas demand.", cs: "OZE srazí poptávka po plynu." }, impact: [5.0, 10.0, 15.0, 20.0, 25.0] },
+      { id: "comm_de_2", title: { en: "LNG Import Infrastructure Expansion", cs: "Rozšíření LNG infrastruktury" }, info: { en: "More terminals mean cheaper global gas access.", cs: "Více terminálů znamená levnější globální plyn." }, yes: { en: "Prices drop.", cs: "Ceny klesají." }, no: { en: "Bottlenecks keep prices up.", cs: "Úzká hrdla drží ceny nahoře." }, impact: [-2.0, -5.0, -8.0, -12.0, -15.0] }
+    ],
+    proof: {
+        scenario: { en: "2022 Nord Stream Crisis", cs: "2022 Krize Nord Stream" },
+        commodity: { en: "Natural Gas (TTF)", cs: "Zemní plyn (TTF)" },
+        unit: "€/MWh",
+        base_price: 20.00,
+        factors: [
+            { id: "proof_de_1", title: { en: "Russia halts gas flows", cs: "Rusko zastaví dodávky plynu" }, isTrue: true, impact: [10.0, 50.0, 180.0, 300.0] },
+            { id: "proof_de_2", title: { en: "Mild winter lowers demand", cs: "Mírná zima sníží poptávku" }, isTrue: false, impact: [-2.0, -5.0, -8.0, -10.0] }
+        ]
+    }
+  },
+  CZ: {
+    commodity: { en: "Steel & Energy", cs: "Ocel a Energie" },
+    desc: { en: "Central European supply chain impact on industrial materials.", cs: "Vliv středoevropských řetězců na průmyslové materiály." },
+    base_price: 800.00,
+    unit: "$/ton",
+    factors: [
+      { id: "comm_cz_1", title: { en: "Automotive supply chain recovery", cs: "Oživení dodavatelských řetězců v automotive" }, info: { en: "Car production needs massive amounts of steel.", cs: "Výroba aut vyžaduje masivní množství oceli." }, yes: { en: "Steel demand rises.", cs: "Poptávka po oceli roste." }, no: { en: "Stagnation suppresses prices.", cs: "Stagnace potlačuje ceny." }, impact: [20.0, 50.0, 80.0, 120.0, 150.0] },
+      { id: "comm_cz_2", title: { en: "Nuclear buildout delays", cs: "Zpoždění výstavby jádra" }, info: { en: "Delays keep overall energy prices for foundries high.", cs: "Zpoždění udrží ceny energií pro slévárny vysoko." }, yes: { en: "Production costs rise, pushing prices up.", cs: "Výrobní náklady rostou, což tlačí ceny nahoru." }, no: { en: "Cheap energy stabilizes steel prices.", cs: "Levná energie stabilizuje ceny oceli." }, impact: [10.0, 20.0, 40.0, 60.0, 80.0] }
+    ],
+    proof: {
+        scenario: { en: "2021 Supply Chain Crunch", cs: "2021 Krize dodavatelských řetězců" },
+        commodity: { en: "Hot Rolled Coil Steel", cs: "Ocel svitky" },
+        unit: "$/ton",
+        base_price: 500.00,
+        factors: [
+            { id: "proof_cz_1", title: { en: "Post-Covid demand explodes", cs: "Pocovidová poptávka exploduje" }, isTrue: true, impact: [100.0, 400.0, 800.0, 1400.0] },
+            { id: "proof_cz_2", title: { en: "Factories stay closed", cs: "Továrny zůstávají zavřené" }, isTrue: false, impact: [-20.0, -50.0, -80.0, -100.0] }
+        ]
+    }
+  },
+  SK: {
+    commodity: { en: "Palladium & Platinum", cs: "Palladium a Platina" },
+    desc: { en: "Slovak auto-manufacturing impact on catalytic metals.", cs: "Vliv slovenské výroby aut na katalytické kovy." },
+    base_price: 1000.00,
+    unit: "$/oz",
+    factors: [
+      { id: "comm_sk_1", title: { en: "Slow transition from ICE to EV", cs: "Pomalý přechod od spalovacích motorů k EV" }, info: { en: "ICE cars need palladium for catalytic converters.", cs: "Spalovací motory potřebují palladium pro katalyzátory." }, yes: { en: "Demand for palladium stays resilient.", cs: "Poptávka po palladiu zůstane odolná." }, no: { en: "EVs destroy palladium demand.", cs: "EV zničí poptávku po palladiu." }, impact: [50.0, 100.0, 150.0, 200.0, 250.0] },
+      { id: "comm_sk_2", title: { en: "Mining strikes in South Africa", cs: "Stávky těžařů v Jižní Africe" }, info: { en: "Major supply disruption of PGMs.", cs: "Zásadní narušení dodávek drahých kovů." }, yes: { en: "Prices squeeze higher.", cs: "Ceny se tlačí výše." }, no: { en: "Steady supply drops prices.", cs: "Stabilní dodávky srazí ceny." }, impact: [20.0, 80.0, 150.0, 300.0, 400.0] }
+    ],
+    proof: {
+        scenario: { en: "2000 Russian Supply Crisis", cs: "2000 Ruská krize dodávek" },
+        commodity: { en: "Palladium", cs: "Palladium" },
+        unit: "$/oz",
+        base_price: 350.00,
+        factors: [
+            { id: "proof_sk_1", title: { en: "Russia halts palladium exports", cs: "Rusko zastaví export palladia" }, isTrue: true, impact: [100.0, 300.0, 600.0, 750.0] },
+            { id: "proof_sk_2", title: { en: "Automakers immediately find substitutes", cs: "Automobilky okamžitě najdou náhradu" }, isTrue: false, impact: [-10.0, -50.0, -100.0, -150.0] }
+        ]
+    }
   }
 };
 
