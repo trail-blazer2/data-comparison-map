@@ -531,7 +531,7 @@ window.FUTURE_DATA = {
     SK: {
       desc: {
         en: "Slovakia's life expectancy lags behind Western Europe, heavily impacted by poor rural healthcare access and an exodus of doctors.",
-        cs: "Naděje dožití na Slovensku zaostává za západní Evropou, což je silně ovlivněno špatnou dostupností zdravotní péče na venkově a odlivem lékařů."
+        cs: "Naděje dožití na Slovensku zaostává za západní Evropou, což je silně ovlivněno špatnou dostupností zdravotní péče na venkově a odlivm lékařů."
       },
       base_growth: [0.001, 0.001, 0.0015, 0.0015, 0.0015],
       factors: [
@@ -541,4 +541,43 @@ window.FUTURE_DATA = {
       ]
     }
   }
+};
+
+// ============================================================================
+// DATA FOR STEP 2 (COMMODITY & PROOF DATA PREP)
+// ============================================================================
+
+window.COMMODITY_DATA = {
+  US: {
+    commodity: { en: "Copper & Silver", cs: "Měď a stříbro" },
+    desc: { en: "US Tech & AI Boom impact on conductive metals globally.", cs: "Vliv amerického AI boomu na vodivé kovy globálně." },
+    base_price: 4.50,
+    unit: "$/lb",
+    factors: [
+      { id: "comm_us_1", title: { en: "Massive AI Data Center buildout", cs: "Masivní výstavba AI datových center" }, info: { en: "AI needs 3x more power and conductive metals.", cs: "AI potřebuje 3x více energie a mědi." }, yes: { en: "Demand skyrockets.", cs: "Poptávka prudce roste." }, no: { en: "Demand falls.", cs: "Poptávka klesá." }, impact: [0.1, 0.3, 0.5, 0.8, 1.2] },
+      { id: "comm_us_2", title: { en: "Stagnant US Grid modernization", cs: "Zpoždění modernizace americké sítě" }, info: { en: "Grid needs massive copper wire upgrades.", cs: "Síť potřebuje masivní modernizaci měděného vedení." }, yes: { en: "Supply bottleneck pushes prices.", cs: "Omezení nabídky tlačí ceny." }, no: { en: "Smooth upgrades keep prices steady.", cs: "Hladká modernizace udrží ceny stabilní." }, impact: [0.05, 0.15, 0.25, 0.4, 0.5] }
+    ]
+  },
+  CN: {
+    commodity: { en: "Lithium & Nickel", cs: "Lithium a Nikl" },
+    desc: { en: "Chinese EV dominance impact on global battery metals.", cs: "Vliv čínské dominance v EV na bateriové kovy globálně." },
+    base_price: 14.50,
+    unit: "$/kg",
+    factors: [
+      { id: "comm_cn_1", title: { en: "Global EV tariff wars escalate", cs: "Eskalace globálních celních válek o EV" }, info: { en: "Tariffs on Chinese cars hurt their production.", cs: "Cla na čínská auta poškozují jejich výrobu." }, yes: { en: "Less production = lower metal demand.", cs: "Méně výroby = nižší poptávka po kovech." }, no: { en: "Unchecked production drives metal shortage.", cs: "Nekontrolovaná výroba vede k nedostatku kovů." }, impact: [-0.5, -1.0, -1.5, -2.5, -3.5] },
+      { id: "comm_cn_2", title: { en: "Breakthrough in solid-state batteries", cs: "Průlom v solid-state bateriích" }, info: { en: "New tech requires different metal mixes.", cs: "Nová technologie vyžaduje jiné složení kovů." }, yes: { en: "Demand drops for legacy lithium.", cs: "Poptávka po klasickém lithiu klesá." }, no: { en: "Traditional batteries dominate.", cs: "Tradiční baterie dominují." }, impact: [-0.2, -0.5, -0.8, -1.2, -2.0] }
+    ]
+  }
+};
+
+window.PROOF_DATA = {
+  scenario: { en: "Gulf War (1990-1991)", cs: "Válka v Zálivu (1990-1991)" },
+  commodity: { en: "Crude Oil", cs: "Surová Ropa" },
+  unit: "$/barrel",
+  base_price: 15.00,
+  factors: [
+    { id: "proof_1", title: { en: "Invasion of Kuwait (Actual Event)", cs: "Invaze do Kuvajtu (Skutečnost)" }, info: { en: "Iraq invades, 4 million barrels/day immediately lost.", cs: "Irák útočí, okamžitá ztráta 4 milionů barelů/den." }, yes: { en: "Massive price spike.", cs: "Masivní cenový skok." }, no: { en: "No spike.", cs: "Bez výkyvu." }, impact: [3.0, 10.0, 22.0, 25.0, 5.0], isTrue: true },
+    { id: "proof_2", title: { en: "Diplomatic resolution achieved", cs: "Dosaženo diplomatické řešení" }, info: { en: "Tensions ease before conflict starts.", cs: "Napětí poleví před začátkem konfliktu." }, yes: { en: "Prices return to normal.", cs: "Ceny se vracejí k normálu." }, no: { en: "Uncertainty remains.", cs: "Nejistota přetrvává." }, impact: [-1.0, -2.0, -1.5, 0.0, 1.0], isTrue: false },
+    { id: "proof_3", title: { en: "OPEC opens the taps", cs: "OPEC otevírá kohoutky" }, info: { en: "Saudi Arabia immediately floods the market.", cs: "Saúdská Arábie okamžitě zaplaví trh." }, yes: { en: "Prices crash.", cs: "Ceny se propadají." }, no: { en: "Supply stays tight.", cs: "Nabídka zůstává omezená." }, impact: [-2.0, -5.0, -4.0, -2.0, -1.0], isTrue: false }
+  ]
 };
