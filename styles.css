@@ -388,3 +388,28 @@
   .cat-tabs { grid-template-columns: 1fr; } 
   .app { padding: 0 12px 12px; } 
 }
+
+/* =========================================
+   AI FEATURES (Typing, Explanation Boxes)
+   ========================================= */
+.ai-wrap { margin-top: 16px; position: relative; z-index: 10; padding-right: 5px; }
+.btn-ai {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white; border: none; padding: 12px 16px; border-radius: 12px;
+  font-weight: 700; font-size: 0.85rem; cursor: pointer; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  font-family: inherit;
+}
+.btn-ai:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5); }
+.btn-ai:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+.ai-icon { font-size: 1.1rem; }
+
+.ai-explanation-box {
+  margin-top: 12px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px; padding: 14px; font-size: 0.85rem; color: #1e3a5f;
+  line-height: 1.6; position: relative;
+}
+.ai-header { font-weight: 800; color: #3b82f6; margin-bottom: 8px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.ai-cursor { display: inline-block; width: 6px; height: 1em; background-color: #3b82f6; vertical-align: middle; margin-left: 2px; animation: aiBlink 1s step-end infinite; }
+@keyframes aiBlink { 50% { opacity: 0; } }
