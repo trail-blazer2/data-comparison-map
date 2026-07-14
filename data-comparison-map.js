@@ -179,7 +179,7 @@ const I18N = {
     "proofTitle": "Důkaz Konceptu: Historická Přesnost",
     "proofActual": "Skutečná událost",
     "simulatedPrice": "Simulovaná cena:",
-    "userSent": "Prémie uživatelského sentimentu: "
+    "userSent": "Prémie sentimentu trhu: "
   }
 };
 
@@ -415,6 +415,7 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
     
+    // Inject the special Commodities category manually
     this.categories['commodities'] = []; 
 
     this.setupModalsAndNav();
@@ -1198,15 +1199,32 @@ class DataComparisonMap extends HTMLElement {
         this.$$('.mode-btn').forEach(b => { b.disabled = true; b.style.display = 'none'; });
         
         let cBtn = this.$('.mode-btn[data-mode="commodity"]');
+        if (!cBtn) {
+            cBtn = document.createElement('button');
+            cBtn.className = 'mode-btn';
+            cBtn.dataset.mode = 'commodity';
+            cBtn.textContent = 'COMMODITIES';
+            this.$('#modeBar').appendChild(cBtn);
+            cBtn.onclick = () => {
+                if(cBtn.disabled) return;
+                this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
+                cBtn.classList.add('active');
+                this.$$('.panel-view').forEach(v => v.classList.remove('active'));
+                this.$('#viewCommodity').classList.add('active');
+                this.$('#leftPanel').classList.add('open');
+                this.buildCommodityView(this._selectedCountryCode);
+            };
+        }
+        
         cBtn.style.display = 'block';
         cBtn.disabled = false;
         
-        if (!this.$('#leftPanel').classList.contains('open')) {
-            this.$('#leftPanel').classList.add('open');
-            cBtn.click();
-        } else {
-            this.buildCommodityView(code);
-        }
+        this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
+        cBtn.classList.add('active');
+        this.$$('.panel-view').forEach(v => v.classList.remove('active'));
+        this.$('#viewCommodity').classList.add('active');
+        this.$('#leftPanel').classList.add('open');
+        this.buildCommodityView(code);
         return;
     }
 
@@ -1366,7 +1384,7 @@ class DataComparisonMap extends HTMLElement {
         aiWrap.id = 'futAiWrap';
         aiWrap.innerHTML = `
             <button class="btn-ai" id="futAiBtn">
-                <span class="ai-icon"></span> <span class="btn-text">${this.t('askAI')}</span>
+                <span class="btn-text">${this.t('askAI')}</span>
             </button>
             <div class="ai-explanation-box" id="futAiBox" style="display:none;">
                 <div class="ai-header">${this.t('aiAnalysis')}</div>
@@ -1442,8 +1460,14 @@ class DataComparisonMap extends HTMLElement {
     const years = [2024, 2025, 2026, 2027, 2028, 2029];
     const calcValues = (rates) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] * (1 + rates[i])); return v; };
     const minValues = calcValues(minRates), maxValues = calcValues(maxRates), currentValues = calcValues(currentRates);
-    const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
-    const range = maxBound === minBound ? 1 : maxBound - minBound;
+    
+    let minBound = Math.min(...minValues, ...maxValues, baseVal);
+    let maxBound = Math.max(...minValues, ...maxValues, baseVal);
+    if (minBound === maxBound) {
+        minBound = baseVal * 0.9;
+        maxBound = baseVal * 1.1;
+    }
+    const range = maxBound - minBound;
 
     const svg = this.$('#futChart'); if (!svg) return;
     const w = 280, h = 120, pad = 12;
@@ -1581,7 +1605,7 @@ class DataComparisonMap extends HTMLElement {
       aiWrap.id = 'commAiWrap';
       aiWrap.innerHTML = `
           <button class="btn-ai" id="commAiBtn">
-              <span class="ai-icon"></span> <span class="btn-text">${this.t('askAI')}</span>
+              <span class="btn-text">${this.t('askAI')}</span>
           </button>
           <div class="ai-explanation-box" id="commAiBox" style="display:none;">
               <div class="ai-header">${this.t('aiAnalysis')}</div>
@@ -1696,8 +1720,13 @@ class DataComparisonMap extends HTMLElement {
       const calcValues = (impArr) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] + impArr[i]); return v; };
       
       const minValues = calcValues(minImpacts), maxValues = calcValues(maxImpacts), currentValues = calcValues(impacts);
-      const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
-      const range = maxBound === minBound ? 1 : maxBound - minBound;
+      let minBound = Math.min(...minValues, ...maxValues, baseVal);
+      let maxBound = Math.max(...minValues, ...maxValues, baseVal);
+      if (minBound === maxBound) {
+          minBound = baseVal * 0.9;
+          maxBound = baseVal * 1.1;
+      }
+      const range = maxBound - minBound;
 
       const svg = this.$('#commChart'); if (!svg) return;
       const w = 280, h = 120, pad = 12;
@@ -1768,7 +1797,8 @@ class DataComparisonMap extends HTMLElement {
               if (baseVal + v > maxB) maxB = baseVal + v;
           });
       });
-      const range = maxB === minB ? 1 : maxB - minB;
+      if (minB === maxB) { minB = baseVal * 0.9; maxB = baseVal * 1.1; }
+      const range = maxB - minB;
 
       const svg = this.$('#countryProofChart'); if (!svg) return;
       const w = 250, h = 70, pad = 8;
@@ -1797,7 +1827,6 @@ class DataComparisonMap extends HTMLElement {
   buildGeneralProof() {
       let dtWrapper = this.$('#dtWrapper');
       if (!dtWrapper) {
-          // Restructure controls slightly to hide dtBtns and srcBtns
           const dtDiv = this.$('#dtBtns').parentElement;
           const srcDiv = this.$('#srcBtns').parentElement;
           
@@ -1820,11 +1849,11 @@ class DataComparisonMap extends HTMLElement {
           
           genProofAcc.innerHTML = `
               <button class="proof-acc-btn">
-                  <span style="font-weight:700; color:#b45309; font-size:0.8rem;">${this.t('proofTitle')}</span>
+                  <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
               </button>
               <div class="proof-acc-body">
-                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})</div>
+                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
                   <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
                   <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
                   <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
@@ -1856,8 +1885,11 @@ class DataComparisonMap extends HTMLElement {
           pSvg.innerHTML = `<path class="chart-line" id="genProofLine" style="stroke: #d97706; stroke-width: 2;" />
                            <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
                            <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
-          this.updateGeneralProofChart();
       }
+      
+      const pData = window.PROOF_DATA;
+      this.$('#genProofDesc').textContent = `${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})`;
+      this.updateGeneralProofChart();
 
       if (this.currentCategory === 'commodities') {
           this.$('#dtWrapper').style.display = 'none';
@@ -1884,8 +1916,9 @@ class DataComparisonMap extends HTMLElement {
       }
       
       const currentValues = years.map((y, i) => baseVal + impacts[i]);
-      const minBound = 5; 
-      const maxBound = 40; 
+      let minBound = 5; 
+      let maxBound = 40; 
+      if (minBound === maxBound) { minBound = baseVal * 0.9; maxBound = baseVal * 1.1; }
       const range = maxBound - minBound;
 
       const svg = this.$('#genProofChart'); if (!svg) return;
@@ -2525,7 +2558,7 @@ class DataComparisonMap extends HTMLElement {
         <button class="btn-action btn-account" id="btnAccount">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
           <span id="accLabel" data-i18n="btnLogReg">Log in</span>
-          <span id="accPoints" style="background: rgba(52,211,153,0.2); padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; margin-left: 4px; color: #059669;">0 Pts</span>
+          <span id="accPoints" style="background: rgba(52,211,153,0.2); padding: 2px 6px; border-radius: 6px; font-size: 0.75 margin-left: 4px; color: #059669;">0 Pts</span>
         </button>
       </div>
       
@@ -2551,6 +2584,7 @@ class DataComparisonMap extends HTMLElement {
         <div class="mode-bar" id="modeBar">
           <button class="mode-btn" data-mode="history" data-i18n="history" disabled>HISTORY</button>
           <button class="mode-btn" data-mode="future" data-i18n="future" disabled>FUTURE</button>
+          <button class="mode-btn" data-mode="commodity" data-i18n="Commodities" style="display:none;" disabled>COMMODITIES</button>
         </div>
         <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
@@ -2574,7 +2608,6 @@ class DataComparisonMap extends HTMLElement {
             <div class="future-result" id="futResult"></div>
           </div>
 
-          <!-- DYNAMIC COMMODITY VIEW PLACEHOLDER -->
           <div id="viewCommodity" class="panel-view"></div>
         </div>
       </div>
@@ -2584,6 +2617,21 @@ class DataComparisonMap extends HTMLElement {
       <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
       <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
       <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
+      
+      <!-- Right Panel Accordion (General Proof) -->
+      <div id="generalProofAcc" class="proof-accordion open" style="display:none;">
+        <button class="proof-acc-btn">
+          <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="proof-acc-body">
+          <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
+          <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
+          <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
+          <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
+        </div>
+      </div>
+
     </div>
   </div>
   <div class="footer" id="lastUpdated" data-i18n="updated">Data updated via Eurostat & World Bank APIs</div>
