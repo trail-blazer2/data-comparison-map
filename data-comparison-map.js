@@ -235,7 +235,8 @@ function fmt(val, unit, tFn) {
   if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val > 0 ? '+' : '') + (val/1e6).toFixed(1) + 'M';
   if (unit === 'net persons') return (val > 0 ? '+' : '') + val.toLocaleString();
   if (unit === 'USD/capita' || unit === 'int. $') return '$' + Math.round(val).toLocaleString();
-  if (unit === '$/lb' || unit === '$/kg' || unit === '$/barrel') return '$' + val.toFixed(2);
+  if (unit === '$/lb' || unit === '$/kg' || unit === '$/barrel' || unit === '$/oz' || unit === '$/ton') return '$' + val.toFixed(2);
+  if (unit === '€/MWh') return '€' + val.toFixed(2);
   if (unit === '% of GDP' || unit === '%') return val.toFixed(1) + '%';
   if (unit === 'births/woman') return val.toFixed(2);
   if (unit === 'years') return val.toFixed(1);
@@ -414,7 +415,6 @@ class DataComparisonMap extends HTMLElement {
       this.categories[cat].push(key);
     });
     
-    // Inject the special Commodities category manually
     this.categories['commodities'] = []; 
 
     this.setupModalsAndNav();
@@ -1069,12 +1069,6 @@ class DataComparisonMap extends HTMLElement {
         else if (mode === 'commodity') viewId = '#viewCommodity';
         
         let viewEl = this.$(viewId);
-        if (!viewEl && mode === 'commodity') {
-            viewEl = document.createElement('div');
-            viewEl.id = 'viewCommodity';
-            viewEl.className = 'panel-view';
-            this.$('#leftPanel').appendChild(viewEl);
-        }
         viewEl.classList.add('active');
         this.$('#leftPanel').classList.add('open');
         
@@ -1204,20 +1198,6 @@ class DataComparisonMap extends HTMLElement {
         this.$$('.mode-btn').forEach(b => { b.disabled = true; b.style.display = 'none'; });
         
         let cBtn = this.$('.mode-btn[data-mode="commodity"]');
-        if(!cBtn) {
-            cBtn = document.createElement('button');
-            cBtn.className = 'mode-btn';
-            cBtn.dataset.mode = 'commodity';
-            cBtn.textContent = 'COMMODITY';
-            this.$('#modeBar').appendChild(cBtn);
-            cBtn.onclick = () => {
-                this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
-                cBtn.classList.add('active');
-                this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-                this.$('#viewCommodity').classList.add('active');
-                this.buildCommodityView(code);
-            };
-        }
         cBtn.style.display = 'block';
         cBtn.disabled = false;
         
@@ -1293,11 +1273,6 @@ class DataComparisonMap extends HTMLElement {
     });
     
     let svg = this.$('#histChart');
-    if(svg.tagName !== 'svg' && svg.tagName !== 'SVG') {
-      this.$('#viewHistory .chart-container').innerHTML = '<svg class="chart-svg" id="histChart"></svg>';
-      svg = this.$('#histChart');
-    }
-
     const w = 280, h = 140, pad = 12;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     const years = [2020, 2021, 2022, 2023, 2024];
@@ -1379,11 +1354,6 @@ class DataComparisonMap extends HTMLElement {
     });
 
     let svg = this.$('#futChart');
-    if(!svg || svg.tagName !== 'svg') {
-      this.$('#viewFuture .chart-container').innerHTML = '<svg class="chart-svg" id="futChart"></svg>';
-      svg = this.$('#futChart');
-    }
-    
     svg.innerHTML = `<defs><linearGradient id="futGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8395a7"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>
                      <path class="chart-line" id="futLine" style="stroke: url(#futGrad); stroke-dasharray: 4 4;" />
                      <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
@@ -1538,6 +1508,7 @@ class DataComparisonMap extends HTMLElement {
     else resultContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     this._lastFutVal = targetVal;
     
+    // Reset AI Box when a new scenario factor is clicked
     const aiBox = this.$('#futAiBox');
     if (aiBox) aiBox.style.display = 'none';
     const aiBtn = this.$('#futAiBtn');
@@ -1661,41 +1632,40 @@ class DataComparisonMap extends HTMLElement {
           }
       };
 
-      // PROOF SECTION
-      const proofData = window.PROOF_DATA;
-      if (proofData) {
+      // PROOF SECTION (Country Specific)
+      if (cData.proof) {
           const proofDiv = document.createElement('div');
           proofDiv.className = 'proof-section';
           proofDiv.innerHTML = `
-            <div class="sec-title">${this.t('proofTitle')} - ${proofData.scenario[this._lang] || proofData.scenario.en}</div>
-            <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${proofData.commodity[this._lang] || proofData.commodity.en} (${proofData.unit})</div>
-            <div class="future-factors" id="proofFactors" style="margin-bottom:12px;"></div>
-            <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="proofChart"></svg></div>
-            <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="proofResult"></div>
+            <div class="sec-title">${this.t('proofTitle')} - ${cData.proof.scenario[this._lang] || cData.proof.scenario.en}</div>
+            <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${cData.proof.commodity[this._lang] || cData.proof.commodity.en} (${cData.proof.unit})</div>
+            <div class="future-factors" id="countryProofFactors" style="margin-bottom:12px;"></div>
+            <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="countryProofChart"></svg></div>
+            <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="countryProofResult"></div>
           `;
           viewEl.appendChild(proofDiv);
           
-          const pFactorCont = this.$('#proofFactors');
-          proofData.factors.forEach((f) => {
+          const pFactorCont = this.$('#countryProofFactors');
+          cData.proof.factors.forEach((f) => {
               const fDiv = document.createElement('div'); fDiv.className = 'factor-row';
               fDiv.innerHTML = `
                 <label class="factor-label" style="font-size:0.75rem;">
-                  <input type="radio" name="proofGroup" class="factor-cb proof-cb" data-id="${f.id}" ${f.isTrue ? 'checked' : ''}>
+                  <input type="radio" name="cProofGroup" class="factor-cb cproof-cb" data-id="${f.id}" ${f.isTrue ? 'checked' : ''}>
                   <span class="cb-custom" style="width:14px; height:14px; border-radius:50%;"></span>
                   <span class="factor-title" style="font-size:0.75rem;">
                     ${f.title[this._lang] || f.title.en} ${f.isTrue ? `<strong style="color:#d97706">(${this.t('proofActual')})</strong>` : ''}
                   </span>
                 </label>
               `;
-              fDiv.querySelector('.proof-cb').onchange = () => this.updateProofChart();
+              fDiv.querySelector('.cproof-cb').onchange = () => this.updateCountryProofChart(code, cData.proof);
               pFactorCont.appendChild(fDiv);
           });
           
-          const pSvg = this.$('#proofChart');
-          pSvg.innerHTML = `<path class="chart-line" id="proofLine" style="stroke: #d97706; stroke-width: 2;" />
-                           <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
-                           <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
-          this.updateProofChart();
+          const pSvg = this.$('#countryProofChart');
+          pSvg.innerHTML = `<path class="chart-line" id="countryProofLine" style="stroke: #d97706; stroke-width: 2;" />
+                           <text x="12" y="85" class="fut-axis-label" text-anchor="start">T1</text>
+                           <text x="268" y="85" class="fut-axis-label" text-anchor="end">T4</text>`;
+          this.updateCountryProofChart(code, cData.proof);
       }
 
       this.updateCommodityChart(code, cData, opinionMod, true);
@@ -1777,14 +1747,137 @@ class DataComparisonMap extends HTMLElement {
       }
   }
 
-  updateProofChart() {
+  updateCountryProofChart(code, proofData) {
+      if(!proofData) return;
+      const baseVal = proofData.base_price;
+      const years = [0, 1, 2, 3]; 
+      
+      let impacts = [0, 0, 0, 0];
+      const activeCb = this.$('.cproof-cb:checked');
+      if (activeCb) {
+          const factor = proofData.factors.find(f => f.id === activeCb.dataset.id);
+          if (factor) impacts = factor.impact;
+      }
+      
+      const currentValues = [baseVal, baseVal + impacts[0], baseVal + impacts[1], baseVal + impacts[2], baseVal + impacts[3]];
+      
+      let minB = baseVal, maxB = baseVal;
+      proofData.factors.forEach(f => {
+          f.impact.forEach(v => {
+              if (baseVal + v < minB) minB = baseVal + v;
+              if (baseVal + v > maxB) maxB = baseVal + v;
+          });
+      });
+      const range = maxB === minB ? 1 : maxB - minB;
+
+      const svg = this.$('#countryProofChart'); if (!svg) return;
+      const w = 250, h = 70, pad = 8;
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      
+      let pathD = "";
+      [0,1,2,3,4].forEach((y, i) => {
+          const cx = pad + (i / 4) * (w - pad * 2);
+          const cy = h - pad - ((currentValues[i] - minB) / range) * (h - pad * 2);
+          pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+          
+          let pt = svg.querySelector(`#cprp${i}`); 
+          if (!pt) {
+            pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `cprp${i}`); pt.setAttribute('r', '3'); pt.setAttribute('class', 'chart-point'); pt.style.fill = '#b45309'; svg.appendChild(pt);
+          }
+          pt.style.transform = `translate(${cx}px, ${cy}px)`;
+      });
+      
+      const line = svg.querySelector('#countryProofLine');
+      if (line) line.setAttribute('d', pathD);
+      
+      this.$('#countryProofResult').innerHTML = `${this.t('simulatedPrice')} <span style="color:#d97706">${fmt(currentValues[3], proofData.unit)}</span>`;
+  }
+
+  // General Proof in the right panel
+  buildGeneralProof() {
+      let dtWrapper = this.$('#dtWrapper');
+      if (!dtWrapper) {
+          // Restructure controls slightly to hide dtBtns and srcBtns
+          const dtDiv = this.$('#dtBtns').parentElement;
+          const srcDiv = this.$('#srcBtns').parentElement;
+          
+          dtWrapper = document.createElement('div'); dtWrapper.id = 'dtWrapper';
+          dtDiv.parentNode.insertBefore(dtWrapper, dtDiv);
+          dtWrapper.appendChild(dtDiv);
+
+          const srcWrapper = document.createElement('div'); srcWrapper.id = 'srcWrapper';
+          srcDiv.parentNode.insertBefore(srcWrapper, srcDiv);
+          srcWrapper.appendChild(srcDiv);
+      }
+
+      let genProofAcc = this.$('#generalProofAcc');
+      if (!genProofAcc) {
+          const pData = window.PROOF_DATA;
+          genProofAcc = document.createElement('div');
+          genProofAcc.id = 'generalProofAcc';
+          genProofAcc.className = 'proof-accordion open';
+          genProofAcc.style.display = 'none'; 
+          
+          genProofAcc.innerHTML = `
+              <button class="proof-acc-btn">
+                  <span style="font-weight:700; color:#b45309; font-size:0.8rem;">${this.t('proofTitle')}</span>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+              </button>
+              <div class="proof-acc-body">
+                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})</div>
+                  <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
+                  <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
+                  <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
+              </div>
+          `;
+          this.$('.controls').appendChild(genProofAcc);
+          
+          genProofAcc.querySelector('.proof-acc-btn').onclick = () => {
+              genProofAcc.classList.toggle('open');
+          };
+          
+          const pFactorCont = genProofAcc.querySelector('#genProofFactors');
+          pData.factors.forEach((f) => {
+              const fDiv = document.createElement('div'); fDiv.className = 'factor-row';
+              fDiv.innerHTML = `
+                <label class="factor-label" style="font-size:0.75rem;">
+                  <input type="radio" name="genProofGroup" class="factor-cb gproof-cb" data-id="${f.id}" ${f.isTrue ? 'checked' : ''}>
+                  <span class="cb-custom" style="width:14px; height:14px; border-radius:50%;"></span>
+                  <span class="factor-title" style="font-size:0.75rem;">
+                    ${f.title[this._lang] || f.title.en} ${f.isTrue ? `<strong style="color:#d97706">(${this.t('proofActual')})</strong>` : ''}
+                  </span>
+                </label>
+              `;
+              fDiv.querySelector('.gproof-cb').onchange = () => this.updateGeneralProofChart();
+              pFactorCont.appendChild(fDiv);
+          });
+          
+          const pSvg = genProofAcc.querySelector('#genProofChart');
+          pSvg.innerHTML = `<path class="chart-line" id="genProofLine" style="stroke: #d97706; stroke-width: 2;" />
+                           <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
+                           <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
+          this.updateGeneralProofChart();
+      }
+
+      if (this.currentCategory === 'commodities') {
+          this.$('#dtWrapper').style.display = 'none';
+          this.$('#srcWrapper').style.display = 'none';
+          genProofAcc.style.display = 'block';
+      } else {
+          this.$('#dtWrapper').style.display = 'block';
+          this.$('#srcWrapper').style.display = 'block';
+          genProofAcc.style.display = 'none';
+      }
+  }
+
+  updateGeneralProofChart() {
       const pData = window.PROOF_DATA;
       if(!pData) return;
       const baseVal = pData.base_price;
-      const years = [1989, 1990, 1991, 1992];
+      const years = [0, 1, 2, 3];
       
       let impacts = [0, 0, 0, 0];
-      const activeCb = this.$('.proof-cb:checked');
+      const activeCb = this.$('.gproof-cb:checked');
       if (activeCb) {
           const factor = pData.factors.find(f => f.id === activeCb.dataset.id);
           if (factor) impacts = [0, factor.impact[0], factor.impact[1], factor.impact[2]];
@@ -1795,7 +1888,7 @@ class DataComparisonMap extends HTMLElement {
       const maxBound = 40; 
       const range = maxBound - minBound;
 
-      const svg = this.$('#proofChart'); if (!svg) return;
+      const svg = this.$('#genProofChart'); if (!svg) return;
       const w = 250, h = 70, pad = 8;
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       
@@ -1805,17 +1898,17 @@ class DataComparisonMap extends HTMLElement {
           const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
           pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
           
-          let pt = svg.querySelector(`#prp${i}`); 
+          let pt = svg.querySelector(`#gprp${i}`); 
           if (!pt) {
-            pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `prp${i}`); pt.setAttribute('r', '3'); pt.setAttribute('class', 'chart-point'); pt.style.fill = '#b45309'; svg.appendChild(pt);
+            pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `gprp${i}`); pt.setAttribute('r', '3'); pt.setAttribute('class', 'chart-point'); pt.style.fill = '#b45309'; svg.appendChild(pt);
           }
           pt.style.transform = `translate(${cx}px, ${cy}px)`;
       });
       
-      const line = svg.querySelector('#proofLine');
+      const line = svg.querySelector('#genProofLine');
       if (line) line.setAttribute('d', pathD);
       
-      this.$('#proofResult').innerHTML = `${this.t('simulatedPrice')} <span style="color:#d97706">$${currentValues[2].toFixed(2)}</span> (1991)`;
+      this.$('#genProofResult').innerHTML = `${this.t('simulatedPrice')} <span style="color:#d97706">$${currentValues[2].toFixed(2)}</span> (1991)`;
   }
   
   // ============================================================
@@ -2141,7 +2234,7 @@ class DataComparisonMap extends HTMLElement {
     this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
     this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
   }
-  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); }
+  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); this.buildGeneralProof(); }
   _snapBack() {
     const b = this._getPanBounds();
     const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
@@ -2231,13 +2324,15 @@ class DataComparisonMap extends HTMLElement {
     this._lastTtVal = null; this._lastTtDataType = null;
     
     if (catKey === 'commodities') {
-        this.$('#dtBtns').innerHTML = `<div style="text-align:center; padding: 20px; font-size: 0.8rem; color: #8395a7;">${this._lang==='cs'?'Vyberte zemi z mapy (USA, Čína)':'Select a country from the map (US, China)'}</div>`;
+        this.$('#dtBtns').innerHTML = `<div style="text-align:center; padding: 20px; font-size: 0.8rem; color: #8395a7;">${this._lang==='cs'?'Vyberte zemi z mapy (USA, Čína, CZ, SK, DE)':'Select a country from the map (US, China, CZ, SK, DE)'}</div>`;
         this.$('#srcBtns').innerHTML = '';
         this.closeSidePanel();
+        this.buildGeneralProof(); 
         this.paint();
         return;
     }
 
+    this.buildGeneralProof(); 
     this.buildDataTypeButtons(catKey);
     const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
   }
@@ -2478,14 +2573,17 @@ class DataComparisonMap extends HTMLElement {
             <div class="future-factors" id="futFactors"></div>
             <div class="future-result" id="futResult"></div>
           </div>
+
+          <!-- DYNAMIC COMMODITY VIEW PLACEHOLDER -->
+          <div id="viewCommodity" class="panel-view"></div>
         </div>
       </div>
     </div>
     
     <div class="controls glass">
       <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
-      <div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div>
-      <div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div>
+      <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
+      <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
     </div>
   </div>
   <div class="footer" id="lastUpdated" data-i18n="updated">Data updated via Eurostat & World Bank APIs</div>
