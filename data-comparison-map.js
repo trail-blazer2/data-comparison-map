@@ -1722,11 +1722,13 @@ class DataComparisonMap extends HTMLElement {
       const minValues = calcValues(minImpacts), maxValues = calcValues(maxImpacts), currentValues = calcValues(impacts);
       let minBound = Math.min(...minValues, ...maxValues, baseVal);
       let maxBound = Math.max(...minValues, ...maxValues, baseVal);
+      // FIX: Ensure range is never 0 so the line renders flat in the middle
       if (minBound === maxBound) {
-          minBound = baseVal * 0.9;
-          maxBound = baseVal * 1.1;
+          minBound = baseVal === 0 ? -1 : baseVal * 0.9;
+          maxBound = baseVal === 0 ? 1 : baseVal * 1.1;
       }
-      const range = maxBound - minBound;
+      let range = maxBound - minBound;
+      if (range === 0) range = 1;
 
       const svg = this.$('#commChart'); if (!svg) return;
       const w = 280, h = 120, pad = 12;
@@ -1766,14 +1768,6 @@ class DataComparisonMap extends HTMLElement {
       if (this._lastCommVal !== undefined && !isNaN(this._lastCommVal) && !isNaN(targetVal)) animateValue(resultContainer, this._lastCommVal, targetVal, cData.unit, 300, k=>this.t(k));
       else resultContainer.textContent = fmt(targetVal, cData.unit, k=>this.t(k));
       this._lastCommVal = targetVal;
-      
-      const aiBox = this.$('#commAiBox');
-      if (aiBox) aiBox.style.display = 'none';
-      const aiBtn = this.$('#commAiBtn');
-      if (aiBtn) {
-         aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
-         aiBtn.disabled = false;
-      }
   }
 
   updateCountryProofChart(code, proofData) {
@@ -1797,8 +1791,9 @@ class DataComparisonMap extends HTMLElement {
               if (baseVal + v > maxB) maxB = baseVal + v;
           });
       });
-      if (minB === maxB) { minB = baseVal * 0.9; maxB = baseVal * 1.1; }
-      const range = maxB - minB;
+      if (minB === maxB) { minB = baseVal === 0 ? -1 : baseVal * 0.9; maxB = baseVal === 0 ? 1 : baseVal * 1.1; }
+      let range = maxB - minB;
+      if (range === 0) range = 1;
 
       const svg = this.$('#countryProofChart'); if (!svg) return;
       const w = 250, h = 70, pad = 8;
@@ -1825,47 +1820,19 @@ class DataComparisonMap extends HTMLElement {
 
   // General Proof in the right panel
   buildGeneralProof() {
-      let dtWrapper = this.$('#dtWrapper');
-      if (!dtWrapper) {
-          const dtDiv = this.$('#dtBtns').parentElement;
-          const srcDiv = this.$('#srcBtns').parentElement;
-          
-          dtWrapper = document.createElement('div'); dtWrapper.id = 'dtWrapper';
-          dtDiv.parentNode.insertBefore(dtWrapper, dtDiv);
-          dtWrapper.appendChild(dtDiv);
-
-          const srcWrapper = document.createElement('div'); srcWrapper.id = 'srcWrapper';
-          srcDiv.parentNode.insertBefore(srcWrapper, srcDiv);
-          srcWrapper.appendChild(srcDiv);
-      }
-
       let genProofAcc = this.$('#generalProofAcc');
-      if (!genProofAcc) {
-          const pData = window.PROOF_DATA;
-          genProofAcc = document.createElement('div');
-          genProofAcc.id = 'generalProofAcc';
-          genProofAcc.className = 'proof-accordion open';
-          genProofAcc.style.display = 'none'; 
-          
-          genProofAcc.innerHTML = `
-              <button class="proof-acc-btn">
-                  <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
-              </button>
-              <div class="proof-acc-body">
-                  <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
-                  <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
-                  <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
-                  <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
-              </div>
-          `;
-          this.$('.controls').appendChild(genProofAcc);
+      const pData = window.PROOF_DATA;
+
+      // Initialize the options only once
+      if (genProofAcc && genProofAcc.dataset.initialized !== 'true') {
+          genProofAcc.dataset.initialized = 'true';
           
           genProofAcc.querySelector('.proof-acc-btn').onclick = () => {
               genProofAcc.classList.toggle('open');
           };
           
           const pFactorCont = genProofAcc.querySelector('#genProofFactors');
+          pFactorCont.innerHTML = ''; // Clear just in case
           pData.factors.forEach((f) => {
               const fDiv = document.createElement('div'); fDiv.className = 'factor-row';
               fDiv.innerHTML = `
@@ -1880,25 +1847,21 @@ class DataComparisonMap extends HTMLElement {
               fDiv.querySelector('.gproof-cb').onchange = () => this.updateGeneralProofChart();
               pFactorCont.appendChild(fDiv);
           });
-          
-          const pSvg = genProofAcc.querySelector('#genProofChart');
-          pSvg.innerHTML = `<path class="chart-line" id="genProofLine" style="stroke: #d97706; stroke-width: 2;" />
-                           <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
-                           <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
       }
       
-      const pData = window.PROOF_DATA;
-      this.$('#genProofDesc').textContent = `${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})`;
-      this.updateGeneralProofChart();
+      if (genProofAcc) {
+          this.$('#genProofDesc').textContent = `${pData.scenario[this._lang] || pData.scenario.en} - ${pData.commodity[this._lang] || pData.commodity.en} (${pData.unit})`;
+          this.updateGeneralProofChart();
 
-      if (this.currentCategory === 'commodities') {
-          this.$('#dtWrapper').style.display = 'none';
-          this.$('#srcWrapper').style.display = 'none';
-          genProofAcc.style.display = 'block';
-      } else {
-          this.$('#dtWrapper').style.display = 'block';
-          this.$('#srcWrapper').style.display = 'block';
-          genProofAcc.style.display = 'none';
+          if (this.currentCategory === 'commodities') {
+              this.$('#dtWrapper').style.display = 'none';
+              this.$('#srcWrapper').style.display = 'none';
+              genProofAcc.style.display = 'block';
+          } else {
+              this.$('#dtWrapper').style.display = 'block';
+              this.$('#srcWrapper').style.display = 'block';
+              genProofAcc.style.display = 'none';
+          }
       }
   }
 
@@ -1918,8 +1881,9 @@ class DataComparisonMap extends HTMLElement {
       const currentValues = years.map((y, i) => baseVal + impacts[i]);
       let minBound = 5; 
       let maxBound = 40; 
-      if (minBound === maxBound) { minBound = baseVal * 0.9; maxBound = baseVal * 1.1; }
-      const range = maxBound - minBound;
+      if (minBound === maxBound) { minBound = baseVal === 0 ? -1 : baseVal * 0.9; maxBound = baseVal === 0 ? 1 : baseVal * 1.1; }
+      let range = maxBound - minBound;
+      if (range === 0) range = 1;
 
       const svg = this.$('#genProofChart'); if (!svg) return;
       const w = 250, h = 70, pad = 8;
