@@ -111,7 +111,12 @@ const I18N = {
     "persons": "persons", "net persons": "net persons", "USD/capita": "USD/capita", "int. $": "int. $",
     "% of GDP": "% of GDP", "%": "%", "births/woman": "births/woman", "years": "years",
     "per 100k inh.": "per 100k inh.", "per 1,000 births": "per 1,000 births",
-    "% gross enrollment": "% gross enrollment", "index (0-100)": "index (0-100)"
+    "% gross enrollment": "% gross enrollment", "index (0-100)": "index (0-100)",
+    "Commodities": "Commodity Prices",
+    "proofTitle": "Proof of Concept: Historical Accuracy",
+    "proofActual": "Actual Event",
+    "simulatedPrice": "Simulated Price:",
+    "userSent": "User Sentiment Premium: "
   },
   cs: {
     about: "O nás", loading: "Načítání mapy a dat…", category: "Kategorie", dataType: "Typ dat", source: "Zdroj",
@@ -169,7 +174,12 @@ const I18N = {
     "Foreign Direct Investment": "Přímé zahraniční investice", "GDP growth": "Růst HDP", "GDP per capita (PPP)": "HDP na obyvatele (PPP)", "Gini coefficient": "Giniho koeficient",
     "persons": "osob", "net persons": "osob (čisté)", "USD/capita": "USD/obyvatele", "int. $": "int. $",
     "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu", "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 births": "na 1 000 naroz.",
-    "% gross enrollment": "% hrubé zápisy", "index (0-100)": "index (0-100)"
+    "% gross enrollment": "% hrubé zápisy", "index (0-100)": "index (0-100)",
+    "Commodities": "Ceny komodit",
+    "proofTitle": "Důkaz Konceptu: Historická Přesnost",
+    "proofActual": "Skutečná událost",
+    "simulatedPrice": "Simulovaná cena:",
+    "userSent": "Prémie uživatelského sentimentu: "
   }
 };
 
@@ -177,7 +187,8 @@ const CATEGORY_META = {
   economy: { labelKey: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
   demographics: { labelKey: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
   society: { labelKey: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
-  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
+  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' },
+  commodities: { labelKey: 'Commodities', isWide: true, icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' }
 };
 
 const QUESTIONNAIRE = [
@@ -224,6 +235,7 @@ function fmt(val, unit, tFn) {
   if (unit === 'net persons' && Math.abs(val) >= 1e6) return (val > 0 ? '+' : '') + (val/1e6).toFixed(1) + 'M';
   if (unit === 'net persons') return (val > 0 ? '+' : '') + val.toLocaleString();
   if (unit === 'USD/capita' || unit === 'int. $') return '$' + Math.round(val).toLocaleString();
+  if (unit === '$/lb' || unit === '$/kg' || unit === '$/barrel') return '$' + val.toFixed(2);
   if (unit === '% of GDP' || unit === '%') return val.toFixed(1) + '%';
   if (unit === 'births/woman') return val.toFixed(2);
   if (unit === 'years') return val.toFixed(1);
@@ -401,6 +413,9 @@ class DataComparisonMap extends HTMLElement {
       if (!this.categories[cat]) this.categories[cat] = [];
       this.categories[cat].push(key);
     });
+    
+    // Inject the special Commodities category manually
+    this.categories['commodities'] = []; 
 
     this.setupModalsAndNav();
 
@@ -896,16 +911,18 @@ class DataComparisonMap extends HTMLElement {
     this.buildCategoryButtons();
     if (this.currentCategory) {
       this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === this.currentCategory));
-      this.buildDataTypeButtons(this.currentCategory);
+      if (this.currentCategory !== 'commodities') {
+         this.buildDataTypeButtons(this.currentCategory);
+      }
     }
-    if (this.currentDataType) {
+    if (this.currentDataType && this.currentCategory !== 'commodities') {
       this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === this.currentDataType));
       this.buildSourceButtons(this.currentDataType);
     }
-    if (this.currentSource) {
+    if (this.currentSource && this.currentCategory !== 'commodities') {
       this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === this.currentSource); });
-      this.paint();
     }
+    this.paint();
 
     this.$$('.cp').forEach(p => {
       p.dataset.name = this._lang === 'cs' ? (CS_COUNTRIES[p.dataset.code] || ALPHA2_TO_NAME[p.dataset.code]) : ALPHA2_TO_NAME[p.dataset.code];
@@ -913,10 +930,17 @@ class DataComparisonMap extends HTMLElement {
 
     if (this._selectedCountryCode) {
       this.$('#panelCountry').textContent = this._lang === 'cs' ? (CS_COUNTRIES[this._selectedCountryCode] || ALPHA2_TO_NAME[this._selectedCountryCode]) : ALPHA2_TO_NAME[this._selectedCountryCode];
-      this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
+      if(this.currentCategory === 'commodities') {
+        const cData = window.COMMODITY_DATA[this._selectedCountryCode];
+        this.$('#panelMetric').textContent = cData ? (cData.commodity[this._lang] || cData.commodity.en) : '';
+      } else {
+        this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
+      }
+      
       const activeBtn = this.$('.mode-btn.active');
       if (activeBtn) {
           if (activeBtn.dataset.mode === 'history') this.updateHistoryView(this.$('#histSlider').value);
+          else if (activeBtn.dataset.mode === 'commodity') this.buildCommodityView(this._selectedCountryCode);
           else this.buildFutureView(this._selectedCountryCode);
       }
     }
@@ -1038,16 +1062,35 @@ class DataComparisonMap extends HTMLElement {
         this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-        this.$(`#view${btn.dataset.mode === 'history' ? 'History' : 'Future'}`).classList.add('active');
+        
+        const mode = btn.dataset.mode;
+        let viewId = '#viewHistory';
+        if (mode === 'future') viewId = '#viewFuture';
+        else if (mode === 'commodity') viewId = '#viewCommodity';
+        
+        let viewEl = this.$(viewId);
+        if (!viewEl && mode === 'commodity') {
+            viewEl = document.createElement('div');
+            viewEl.id = 'viewCommodity';
+            viewEl.className = 'panel-view';
+            this.$('#leftPanel').appendChild(viewEl);
+        }
+        viewEl.classList.add('active');
         this.$('#leftPanel').classList.add('open');
-        const slider = this.$('#histSlider');
-        slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
-        if (btn.dataset.mode === 'history') this.updateHistoryView(slider.value);
-        else this.buildFutureView(this._selectedCountryCode);
+        
+        if (mode === 'history') {
+            const slider = this.$('#histSlider');
+            slider.oninput = (ev) => this.updateHistoryView(ev.target.value);
+            this.updateHistoryView(slider.value);
+        } else if (mode === 'future') {
+            this.buildFutureView(this._selectedCountryCode);
+        } else if (mode === 'commodity') {
+            this.buildCommodityView(this._selectedCountryCode);
+        }
       };
     });
     this.$('#closeLeftBtn').onclick = () => this.closeLeftPanelOnly();
-    if(this.currentSource) this.paint();
+    this.paint();
   }
 
   _buildResolutionGroup(features, className, proj, precision) {
@@ -1082,6 +1125,8 @@ class DataComparisonMap extends HTMLElement {
   _bindCountryInteractions(pathEl) {
     const self = this;
     pathEl.addEventListener('mouseenter', function(e) { 
+      if (self.currentCategory === 'commodities' && !window.COMMODITY_DATA[pathEl.dataset.code]) return;
+      
       const hOverlay = self.$('#hoverOverlay');
       if(hOverlay) {
         const code = pathEl.dataset.code;
@@ -1109,9 +1154,11 @@ class DataComparisonMap extends HTMLElement {
     });
     pathEl.addEventListener('click', function(e) { 
       if (self._dragged) return; 
+      if (self.currentCategory === 'commodities' && !window.COMMODITY_DATA[pathEl.dataset.code]) return;
       self.openSidePanel(pathEl.dataset.code, pathEl.dataset.name, pathEl, e); 
     });
     pathEl.addEventListener('touchstart', function(e) {
+      if (self.currentCategory === 'commodities' && !window.COMMODITY_DATA[pathEl.dataset.code]) return;
       self.$$('.cp.touched').forEach(el => el.classList.remove('touched'));
       const code = pathEl.dataset.code;
       const allPaths = self.$$(`.cp[data-code="${code}"]`);
@@ -1150,6 +1197,42 @@ class DataComparisonMap extends HTMLElement {
     }
 
     this.$('#panelCountry').textContent = name;
+
+    if (this.currentCategory === 'commodities') {
+        const cData = window.COMMODITY_DATA[code];
+        this.$('#panelMetric').textContent = cData ? (cData.commodity[this._lang] || cData.commodity.en) : '';
+        this.$$('.mode-btn').forEach(b => { b.disabled = true; b.style.display = 'none'; });
+        
+        let cBtn = this.$('.mode-btn[data-mode="commodity"]');
+        if(!cBtn) {
+            cBtn = document.createElement('button');
+            cBtn.className = 'mode-btn';
+            cBtn.dataset.mode = 'commodity';
+            cBtn.textContent = 'COMMODITY';
+            this.$('#modeBar').appendChild(cBtn);
+            cBtn.onclick = () => {
+                this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
+                cBtn.classList.add('active');
+                this.$$('.panel-view').forEach(v => v.classList.remove('active'));
+                this.$('#viewCommodity').classList.add('active');
+                this.buildCommodityView(code);
+            };
+        }
+        cBtn.style.display = 'block';
+        cBtn.disabled = false;
+        
+        if (!this.$('#leftPanel').classList.contains('open')) {
+            this.$('#leftPanel').classList.add('open');
+            cBtn.click();
+        } else {
+            this.buildCommodityView(code);
+        }
+        return;
+    }
+
+    // Normal History/Future Flow
+    this.$$('.mode-btn[data-mode="commodity"]').forEach(b => b.style.display = 'none');
+    this.$$('.mode-btn:not([data-mode="commodity"])').forEach(b => b.style.display = 'block');
     this.$('#panelMetric').textContent = this.DATA[this.currentDataType] ? this.t(this.DATA[this.currentDataType].label) : '';
 
     const hasData = window.HISTORY_DATA && window.HISTORY_DATA[this.currentDataType] && window.HISTORY_DATA[this.currentDataType][code];
@@ -1158,13 +1241,13 @@ class DataComparisonMap extends HTMLElement {
       this.closeLeftPanelOnly();
       return;
     }
-    this.$$('.mode-btn').forEach(b => b.disabled = false);
+    this.$$('.mode-btn:not([data-mode="commodity"])').forEach(b => b.disabled = false);
     
     if (this.$('#leftPanel').classList.contains('open')) {
         const activeBtn = this.$('.mode-btn.active');
         if (activeBtn) {
             if (activeBtn.dataset.mode === 'history') this.updateHistoryView(this.$('#histSlider').value);
-            else this.buildFutureView(code);
+            else if (activeBtn.dataset.mode === 'future') this.buildFutureView(code);
         }
     }
   }
@@ -1183,7 +1266,6 @@ class DataComparisonMap extends HTMLElement {
     if (sOverlay) sOverlay.style.clipPath = 'circle(0% at 50% 50%)';
   }
 
-  // Helper for typing AI effect
   _typeText(el, text, speed = 15) {
     if (this._typingInterval) clearInterval(this._typingInterval);
     el.innerHTML = '<span class="text-content"></span><span class="ai-cursor"></span>';
@@ -1266,7 +1348,6 @@ class DataComparisonMap extends HTMLElement {
     const container = this.$('#futFactors');
     container.innerHTML = '';
     
-    // Clear AI box if it exists
     const existingAiWrap = this.$('#futAiWrap');
     if (existingAiWrap) existingAiWrap.style.display = 'none';
     
@@ -1308,7 +1389,6 @@ class DataComparisonMap extends HTMLElement {
                      <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
                      <text x="268" y="118" class="fut-axis-label" text-anchor="end">2029</text>`;
     
-    // Add AI Explanation Box structure if not present
     let aiWrap = this.$('#futAiWrap');
     if (!aiWrap) {
         aiWrap = document.createElement('div');
@@ -1458,7 +1538,6 @@ class DataComparisonMap extends HTMLElement {
     else resultContainer.textContent = fmt(targetVal, dt.unit, k=>this.t(k));
     this._lastFutVal = targetVal;
     
-    // Reset AI Box when a new scenario factor is clicked
     const aiBox = this.$('#futAiBox');
     if (aiBox) aiBox.style.display = 'none';
     const aiBtn = this.$('#futAiBtn');
@@ -1467,6 +1546,279 @@ class DataComparisonMap extends HTMLElement {
        aiBtn.disabled = false;
     }
   }
+  
+  /* ============================================================
+     COMMODITY VIEW (NEW STEP 2)
+     ============================================================ */
+  buildCommodityView(code) {
+      let viewEl = this.$('#viewCommodity');
+      if(!viewEl) return;
+      viewEl.innerHTML = '';
+      
+      const cData = window.COMMODITY_DATA[code];
+      if(!cData) {
+          viewEl.innerHTML = `<div style="text-align:center; padding: 20px; color:#8395a7;">${this.t('noProj')}</div>`;
+          return;
+      }
+      
+      let opinionMod = 0;
+      if (this._answers['q2_3'] === 'yes') opinionMod += 0.05; 
+      if (this._answers['q3_3'] === 'yes') opinionMod += 0.05; 
+      if (this._answers['q3_1'] === 'no')  opinionMod += 0.05; 
+      if (this._answers['q1_2'] === 'yes') opinionMod += 0.03; 
+      
+      const hasOpinion = opinionMod > 0;
+      const basePrice = cData.base_price;
+      
+      const headerHtml = `
+        <div class="future-desc" id="commDesc">${cData.desc[this._lang] || cData.desc.en}</div>
+        <div class="user-sentiment-badge ${hasOpinion ? 'active' : ''}" id="userSentBadge">
+            ${this.t('userSent')}+${Math.round(opinionMod * 100)}%
+        </div>
+        <div class="chart-container"><svg class="chart-svg" id="commChart"></svg></div>
+        <div class="future-factors" id="commFactors"></div>
+        <div class="future-result" id="commResult"></div>
+      `;
+      viewEl.innerHTML = headerHtml;
+      
+      const factorContainer = this.$('#commFactors');
+      cData.factors.forEach((f) => {
+          const div = document.createElement('div'); div.className = 'factor-row';
+          div.innerHTML = `
+            <label class="factor-label">
+              <input type="checkbox" class="factor-cb comm-cb" data-id="${f.id}">
+              <span class="cb-custom"></span><span class="factor-title">${f.title[this._lang] || f.title.en}</span>
+            </label>
+            <div class="factor-info-btn">i
+              <div class="factor-tooltip">
+                <strong>${this.t('context')}</strong> ${f.info[this._lang] || f.info.en}<br/><br/>
+                <span style="color:#27ae60">✔ ${f.yes[this._lang] || f.yes.en}</span><br/><span style="color:#c0392b">✘ ${f.no[this._lang] || f.no.en}</span>
+              </div>
+            </div>`;
+          div.querySelector('.comm-cb').onchange = () => this.updateCommodityChart(code, cData, opinionMod);
+          factorContainer.appendChild(div);
+      });
+      
+      const svg = this.$('#commChart');
+      svg.innerHTML = `<defs><linearGradient id="commGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#b45309"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient></defs>
+                       <path class="chart-line" id="commLine" style="stroke: url(#commGrad); stroke-dasharray: 4 4;" />
+                       <text x="12" y="118" class="fut-axis-label" text-anchor="start">2024</text>
+                       <text x="268" y="118" class="fut-axis-label" text-anchor="end">2029</text>`;
+                       
+      let aiWrap = document.createElement('div');
+      aiWrap.className = 'ai-wrap';
+      aiWrap.id = 'commAiWrap';
+      aiWrap.innerHTML = `
+          <button class="btn-ai" id="commAiBtn">
+              <span class="ai-icon">✨</span> <span class="btn-text">${this.t('askAI')}</span>
+          </button>
+          <div class="ai-explanation-box" id="commAiBox" style="display:none;">
+              <div class="ai-header">${this.t('aiAnalysis')}</div>
+              <div class="ai-content"></div>
+          </div>
+      `;
+      viewEl.appendChild(aiWrap);
+      
+      const aiBtn = this.$('#commAiBtn');
+      aiBtn.onclick = async () => {
+          aiBtn.disabled = true;
+          aiBtn.querySelector('.btn-text').textContent = this.t('aiThinking');
+          
+          const checked = [];
+          this.$$('.comm-cb:checked').forEach(cb => {
+               const factor = cData.factors.find(f => f.id === cb.dataset.id);
+               if(factor) checked.push(factor.yes.en); 
+          });
+          const unchecked = [];
+          this.$$('.comm-cb:not(:checked)').forEach(cb => {
+               const factor = cData.factors.find(f => f.id === cb.dataset.id);
+               if(factor) unchecked.push(factor.no.en);
+          });
+          
+          let factorsText = "Factors happening: " + (checked.join(', ') || "None") + ". Factors NOT happening: " + (unchecked.join(', ') || "None");
+          const metricName = cData.commodity.en;
+          const targetValFmt = this.$('#commResultVal').textContent;
+          const countryName = this._selectedCountryName;
+          
+          const langInstruction = this._lang === 'cs' ? "Reply completely in Czech language." : "Reply completely in English language.";
+          const prompt = `Act as an expert commodities analyst. Explain briefly (max 3 short sentences) why the price of ${metricName} is projected to reach ${targetValFmt} by 2029 due to developments in ${countryName}. Take into account these specific driving factors that the user selected: ${factorsText}. Also mention the market sentiment premium if it is impacting prices. Be professional, analytical, and concise. ${langInstruction}`;
+          
+          try {
+              const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+              if(!res.ok) throw new Error('API Error');
+              const aiText = await res.text();
+              
+              this.$('#commAiBox').style.display = 'block';
+              this._typeText(this.$('#commAiBox').querySelector('.ai-content'), aiText, 30);
+              
+              aiBtn.querySelector('.btn-text').textContent = this.t('aiAgain');
+              aiBtn.disabled = false;
+          } catch(e) {
+              this.$('#commAiBox').style.display = 'block';
+              this.$('#commAiBox').querySelector('.ai-content').textContent = this.t('aiError');
+              aiBtn.disabled = false;
+              aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+          }
+      };
+
+      // PROOF SECTION
+      const proofData = window.PROOF_DATA;
+      if (proofData) {
+          const proofDiv = document.createElement('div');
+          proofDiv.className = 'proof-section';
+          proofDiv.innerHTML = `
+            <div class="sec-title">${this.t('proofTitle')} - ${proofData.scenario[this._lang] || proofData.scenario.en}</div>
+            <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;">${proofData.commodity[this._lang] || proofData.commodity.en} (${proofData.unit})</div>
+            <div class="future-factors" id="proofFactors" style="margin-bottom:12px;"></div>
+            <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="proofChart"></svg></div>
+            <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="proofResult"></div>
+          `;
+          viewEl.appendChild(proofDiv);
+          
+          const pFactorCont = this.$('#proofFactors');
+          proofData.factors.forEach((f) => {
+              const fDiv = document.createElement('div'); fDiv.className = 'factor-row';
+              fDiv.innerHTML = `
+                <label class="factor-label" style="font-size:0.75rem;">
+                  <input type="radio" name="proofGroup" class="factor-cb proof-cb" data-id="${f.id}" ${f.isTrue ? 'checked' : ''}>
+                  <span class="cb-custom" style="width:14px; height:14px; border-radius:50%;"></span>
+                  <span class="factor-title" style="font-size:0.75rem;">
+                    ${f.title[this._lang] || f.title.en} ${f.isTrue ? `<strong style="color:#d97706">(${this.t('proofActual')})</strong>` : ''}
+                  </span>
+                </label>
+              `;
+              fDiv.querySelector('.proof-cb').onchange = () => this.updateProofChart();
+              pFactorCont.appendChild(fDiv);
+          });
+          
+          const pSvg = this.$('#proofChart');
+          pSvg.innerHTML = `<path class="chart-line" id="proofLine" style="stroke: #d97706; stroke-width: 2;" />
+                           <text x="12" y="85" class="fut-axis-label" text-anchor="start">1989</text>
+                           <text x="268" y="85" class="fut-axis-label" text-anchor="end">1992</text>`;
+          this.updateProofChart();
+      }
+
+      this.updateCommodityChart(code, cData, opinionMod, true);
+  }
+  
+  updateCommodityChart(code, cData, opinionMod, isInitial = false) {
+      const baseVal = cData.base_price;
+      let impacts = [0, 0, 0, 0, 0];
+      let minImpacts = [0, 0, 0, 0, 0];
+      let maxImpacts = [0, 0, 0, 0, 0];
+      
+      this.$$('.comm-cb').forEach(cb => {
+          const factor = cData.factors.find(f => f.id === cb.dataset.id);
+          if(!factor) return;
+          for(let i=0; i<5; i++) {
+              if (cb.checked) impacts[i] += factor.impact[i];
+              if (factor.impact[i] > 0) maxImpacts[i] += factor.impact[i]; else minImpacts[i] += factor.impact[i];
+          }
+      });
+      
+      for(let i=0; i<5; i++) {
+          impacts[i] += (baseVal * opinionMod);
+          maxImpacts[i] += (baseVal * opinionMod);
+          minImpacts[i] += (baseVal * opinionMod);
+      }
+
+      const years = [2024, 2025, 2026, 2027, 2028, 2029];
+      const calcValues = (impArr) => { const v = [baseVal]; for(let i=0; i<5; i++) v.push(v[i] + impArr[i]); return v; };
+      
+      const minValues = calcValues(minImpacts), maxValues = calcValues(maxImpacts), currentValues = calcValues(impacts);
+      const minBound = Math.min(...minValues, ...maxValues, baseVal), maxBound = Math.max(...minValues, ...maxValues, baseVal);
+      const range = maxBound === minBound ? 1 : maxBound - minBound;
+
+      const svg = this.$('#commChart'); if (!svg) return;
+      const w = 280, h = 120, pad = 12;
+      if(isInitial) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      
+      let pathD = "";
+      years.forEach((y, i) => {
+          const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
+          const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
+          pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+          
+          let pt = svg.querySelector(`#cp${i}`); let lbl = svg.querySelector(`#cl${i}`);
+          if (!pt) {
+            pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `cp${i}`); pt.setAttribute('r', '4'); pt.setAttribute('class', 'chart-point fut-point'); pt.style.fill = '#f59e0b'; svg.appendChild(pt);
+            lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text'); lbl.setAttribute('id', `cl${i}`); lbl.setAttribute('class', 'fut-label'); svg.appendChild(lbl);
+          }
+          pt.style.transform = `translate(${cx}px, ${cy}px)`; lbl.style.transform = `translate(${cx}px, ${cy - 10}px)`;
+
+          if (i === 0) { lbl.textContent = fmt(currentValues[i], cData.unit, k=>this.t(k)); lbl.setAttribute('text-anchor', 'start'); } 
+          else if (i === 5) {
+            lbl.setAttribute('text-anchor', 'end');
+            if (this._lastCommVal !== undefined && !isNaN(this._lastCommVal) && !isNaN(currentValues[i])) animateValue(lbl, this._lastCommVal, currentValues[i], cData.unit, 300, k=>this.t(k));
+            else lbl.textContent = fmt(currentValues[i], cData.unit, k=>this.t(k));
+          } else lbl.textContent = '';
+      });
+      
+      const line = svg.querySelector('#commLine');
+      if (line) line.setAttribute('d', pathD);
+
+      const targetVal = currentValues[5];
+      let resultContainer = this.$('#commResultVal');
+      if (!resultContainer) {
+        this.$('#commResult').innerHTML = `${this.t('projected')}<strong id="commResultVal" style="color:#d97706">${fmt(targetVal, cData.unit, k=>this.t(k))}</strong>`;
+        resultContainer = this.$('#commResultVal');
+        this._lastCommVal = targetVal;
+      }
+      if (this._lastCommVal !== undefined && !isNaN(this._lastCommVal) && !isNaN(targetVal)) animateValue(resultContainer, this._lastCommVal, targetVal, cData.unit, 300, k=>this.t(k));
+      else resultContainer.textContent = fmt(targetVal, cData.unit, k=>this.t(k));
+      this._lastCommVal = targetVal;
+      
+      const aiBox = this.$('#commAiBox');
+      if (aiBox) aiBox.style.display = 'none';
+      const aiBtn = this.$('#commAiBtn');
+      if (aiBtn) {
+         aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+         aiBtn.disabled = false;
+      }
+  }
+
+  updateProofChart() {
+      const pData = window.PROOF_DATA;
+      if(!pData) return;
+      const baseVal = pData.base_price;
+      const years = [1989, 1990, 1991, 1992];
+      
+      let impacts = [0, 0, 0, 0];
+      const activeCb = this.$('.proof-cb:checked');
+      if (activeCb) {
+          const factor = pData.factors.find(f => f.id === activeCb.dataset.id);
+          if (factor) impacts = [0, factor.impact[0], factor.impact[1], factor.impact[2]];
+      }
+      
+      const currentValues = years.map((y, i) => baseVal + impacts[i]);
+      const minBound = 5; 
+      const maxBound = 40; 
+      const range = maxBound - minBound;
+
+      const svg = this.$('#proofChart'); if (!svg) return;
+      const w = 250, h = 70, pad = 8;
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      
+      let pathD = "";
+      years.forEach((y, i) => {
+          const cx = pad + (i / (years.length - 1)) * (w - pad * 2);
+          const cy = h - pad - ((currentValues[i] - minBound) / range) * (h - pad * 2);
+          pathD += `${i === 0 ? 'M' : 'L'}${cx},${cy} `;
+          
+          let pt = svg.querySelector(`#prp${i}`); 
+          if (!pt) {
+            pt = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); pt.setAttribute('id', `prp${i}`); pt.setAttribute('r', '3'); pt.setAttribute('class', 'chart-point'); pt.style.fill = '#b45309'; svg.appendChild(pt);
+          }
+          pt.style.transform = `translate(${cx}px, ${cy}px)`;
+      });
+      
+      const line = svg.querySelector('#proofLine');
+      if (line) line.setAttribute('d', pathD);
+      
+      this.$('#proofResult').innerHTML = `${this.t('simulatedPrice')} <span style="color:#d97706">$${currentValues[2].toFixed(2)}</span> (1991)`;
+  }
+  
+  // ============================================================
 
   initZoomPan() {
     const svg = this.$('#mapSvg');
@@ -1577,6 +1929,7 @@ class DataComparisonMap extends HTMLElement {
         }
         this.drawMap(); 
         if (clickedCode) {
+           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
            const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
            this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e);
         }
@@ -1660,6 +2013,7 @@ class DataComparisonMap extends HTMLElement {
         }
         this.drawMap();
         if (clickedCode) {
+           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
            const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
            this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e.changedTouches[0]);
         }
@@ -1863,7 +2217,9 @@ class DataComparisonMap extends HTMLElement {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
       const meta = CATEGORY_META[catKey] || { icon: '', labelKey: catKey };
-      const b = document.createElement('button'); b.className = 'cat-btn'; b.dataset.key = catKey;
+      const b = document.createElement('button'); 
+      b.className = 'cat-btn' + (meta.isWide ? ' cat-btn-wide' : ''); 
+      b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + this.t(meta.labelKey) + '</span>';
       b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
     });
@@ -1872,8 +2228,17 @@ class DataComparisonMap extends HTMLElement {
   selectCategory(catKey) {
     this.currentCategory = catKey;
     this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
-    this.buildDataTypeButtons(catKey);
     this._lastTtVal = null; this._lastTtDataType = null;
+    
+    if (catKey === 'commodities') {
+        this.$('#dtBtns').innerHTML = `<div style="text-align:center; padding: 20px; font-size: 0.8rem; color: #8395a7;">${this._lang==='cs'?'Vyberte zemi z mapy (USA, Čína)':'Select a country from the map (US, China)'}</div>`;
+        this.$('#srcBtns').innerHTML = '';
+        this.closeSidePanel();
+        this.paint();
+        return;
+    }
+
+    this.buildDataTypeButtons(catKey);
     const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
   }
 
@@ -1937,6 +2302,24 @@ class DataComparisonMap extends HTMLElement {
   }
 
   paint() {
+    if (this.currentCategory === 'commodities') {
+        this.$('#mapTitle').textContent = this.t('Commodities');
+        this.$('#mapSub').textContent = 'Global Projections & Scenarios';
+        this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
+        
+        this.$$('.cp').forEach(p => {
+            const isSupported = !!window.COMMODITY_DATA[p.dataset.code];
+            if (isSupported) {
+                p.classList.remove('no-data');
+                p.setAttribute('fill', '#f59e0b'); 
+            } else {
+                p.classList.add('no-data');
+                p.setAttribute('fill', '#d4e3f0');
+            }
+        });
+        return;
+    }
+
     const dt = this.DATA[this.currentDataType]; if (!dt) return;
     const src = dt.sources[this.currentSource]; if (!src) return;
     this.$('#mapTitle').textContent = this.t(dt.label);
@@ -1953,9 +2336,21 @@ class DataComparisonMap extends HTMLElement {
   }
 
   ttShow(e) {
+    const code = e.target.dataset.code;
+    
+    if (this.currentCategory === 'commodities') {
+        const cData = window.COMMODITY_DATA[code];
+        if(!cData) return;
+        this.$('#ttName').textContent = e.target.dataset.name;
+        this.$('#ttUnit').textContent = cData.unit;
+        this.$('#ttSrc').textContent = 'Live projection parameters';
+        this.$('#ttVal').textContent = '$' + cData.base_price.toFixed(2);
+        this.$('#tt').classList.add('visible');
+        return;
+    }
+
     const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
     const src = dt.sources[this.currentSource]; if (!src) return;
-    const code = e.target.dataset.code;
     const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
     this.$('#ttName').textContent = e.target.dataset.name;
     this.$('#ttUnit').textContent = newVal != null ? this.t(dt.unit) : '';
