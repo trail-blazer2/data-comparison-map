@@ -103,8 +103,8 @@ const I18N = {
     emailPlaceholder: "Email Address",
     passPlaceholder: "Password",
     authGdpr: `I agree to the <a href="terms.html" target="_blank" class="legal-link">Terms of Service</a> and <a href="privacy.html" target="_blank" class="legal-link">Privacy Policy</a>.`,
-    askAI: "Why this number? Ask our AI",
-    aiThinking: "AI is thinking...",
+    askAI: "Why this number? Ask AI",
+    aiThinking: "Thinking...",
     aiAgain: "Ask AI again",
     aiAnalysis: "AI Analysis",
     aiError: "AI service is currently unavailable. Please try again.",
@@ -116,7 +116,15 @@ const I18N = {
     "proofTitle": "Proof of Concept: Historical Accuracy",
     "proofActual": "Actual Event",
     "simulatedPrice": "Simulated Price:",
-    "userSent": "User Sentiment Premium: "
+    "userSent": "User Sentiment Premium: ",
+    tutorialTitle: "Welcome to RealWorldView",
+    tutorialStep1: "1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.",
+    tutorialStep2: "2. Tweak real-world scenarios and geopolitical factors in the side panel.",
+    tutorialStep3: "3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.",
+    tutorialBtnNext: "Next",
+    tutorialBtnStart: "Get Started",
+    rightTutorialTitle: "Quick Guide",
+    moreDataTitle: "Explore Macro Data"
   },
   cs: {
     about: "O nás", loading: "Načítání mapy a dat…", category: "Kategorie", dataType: "Typ dat", source: "Zdroj",
@@ -161,8 +169,8 @@ const I18N = {
     emailPlaceholder: "E-mailová adresa",
     passPlaceholder: "Heslo",
     authGdpr: `Souhlasím s <a href="terms.html" target="_blank" class="legal-link">Podmínkami služby</a> a <a href="privacy.html" target="_blank" class="legal-link">Zásadami ochrany osobních údajů</a>.`,
-    askAI: "Proč toto číslo? Zeptejte se naší AI",
-    aiThinking: "AI přemýšlí...",
+    askAI: "Proč toto číslo? Zeptat se AI",
+    aiThinking: "Přemýšlím...",
     aiAgain: "Zeptat se AI znovu",
     aiAnalysis: "AI Analýza",
     aiError: "Služba AI je momentálně nedostupná. Zkuste to prosím znovu.",
@@ -179,7 +187,15 @@ const I18N = {
     "proofTitle": "Důkaz Konceptu: Historická Přesnost",
     "proofActual": "Skutečná událost",
     "simulatedPrice": "Simulovaná cena:",
-    "userSent": "Prémie sentimentu trhu: "
+    "userSent": "Prémie sentimentu trhu: ",
+    tutorialTitle: "Vítejte v RealWorldView",
+    tutorialStep1: "1. Vyberte podporovanou zemi (USA, Čína, Německo, ČR, SR) na mapě.",
+    tutorialStep2: "2. Upravte reálné scénáře a geopolitické faktory v bočním panelu.",
+    tutorialStep3: "3. Sledujte, jak náš AI algoritmus předpovídá budoucí ceny komodit na základě vašeho sentimentu.",
+    tutorialBtnNext: "Další",
+    tutorialBtnStart: "Začít",
+    rightTutorialTitle: "Rychlý průvodce",
+    moreDataTitle: "Prozkoumat makro data"
   }
 };
 
@@ -187,8 +203,7 @@ const CATEGORY_META = {
   economy: { labelKey: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
   demographics: { labelKey: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
   society: { labelKey: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
-  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' },
-  commodities: { labelKey: 'Commodities', isWide: true, icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' }
+  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
 };
 
 const QUESTIONNAIRE = [
@@ -328,6 +343,7 @@ class DataComparisonMap extends HTMLElement {
     this._guestId = null;
     
     this._typingInterval = null;
+    this._tutorialStep = 1;
   }
 
   t(key) {
@@ -414,9 +430,6 @@ class DataComparisonMap extends HTMLElement {
       if (!this.categories[cat]) this.categories[cat] = [];
       this.categories[cat].push(key);
     });
-    
-    // Inject the special Commodities category manually
-    this.categories['commodities'] = []; 
 
     this.setupModalsAndNav();
 
@@ -446,8 +459,8 @@ class DataComparisonMap extends HTMLElement {
     this.drawMap();
     this.applyLanguage(); 
 
-    const firstCat = Object.keys(this.categories)[0];
-    if (firstCat) this.selectCategory(firstCat);
+    // Default to 'commodities' first
+    this.selectCategory('commodities');
     this.initZoomPan();
 
     const mapWrap = this.$('.map-wrap');
@@ -465,13 +478,14 @@ class DataComparisonMap extends HTMLElement {
                 mapWrap.style.transition = 'opacity 0.4s ease-in, transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1)';
                 mapWrap.style.opacity = '1';
                 mapWrap.style.transform = 'scale(1)';
-                
-                setTimeout(() => { 
-                    mapWrap.style.transition = ''; 
-                    mapWrap.style.transform = ''; 
-                }, 600);
+                setTimeout(() => { mapWrap.style.transition = ''; mapWrap.style.transform = ''; }, 600);
             });
         });
+    }
+
+    // Show Tutorial if not done
+    if (!localStorage.getItem('rwv_tutorial_done')) {
+      setTimeout(() => this.showTutorial(), 800);
     }
 
     const promoParams = new URLSearchParams(window.location.search);
@@ -590,6 +604,33 @@ class DataComparisonMap extends HTMLElement {
     this.$$('.acc-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => this.openAccountTab(btn.dataset.tab));
     });
+  }
+
+  showTutorial() {
+    this._tutorialStep = 1;
+    this.$('#tutorialModal').classList.add('active');
+    this.updateTutorialStep();
+  }
+
+  updateTutorialStep() {
+    this.$$('.tut-step').forEach(s => s.classList.remove('active'));
+    this.$(`#tutStep${this._tutorialStep}`).classList.add('active');
+    const nxtBtn = this.$('#tutNextBtn');
+    if (this._tutorialStep === 3) {
+      nxtBtn.textContent = this.t('tutorialBtnStart');
+    } else {
+      nxtBtn.textContent = this.t('tutorialBtnNext');
+    }
+  }
+
+  nextTutorialStep() {
+    if (this._tutorialStep < 3) {
+      this._tutorialStep++;
+      this.updateTutorialStep();
+    } else {
+      localStorage.setItem('rwv_tutorial_done', 'true');
+      this.$('#tutorialModal').classList.remove('active');
+    }
   }
   
   openAccountTab(tabName) {
@@ -1196,35 +1237,14 @@ class DataComparisonMap extends HTMLElement {
     if (this.currentCategory === 'commodities') {
         const cData = window.COMMODITY_DATA[code];
         this.$('#panelMetric').textContent = cData ? (cData.commodity[this._lang] || cData.commodity.en) : '';
+        
         this.$$('.mode-btn').forEach(b => { b.disabled = true; b.style.display = 'none'; });
-        
-        let cBtn = this.$('.mode-btn[data-mode="commodity"]');
-        if (!cBtn) {
-            cBtn = document.createElement('button');
-            cBtn.className = 'mode-btn';
-            cBtn.dataset.mode = 'commodity';
-            cBtn.textContent = 'COMMODITIES';
-            this.$('#modeBar').appendChild(cBtn);
-            cBtn.onclick = () => {
-                if(cBtn.disabled) return;
-                this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
-                cBtn.classList.add('active');
-                this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-                this.$('#viewCommodity').classList.add('active');
-                this.$('#leftPanel').classList.add('open');
-                this.buildCommodityView(this._selectedCountryCode);
-            };
+        const cBtn = this.$('.mode-btn[data-mode="commodity"]');
+        if (cBtn) {
+            cBtn.style.display = 'block';
+            cBtn.disabled = false;
+            cBtn.click();
         }
-        
-        cBtn.style.display = 'block';
-        cBtn.disabled = false;
-        
-        this.$$('.mode-btn').forEach(b => b.classList.remove('active'));
-        cBtn.classList.add('active');
-        this.$$('.panel-view').forEach(v => v.classList.remove('active'));
-        this.$('#viewCommodity').classList.add('active');
-        this.$('#leftPanel').classList.add('open');
-        this.buildCommodityView(code);
         return;
     }
 
@@ -1464,10 +1484,11 @@ class DataComparisonMap extends HTMLElement {
     let minBound = Math.min(...minValues, ...maxValues, baseVal);
     let maxBound = Math.max(...minValues, ...maxValues, baseVal);
     if (minBound === maxBound) {
-        minBound = baseVal * 0.9;
-        maxBound = baseVal * 1.1;
+        minBound = baseVal === 0 ? -1 : baseVal * 0.9;
+        maxBound = baseVal === 0 ? 1 : baseVal * 1.1;
     }
-    const range = maxBound - minBound;
+    let range = maxBound - minBound;
+    if (range === 0) range = 1;
 
     const svg = this.$('#futChart'); if (!svg) return;
     const w = 280, h = 120, pad = 12;
@@ -1722,7 +1743,6 @@ class DataComparisonMap extends HTMLElement {
       const minValues = calcValues(minImpacts), maxValues = calcValues(maxImpacts), currentValues = calcValues(impacts);
       let minBound = Math.min(...minValues, ...maxValues, baseVal);
       let maxBound = Math.max(...minValues, ...maxValues, baseVal);
-      // FIX: Ensure range is never 0 so the line renders flat in the middle
       if (minBound === maxBound) {
           minBound = baseVal === 0 ? -1 : baseVal * 0.9;
           maxBound = baseVal === 0 ? 1 : baseVal * 1.1;
@@ -1768,6 +1788,14 @@ class DataComparisonMap extends HTMLElement {
       if (this._lastCommVal !== undefined && !isNaN(this._lastCommVal) && !isNaN(targetVal)) animateValue(resultContainer, this._lastCommVal, targetVal, cData.unit, 300, k=>this.t(k));
       else resultContainer.textContent = fmt(targetVal, cData.unit, k=>this.t(k));
       this._lastCommVal = targetVal;
+      
+      const aiBox = this.$('#commAiBox');
+      if (aiBox) aiBox.style.display = 'none';
+      const aiBtn = this.$('#commAiBtn');
+      if (aiBtn) {
+         aiBtn.querySelector('.btn-text').textContent = this.t('askAI');
+         aiBtn.disabled = false;
+      }
   }
 
   updateCountryProofChart(code, proofData) {
@@ -1820,10 +1848,23 @@ class DataComparisonMap extends HTMLElement {
 
   // General Proof in the right panel
   buildGeneralProof() {
+      let dtWrapper = this.$('#dtWrapper');
+      if (!dtWrapper) {
+          const dtDiv = this.$('#dtBtns').parentElement;
+          const srcDiv = this.$('#srcBtns').parentElement;
+          
+          dtWrapper = document.createElement('div'); dtWrapper.id = 'dtWrapper';
+          dtDiv.parentNode.insertBefore(dtWrapper, dtDiv);
+          dtWrapper.appendChild(dtDiv);
+
+          const srcWrapper = document.createElement('div'); srcWrapper.id = 'srcWrapper';
+          srcDiv.parentNode.insertBefore(srcWrapper, srcDiv);
+          srcWrapper.appendChild(srcDiv);
+      }
+
       let genProofAcc = this.$('#generalProofAcc');
       const pData = window.PROOF_DATA;
 
-      // Initialize the options only once
       if (genProofAcc && genProofAcc.dataset.initialized !== 'true') {
           genProofAcc.dataset.initialized = 'true';
           
@@ -1832,7 +1873,7 @@ class DataComparisonMap extends HTMLElement {
           };
           
           const pFactorCont = genProofAcc.querySelector('#genProofFactors');
-          pFactorCont.innerHTML = ''; // Clear just in case
+          pFactorCont.innerHTML = '';
           pData.factors.forEach((f) => {
               const fDiv = document.createElement('div'); fDiv.className = 'factor-row';
               fDiv.innerHTML = `
@@ -1854,12 +1895,15 @@ class DataComparisonMap extends HTMLElement {
           this.updateGeneralProofChart();
 
           if (this.currentCategory === 'commodities') {
-              this.$('#dtWrapper').style.display = 'none';
-              this.$('#srcWrapper').style.display = 'none';
+              this.$('.more-data-acc').style.display = 'block';
+              this.$('.more-data-acc').classList.remove('open');
+              this.$('.right-tutorial').style.display = 'block';
               genProofAcc.style.display = 'block';
           } else {
+              this.$('.more-data-acc').style.display = 'none';
               this.$('#dtWrapper').style.display = 'block';
               this.$('#srcWrapper').style.display = 'block';
+              this.$('.right-tutorial').style.display = 'none';
               genProofAcc.style.display = 'none';
           }
       }
@@ -1910,582 +1954,6 @@ class DataComparisonMap extends HTMLElement {
   
   // ============================================================
 
-  initZoomPan() {
-    const svg = this.$('#mapSvg');
-    const wrap = this.$('.map-wrap');
-    if (!svg || !wrap) return;
-    this._origVB = { ...WORLD_VIEWBOX };
-    this._contentBBox = { ...WORLD_CONTENT_BBOX };
-    
-    if (!this._isDesktop) {
-      this._zoom = 1.8; 
-      const vw = this._origVB.w / this._zoom;
-      const vh = this._origVB.h / this._zoom;
-      this._panX = 260; 
-      this._panY = -20;
-    } else {
-      this._zoom = 1; this._panX = 0; this._panY = -10;
-    }
-    this._applyTransform();
-
-    const getScale = () => {
-      const rect = svg.getBoundingClientRect();
-      const vb = this._getViewBox();
-      const scaleX = rect.width / vb.w;
-      const scaleY = rect.height / vb.h;
-      return (svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') 
-        ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
-    };
-
-    const animLoop = () => {
-      let needsRedraw = false;
-      if (this._is3D) {
-        if (this._autoSpinning && !this._isPanning) {
-          this._globeRotation[0] += 0.15; needsRedraw = true;
-        } else if (!this._isPanning && Math.abs(this._spinVelocity) > 0.01) {
-          this._globeRotation[0] += this._spinVelocity; this._spinVelocity *= 0.95; needsRedraw = true;
-        } else if (!this._isPanning && Math.abs(this._spinVelocity) <= 0.01) {
-          if (this._spinVelocity !== 0) {
-            this._spinVelocity = 0;
-            needsRedraw = true; 
-          }
-        }
-      }
-      if (needsRedraw) this.drawMap();
-      requestAnimationFrame(animLoop);
-    };
-    requestAnimationFrame(animLoop);
-
-    wrap.addEventListener('wheel', (e) => {
-      e.preventDefault(); 
-      this._autoSpinning = false;
-      const delta = e.deltaY > 0 ? -0.12 : 0.12;
-      const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, this._zoom + delta));
-      const rect = svg.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) / rect.width;
-      const my = (e.clientY - rect.top) / rect.height;
-      const oldW = this._origVB.w / this._zoom, newW = this._origVB.w / newZoom;
-      const oldH = this._origVB.h / this._zoom, newH = this._origVB.h / newZoom;
-      this._panX += (oldW - newW) * mx; this._panY += (oldH - newH) * my;
-      this._zoom = newZoom; this._clampAndApply();
-    }, { passive: false });
-
-    wrap.addEventListener('mousedown', (e) => {
-      if (e.button !== 0) return;
-      this._isPanning = true; this._dragged = false; this._autoSpinning = false;
-      this._panStartX = e.clientX; this._panStartY = e.clientY;
-      this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-      this._panStartRotation = [...this._globeRotation];
-      this._spinVelocity = 0; this._lastSpinTime = performance.now();
-      wrap.style.cursor = 'grabbing'; e.preventDefault();
-    });
-    
-    window.addEventListener('mousemove', (e) => {
-      if (!this._isPanning) return;
-      if (Math.abs(e.clientX - this._panStartX) > 3 || Math.abs(e.clientY - this._panStartY) > 3) {
-        this._dragged = true;
-      }
-      const dx = (e.clientX - this._panStartX);
-      const dy = (e.clientY - this._panStartY);
-      if (this._is3D) {
-        const sensitivity = 0.25 / this._zoom;
-        const now = performance.now();
-        const dt = now - this._lastSpinTime;
-        if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
-        this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
-        this._globeRotation[1] = Math.max(-90, Math.min(90, this._panStartRotation[1] - dy * sensitivity));
-        this._lastSpinTime = now;
-        this.drawMap();
-      } else {
-        const rect = svg.getBoundingClientRect(); const vb = this._getViewBox();
-        this._panX = this._panStartPanX - dx * (vb.w / rect.width);
-        this._panY = this._panStartPanY - dy * (vb.h / rect.height);
-        this._applyTransform();
-      }
-    });
-
-    window.addEventListener('mouseup', (e) => {
-      if (!this._isPanning) return;
-      this._isPanning = false; wrap.style.cursor = ''; 
-      if (this._is3D) {
-        let clickedCode = null, clickedName = null, clickTarget = null;
-        if (!this._dragged) {
-          const targets = this.shadowRoot.elementsFromPoint(e.clientX, e.clientY);
-          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (clickTarget) {
-            clickedCode = clickTarget.dataset.code;
-            clickedName = clickTarget.dataset.name;
-          }
-        }
-        this.drawMap(); 
-        if (clickedCode) {
-           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
-           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
-           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e);
-        }
-      } else {
-        this._snapBack();
-      }
-    });
-
-    wrap.addEventListener('dblclick', (e) => { 
-      e.preventDefault(); 
-      this._animateTo(1, 0, 0); 
-    });
-
-    let initialDist = 0, initialMidX = 0, initialMidY = 0, startZoom = 1;
-
-    wrap.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        this._isPanning = true; this._dragged = false; this._autoSpinning = false;
-        this._panStartX = e.touches[0].clientX; this._panStartY = e.touches[0].clientY;
-        this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-        this._panStartRotation = [...this._globeRotation];
-        this._spinVelocity = 0; this._lastSpinTime = performance.now();
-      } else if (e.touches.length === 2) {
-        this._isPanning = false; this._autoSpinning = false;
-        const t1 = e.touches[0], t2 = e.touches[1];
-        initialDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        initialMidX = (t1.clientX + t2.clientX) / 2; initialMidY = (t1.clientY + t2.clientY) / 2;
-        startZoom = this._zoom; this._panStartPanX = this._panX; this._panStartPanY = this._panY;
-      }
-    }, { passive: true });
-
-    wrap.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1 && this._isPanning) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - this._panStartX;
-        const dy = e.touches[0].clientY - this._panStartY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) this._dragged = true;
-        if (this._is3D) {
-          const sensitivity = 0.35 / this._zoom;
-          const now = performance.now();
-          const dt = now - this._lastSpinTime;
-          if (dt > 0) this._spinVelocity = (dx * sensitivity - (this._globeRotation[0] - this._panStartRotation[0])) * 0.5;
-          this._globeRotation[0] = this._panStartRotation[0] + dx * sensitivity;
-          this._globeRotation[1] = Math.max(-90, Math.min(90, this._panStartRotation[1] - dy * sensitivity));
-          this._lastSpinTime = now;
-          this.drawMap();
-        } else {
-          const scale = getScale();
-          this._panX = this._panStartPanX - dx / scale;
-          this._panY = this._panStartPanY - dy / scale;
-          this._applyTransform();
-        }
-      } else if (e.touches.length === 2) {
-        this._dragged = true; e.preventDefault();
-        const t1 = e.touches[0], t2 = e.touches[1];
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const newZoom = Math.max(this._minZoom, Math.min(this._maxZoom, startZoom * (dist / initialDist)));
-        const rect = svg.getBoundingClientRect();
-        const mx = (initialMidX - rect.left) / rect.width;
-        const my = (initialMidY - rect.top) / rect.height;
-        const oldW = this._origVB.w / startZoom, newW = this._origVB.w / newZoom;
-        const oldH = this._origVB.h / startZoom, newH = this._origVB.h / newZoom;
-        this._panX = this._panStartPanX + (oldW - newW) * mx; 
-        this._panY = this._panStartPanY + (oldH - newH) * my;
-        this._zoom = newZoom; this._clampAndApply();
-      }
-    }, { passive: false });
-
-    wrap.addEventListener('touchend', (e) => { 
-      this._isPanning = false; 
-      if (this._is3D) {
-        let clickedCode = null, clickedName = null, clickTarget = null;
-        if (!this._dragged && e.changedTouches && e.changedTouches.length > 0) {
-          const touch = e.changedTouches[0];
-          const targets = this.shadowRoot.elementsFromPoint(touch.clientX, touch.clientY);
-          clickTarget = targets.find(el => el.classList && el.classList.contains('cp'));
-          if (clickTarget) {
-            clickedCode = clickTarget.dataset.code;
-            clickedName = clickTarget.dataset.name;
-          }
-        }
-        this.drawMap();
-        if (clickedCode) {
-           if (this.currentCategory === 'commodities' && !window.COMMODITY_DATA[clickedCode]) return;
-           const newTarget = this.$$(`.cp[data-code="${clickedCode}"]`)[0];
-           this.openSidePanel(clickedCode, clickedName, newTarget || clickTarget, e.changedTouches[0]);
-        }
-      } else {
-        this._snapBack(); 
-      }
-    });
-
-    const zoomIn = this.$('#zoomIn'), zoomOut = this.$('#zoomOut'), zoomReset = this.$('#zoomReset');
-    if (zoomIn) zoomIn.addEventListener('click', () => {
-      this._autoSpinning = false;
-      const nz = Math.min(this._maxZoom, this._zoom + 0.3);
-      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
-      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
-      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-    });
-    if (zoomOut) zoomOut.addEventListener('click', () => {
-      this._autoSpinning = false;
-      const nz = Math.max(this._minZoom, this._zoom - 0.3);
-      const oW = this._origVB.w / this._zoom, nW = this._origVB.w / nz;
-      const oH = this._origVB.h / this._zoom, nH = this._origVB.h / nz;
-      this._animateTo(nz, this._panX + (oW - nW) * 0.5, this._panY + (oH - nH) * 0.5);
-    });
-    if (zoomReset) zoomReset.addEventListener('click', () => { 
-      this._animateTo(1, 0, 0); 
-    });
-
-    const toggle3D = this.$('#toggle3D');
-    if (toggle3D) {
-      toggle3D.addEventListener('click', () => {
-        const wrap = this.$('.map-wrap'); 
-        wrap.style.transition = 'opacity 0.15s ease-out';
-        wrap.style.opacity = '0';
-        
-        setTimeout(() => {
-          this._is3D = !this._is3D;
-          toggle3D.classList.toggle('active-3d', this._is3D);
-          
-          if (this._is3D) {
-            this._zoom = 1; this._panX = 0; this._panY = 0;
-            this._applyTransform();
-            wrap.style.transform = 'scale(0.85)';
-          } else {
-            wrap.style.transform = 'scale(1.15)';
-          }
-          this.drawMap();
-          void wrap.offsetHeight; 
-          
-          wrap.style.transition = 'opacity 0.3s ease-in, transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1)';
-          wrap.style.opacity = '1';
-          wrap.style.transform = 'scale(1)';
-          
-          setTimeout(() => { wrap.style.transition = ''; wrap.style.transform = ''; }, 450);
-        }, 150);
-      });
-    }
-  }
-
-  _getViewBox() {
-    const w = this._origVB.w / this._zoom, h = this._origVB.h / this._zoom;
-    return { x: this._origVB.x + this._panX, y: this._origVB.y + this._panY, w, h };
-  }
-  _applyTransform() {
-    const svg = this.$('#mapSvg'); if (!svg) return;
-    const vb = this._getViewBox();
-    svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`);
-  }
-  _syncDetailLayerVisibility() {
-    const lowResGroup = this.$('.euro-group.low-res');
-    const highResGroup = this.$('.euro-group.high-res');
-    const showHighRes = this._zoom >= DETAIL_LAYER_ZOOM_THRESHOLD;
-    
-    if (!highResGroup) {
-      if (lowResGroup) {
-        lowResGroup.style.visibility = 'visible';
-        lowResGroup.style.opacity = '1';
-        lowResGroup.style.pointerEvents = 'auto';
-      }
-      this._isHighResVisible = false;
-      return;
-    }
-
-    if (this._isHighResVisible === showHighRes) return;
-    this._isHighResVisible = showHighRes;
-    
-    lowResGroup.style.visibility = showHighRes ? 'hidden' : 'visible';
-    lowResGroup.style.opacity = showHighRes ? '0' : '1';
-    lowResGroup.style.pointerEvents = showHighRes ? 'none' : 'auto';
-    
-    highResGroup.style.visibility = showHighRes ? 'visible' : 'hidden';
-    highResGroup.style.opacity = showHighRes ? '1' : '0';
-    highResGroup.style.pointerEvents = showHighRes ? 'auto' : 'none';
-  }
-  _getPanBounds() {
-    const svg = this.$('#mapSvg');
-    let vw = this._origVB.w / this._zoom;
-    let vh = this._origVB.h / this._zoom;
-    let isMobile = false;
-    
-    if (svg && svg.getAttribute('preserveAspectRatio') === 'xMidYMid slice') {
-      isMobile = true;
-      const rect = svg.getBoundingClientRect();
-      const vb = this._getViewBox();
-      const scaleX = rect.width / vb.w;
-      const scaleY = rect.height / vb.h;
-      const scale = Math.max(scaleX, scaleY);
-      if (scale > 0) {
-        vw = rect.width / scale;
-        vh = rect.height / scale;
-      }
-    }
-    const cb = this._contentBBox;
-    const overX = isMobile ? (this._origVB.w * 0.7) : (vw * 0.05); 
-    const overY = vh * 0.05; 
-    
-    return {
-      minX: Math.min(cb.x - this._origVB.x - overX, 0),
-      maxX: Math.max((cb.x + cb.w) - this._origVB.x - vw + overX, 0),
-      minY: Math.min(cb.y - this._origVB.y - overY, 0),
-      maxY: Math.max((cb.y + cb.h) - this._origVB.y - vh + overY, 0)
-    };
-  }
-  _clampPan() {
-    const b = this._getPanBounds();
-    this._panX = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    this._panY = Math.max(b.minY, Math.min(b.maxY, this._panY));
-  }
-  _clampAndApply() { this._clampPan(); this._applyTransform(); this._syncDetailLayerVisibility(); this.buildGeneralProof(); }
-  _snapBack() {
-    const b = this._getPanBounds();
-    const tx = Math.max(b.minX, Math.min(b.maxX, this._panX));
-    const ty = Math.max(b.minY, Math.min(b.maxY, this._panY));
-    if (Math.abs(tx - this._panX) < 0.5 && Math.abs(ty - this._panY) < 0.5) {
-      this._panX = tx; this._panY = ty; this._applyTransform(); return;
-    }
-    this._animateTo(this._zoom, tx, ty, 350);
-  }
-  _animateTo(targetZoom, targetPanX, targetPanY, duration) {
-    duration = duration || 400;
-    if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    const sz = this._zoom, sx = this._panX, sy = this._panY;
-    
-    const tvw = this._origVB.w / targetZoom, tvh = this._origVB.h / targetZoom, cb = this._contentBBox;
-    const overX = tvw * 0.15, overY = tvh * 0.15;
-    
-    targetPanX = Math.max(Math.min(cb.x - this._origVB.x - overX, 0), Math.min(Math.max((cb.x + cb.w) - this._origVB.x - tvw + overX, 0), targetPanX));
-    targetPanY = Math.max(Math.min(cb.y - this._origVB.y - overY, 0), Math.min(Math.max((cb.y + cb.h) - this._origVB.y - tvh + overY, 0), targetPanY));
-    
-    const st = performance.now();
-    const tick = (now) => {
-      const p = Math.min((now - st) / duration, 1);
-      const c1 = 1.70158, c3 = c1 + 1;
-      const ease = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
-      this._zoom = sz + (targetZoom - sz) * ease;
-      this._panX = sx + (targetPanX - sx) * ease;
-      this._panY = sy + (targetPanY - sy) * ease;
-      this._applyTransform();
-      
-      if (p < 1) this._animFrame = requestAnimationFrame(tick);
-      else { this._zoom = targetZoom; this._panX = targetPanX; this._panY = targetPanY; this._applyTransform(); this._syncDetailLayerVisibility(); this._animFrame = null; }
-    };
-    this._animFrame = requestAnimationFrame(tick);
-  }
-
-  _appendPathPoint(path, command, point, precision) { path.push(`${command}${point[0].toFixed(precision)},${point[1].toFixed(precision)}`); }
-
-  _ringToPath(ring, proj, precision) {
-    if (!ring.length) return '';
-    const path = [];
-    let currentLon = ring[0][0];
-    const firstPoint = proj([currentLon, ring[0][1]]);
-    this._appendPathPoint(path, 'M', firstPoint, precision);
-
-    for (let i = 1; i < ring.length; i += 1) {
-      let lon = ring[i][0];
-      let lat = ring[i][1];
-      if (lon - currentLon > 180) lon -= 360;
-      else if (currentLon - lon > 180) lon += 360;
-      currentLon = lon;
-      this._appendPathPoint(path, 'L', proj([lon, lat]), precision);
-    }
-    path.push('Z');
-    return path.join(' ');
-  }
-
-  geoPaths(geom, proj, precision) {
-    const ring = r => this._ringToPath(r, proj, precision);
-    if (geom.type === 'Polygon') return [geom.coordinates.map(ring).join(' ')];
-    if (geom.type === 'MultiPolygon') return geom.coordinates.map(p => p.map(ring).join(' '));
-    return [];
-  }
-
-  moveSlider(container, activeBtn) {
-    let slider = container.querySelector('.slider');
-    if (!slider) { slider = document.createElement('div'); slider.className = 'slider'; container.prepend(slider); }
-    if (!activeBtn) { slider.classList.remove('visible'); return; }
-    slider.style.top = activeBtn.offsetTop + 'px'; slider.style.height = activeBtn.offsetHeight + 'px'; slider.classList.add('visible');
-  }
-
-  buildCategoryButtons() {
-    const c = this.$('#catBtns'); c.innerHTML = '';
-    Object.entries(this.categories).forEach(([catKey]) => {
-      const meta = CATEGORY_META[catKey] || { icon: '', labelKey: catKey };
-      const b = document.createElement('button'); 
-      b.className = 'cat-btn' + (meta.isWide ? ' cat-btn-wide' : ''); 
-      b.dataset.key = catKey;
-      b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + this.t(meta.labelKey) + '</span>';
-      b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
-    });
-  }
-
-  selectCategory(catKey) {
-    this.currentCategory = catKey;
-    this.$$('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.key === catKey));
-    this._lastTtVal = null; this._lastTtDataType = null;
-    
-    if (catKey === 'commodities') {
-        this.$('#dtBtns').innerHTML = `<div style="text-align:center; padding: 20px; font-size: 0.8rem; color: #8395a7;">${this._lang==='cs'?'Vyberte zemi z mapy (USA, Čína, CZ, SK, DE)':'Select a country from the map (US, China, CZ, SK, DE)'}</div>`;
-        this.$('#srcBtns').innerHTML = '';
-        this.closeSidePanel();
-        this.buildGeneralProof(); 
-        this.paint();
-        return;
-    }
-
-    this.buildGeneralProof(); 
-    this.buildDataTypeButtons(catKey);
-    const keys = this.categories[catKey]; if (keys && keys[0]) this.selectDataType(keys[0]);
-  }
-
-  buildDataTypeButtons(catKey) {
-    const c = this.$('#dtBtns'); c.innerHTML = '';
-    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
-    (this.categories[catKey] || []).forEach(key => {
-      const dt = this.DATA[key]; if (!dt) return;
-      const b = document.createElement('button'); b.className = 'btn'; b.dataset.key = key;
-      const validSources = Object.entries(dt.sources).filter(([sk, s]) => sk !== 'who');
-      const srcCount = validSources.length;
-      const okCount = validSources.filter(([, s]) => Object.keys(s.countries).length > 0).length;
-      
-      b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + this.t(dt.label) + '</span></span><span class="badge">' + okCount + '/' + srcCount + '</span>';
-      b.onclick = () => this.selectDataType(key); c.appendChild(b);
-    });
-  }
-
-  buildSourceButtons(dtKey) {
-    const c = this.$('#srcBtns'); c.innerHTML = '';
-    const slider = document.createElement('div'); slider.className = 'slider'; c.appendChild(slider);
-    const dt = this.DATA[dtKey]; if (!dt) return;
-    Object.entries(dt.sources).forEach(([key, src]) => {
-      if (key === 'who') return; 
-      const count = Object.keys(src.countries).length; const isEmpty = count === 0;
-      const b = document.createElement('button'); b.className = 'btn' + (isEmpty ? ' disabled' : ''); b.dataset.key = key;
-      if (isEmpty) b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge badge-empty">' + this.t('noData') + '</span>';
-      else { b.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span class="btn-dot"></span><span>' + src.label + '</span></span><span class="badge">' + count + ' · ' + src.year + '</span>'; b.onclick = () => this.selectSource(key); }
-      c.appendChild(b);
-    });
-  }
-
-  selectDataType(k) {
-    this.currentDataType = k;
-    this.$$('#dtBtns .btn').forEach(b => b.classList.toggle('active', b.dataset.key === k));
-    const dtc = this.$('#dtBtns'), ab = dtc.querySelector('.btn[data-key="' + k + '"]');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(dtc, ab)); });
-    this._lastTtVal = null; this._lastTtDataType = k; this.buildSourceButtons(k);
-    const dt = this.DATA[k]; if (!dt) return;
-    const firstOk = Object.entries(dt.sources).find(([sk, s]) => sk !== 'who' && Object.keys(s.countries).length > 0);
-    if (firstOk) {
-      this.selectSource(firstOk[0]);
-    } else {
-      this.currentSource = null; this.$('#mapTitle').textContent = this.t(dt.label);
-      this.$('#mapSub').textContent = this.t('noDataSrc');
-      this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
-      this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); });
-    }
-    
-    if (this._selectedCountryCode) {
-      this.openSidePanel(this._selectedCountryCode, this._selectedCountryName);
-    }
-  }
-
-  selectSource(k) {
-    this.currentSource = k;
-    this.$$('#srcBtns .btn').forEach(b => { if (!b.classList.contains('disabled')) b.classList.toggle('active', b.dataset.key === k); });
-    const sc = this.$('#srcBtns'), ab = sc.querySelector('.btn.active');
-    requestAnimationFrame(() => { requestAnimationFrame(() => this.moveSlider(sc, ab)); });
-    this.paint();
-  }
-
-  paint() {
-    if (this.currentCategory === 'commodities') {
-        this.$('#mapTitle').textContent = this.t('Commodities');
-        this.$('#mapSub').textContent = 'Global Projections & Scenarios';
-        this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014';
-        
-        this.$$('.cp').forEach(p => {
-            const isSupported = !!window.COMMODITY_DATA[p.dataset.code];
-            if (isSupported) {
-                p.classList.remove('no-data');
-                p.setAttribute('fill', '#f59e0b'); 
-            } else {
-                p.classList.add('no-data');
-                p.setAttribute('fill', '#d4e3f0');
-            }
-        });
-        return;
-    }
-
-    const dt = this.DATA[this.currentDataType]; if (!dt) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    this.$('#mapTitle').textContent = this.t(dt.label);
-    this.$('#mapSub').textContent = src.label + ' \u00B7 ' + src.year + ' \u00B7 ' + this.t(dt.unit);
-    const vals = Object.values(src.countries).filter(v => v != null);
-    if (!vals.length) { this.$('#legMin').textContent = '\u2014'; this.$('#legMax').textContent = '\u2014'; this.$$('.cp').forEach(p => { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); }); return; }
-    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    this.$('#legMin').textContent = fmt(min, dt.unit, key => this.t(key)); this.$('#legMax').textContent = fmt(max, dt.unit, key => this.t(key));
-    this.$$('.cp').forEach(p => {
-      const v = src.countries[p.dataset.code];
-      if (v != null) { p.classList.remove('no-data'); p.setAttribute('fill', getColor(max !== min ? (v - min) / (max - min) : 0.5)); }
-      else { p.classList.add('no-data'); p.setAttribute('fill', '#d4e3f0'); }
-    });
-  }
-
-  ttShow(e) {
-    const code = e.target.dataset.code;
-    
-    if (this.currentCategory === 'commodities') {
-        const cData = window.COMMODITY_DATA[code];
-        if(!cData) return;
-        this.$('#ttName').textContent = e.target.dataset.name;
-        this.$('#ttUnit').textContent = cData.unit;
-        this.$('#ttSrc').textContent = 'Live projection parameters';
-        this.$('#ttVal').textContent = '$' + cData.base_price.toFixed(2);
-        this.$('#tt').classList.add('visible');
-        return;
-    }
-
-    const dt = this.DATA[this.currentDataType]; if (!dt || !this.currentSource) return;
-    const src = dt.sources[this.currentSource]; if (!src) return;
-    const newVal = (src.countries && src.countries[code] != null) ? src.countries[code] : null;
-    this.$('#ttName').textContent = e.target.dataset.name;
-    this.$('#ttUnit').textContent = newVal != null ? this.t(dt.unit) : '';
-    this.$('#ttSrc').textContent = (src.label || '\u2014') + ' \u00B7 ' + (src.year || '\u2014');
-    const valEl = this.$('#ttVal');
-    if (this._lastTtDataType === this.currentDataType && newVal != null && this._lastTtVal != null && !isNaN(this._lastTtVal) && !isNaN(newVal))
-      animateValue(valEl, this._lastTtVal, newVal, dt.unit, 300, key => this.t(key));
-    else valEl.textContent = fmt(newVal, dt.unit, key => this.t(key));
-    this._lastTtVal = newVal; this._lastTtDataType = this.currentDataType;
-    this.checkDiscrepancy(code);
-    const marker = this.$('#legMarker');
-    if (newVal != null) {
-      const vs = Object.values(src.countries).filter(v => v != null);
-      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
-      marker.style.left = (mx !== mn ? ((newVal - mn) / (mx - mn)) * 100 : 50) + '%'; marker.classList.add('visible');
-    } else marker.classList.remove('visible');
-    this.$('#tt').classList.add('visible');
-  }
-  ttMove(e) { const tt = this.$('#tt'); tt.style.left = (e.clientX + 18) + 'px'; tt.style.top = (e.clientY - 12) + 'px'; }
-  ttHide() { this.$('#tt').classList.remove('visible'); this.$('#legMarker').classList.remove('visible'); }
-  
-  checkDiscrepancy(code) {
-    const el = this.$('#ttDisc');
-    const dt = this.DATA[this.currentDataType];
-    if (!dt) return;
-    const vals = [];
-    Object.entries(dt.sources).forEach(([sk, s]) => {
-      if (sk === 'who') return; 
-      if (s.countries[code] != null) vals.push(s.countries[code]);
-    });
-    if (vals.length >= 2) {
-      const mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      const diff = avg ? ((mx - mn) / Math.abs(avg)) * 100 : 0;
-      if (diff > 10) {
-        el.style.display = 'block'; 
-        el.textContent = '\u26A0\uFE0F ' + diff.toFixed(0) + (this._lang === 'cs' ? '% rozptyl mezi ' : '% variance across ') + vals.length + (this._lang === 'cs' ? ' zdroji' : ' sources'); 
-        return;
-      }
-    }
-    el.style.display = 'none';
-  }
-
   html() {
     return `<style>
   /* Prevents FOUC (Flash of Unstyled Content) while external CSS loads */
@@ -2522,7 +1990,7 @@ class DataComparisonMap extends HTMLElement {
         <button class="btn-action btn-account" id="btnAccount">
           <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
           <span id="accLabel" data-i18n="btnLogReg">Log in</span>
-          <span id="accPoints" style="background: rgba(52,211,153,0.2); padding: 2px 6px; border-radius: 6px; font-size: 0.75 margin-left: 4px; color: #059669;">0 Pts</span>
+          <span id="accPoints" style="background: rgba(52,211,153,0.2); padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; margin-left: 4px; color: #059669;">0 Pts</span>
         </button>
       </div>
       
@@ -2552,36 +2020,50 @@ class DataComparisonMap extends HTMLElement {
         </div>
         <div class="side-panel left glass" id="leftPanel">
           <button class="close-btn" id="closeLeftBtn">✕</button>
-          <div><div class="history-header" id="panelCountry" data-i18n="country">Country</div><div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div></div>
-          
-          <div id="viewHistory" class="panel-view">
-            <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
-            <div class="year-slider-wrap">
-              <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
-              <div class="year-labels" id="yearLabels">
-                <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+          <div class="panel-scroll-wrap">
+              <div><div class="history-header" id="panelCountry" data-i18n="country">Country</div><div class="history-sub" id="panelMetric" data-i18n="metric">Metric</div></div>
+              
+              <div id="viewHistory" class="panel-view">
+                <div class="chart-container"><svg class="chart-svg" id="histChart"></svg></div>
+                <div class="year-slider-wrap">
+                  <input type="range" min="2020" max="2024" value="2024" class="year-slider" id="histSlider" step="1">
+                  <div class="year-labels" id="yearLabels">
+                    <span data-val="2020">2020</span><span data-val="2021">2021</span><span data-val="2022">2022</span><span data-val="2023">2023</span><span data-val="2024">2024</span>
+                  </div>
+                </div>
+                <div class="history-content" id="histText"></div>
               </div>
-            </div>
-            <div class="history-content" id="histText"></div>
-          </div>
 
-          <div id="viewFuture" class="panel-view">
-            <div class="future-desc" id="futDesc" data-i18n="desc">Description</div>
-            <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
-            <div class="future-factors" id="futFactors"></div>
-            <div class="future-result" id="futResult"></div>
-          </div>
+              <div id="viewFuture" class="panel-view">
+                <div class="future-desc" id="futDesc" data-i18n="desc">Description</div>
+                <div class="chart-container"><svg class="chart-svg" id="futChart"></svg></div>
+                <div class="future-factors" id="futFactors"></div>
+                <div class="future-result" id="futResult"></div>
+              </div>
 
-          <div id="viewCommodity" class="panel-view"></div>
+              <div id="viewCommodity" class="panel-view"></div>
+          </div>
         </div>
       </div>
     </div>
     
     <div class="controls glass">
-      <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
-      <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
-      <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
-      
+      <!-- Main Category: Commodities -->
+      <button class="cat-btn cat-btn-wide active" id="btnCatCommodities" data-key="commodities" onclick="document.querySelector('data-comparison-map').selectCategory('commodities')">
+          <span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></span>
+          <span class="cat-label" data-i18n="Commodities">Commodity Prices</span>
+      </button>
+
+      <!-- Static Tutorial Box -->
+      <div class="right-tutorial">
+         <h4 data-i18n="rightTutorialTitle">Quick Guide</h4>
+         <ol>
+            <li data-i18n="tutorialStep1">1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.</li>
+            <li data-i18n="tutorialStep2">2. Tweak real-world scenarios and geopolitical factors in the side panel.</li>
+            <li data-i18n="tutorialStep3">3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.</li>
+         </ol>
+      </div>
+
       <!-- Right Panel Accordion (General Proof) -->
       <div id="generalProofAcc" class="proof-accordion open" style="display:none;">
         <button class="proof-acc-btn">
@@ -2596,6 +2078,18 @@ class DataComparisonMap extends HTMLElement {
         </div>
       </div>
 
+      <!-- Old Macro Data hidden inside Accordion -->
+      <div class="more-data-acc">
+         <button class="more-data-btn" onclick="this.parentElement.classList.toggle('open')">
+            <span data-i18n="moreDataTitle">Explore Macro Data</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="#1e3a5f" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+         </button>
+         <div class="more-data-body">
+            <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+            <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
+            <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
+         </div>
+      </div>
     </div>
   </div>
   <div class="footer" id="lastUpdated" data-i18n="updated">Data updated via Eurostat & World Bank APIs</div>
@@ -2605,6 +2099,38 @@ class DataComparisonMap extends HTMLElement {
   <div><span class="tt-val" id="ttVal">\u2014</span><span class="tt-unit" id="ttUnit"></span></div>
   <div class="tt-src" id="ttSrc"></div>
   <div class="tt-disc" id="ttDisc"></div>
+</div>
+
+<!-- TUTORIAL MODAL OVERLAY -->
+<div class="modal-overlay" id="tutorialModal" style="z-index: 10001;">
+  <div class="modal-content" style="max-width: 420px; text-align: center;">
+    <button class="modal-close">✕</button>
+    <div class="stepper">
+      <div class="step" data-step="1">1</div><div class="step-line" data-line="1"></div>
+      <div class="step" data-step="2">2</div><div class="step-line" data-line="2"></div>
+      <div class="step" data-step="3">3</div>
+    </div>
+    
+    <div class="tut-step active" id="tutStep1">
+      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p1.png" class="tut-img" alt="">
+      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
+      <p class="modal-desc" data-i18n="tutorialStep1">1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.</p>
+    </div>
+
+    <div class="tut-step" id="tutStep2">
+      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.png" class="tut-img" alt="">
+      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
+      <p class="modal-desc" data-i18n="tutorialStep2">2. Tweak real-world scenarios and geopolitical factors in the side panel.</p>
+    </div>
+
+    <div class="tut-step" id="tutStep3">
+      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png" class="tut-img" alt="">
+      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
+      <p class="modal-desc" data-i18n="tutorialStep3">3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.</p>
+    </div>
+
+    <button class="btn-primary-large" id="tutNextBtn" onclick="document.querySelector('data-comparison-map').nextTutorialStep()" style="margin-top:20px;" data-i18n="tutorialBtnNext">Next</button>
+  </div>
 </div>
 
 <!-- WIZARD MODAL (Predict & Earn) -->
