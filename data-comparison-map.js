@@ -203,8 +203,7 @@ const CATEGORY_META = {
   economy: { labelKey: 'Economy', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/><path d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>' },
   demographics: { labelKey: 'Demographics', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
   society: { labelKey: 'Society', icon: '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>' },
-  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' },
-  commodities: { labelKey: 'Commodities', isWide: true, icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' }
+  public_services: { labelKey: 'Public Services', icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>' }
 };
 
 const QUESTIONNAIRE = [
@@ -628,8 +627,10 @@ class DataComparisonMap extends HTMLElement {
     const title = this.$('#tutPopTitle');
     const desc = this.$('#tutPopDesc');
     const nextBtn = this.$('#tutPopNext');
+    const arrow = this.$('#tutArrow');
 
     title.textContent = this.t('tutorialTitle');
+    arrow.className = 'tut-arrow'; // reset class
 
     if (this._tutorialStep === 1) {
       desc.textContent = this.t('tutorialStep1');
@@ -639,9 +640,11 @@ class DataComparisonMap extends HTMLElement {
       if (mapPanel) {
           mapPanel.classList.add('tutorial-target');
           if (this._isDesktop) {
-              pop.style.top = '20%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              pop.style.top = '15%'; pop.style.left = '45%'; pop.style.transform = 'translateX(-50%)';
+              arrow.classList.add('down');
           } else {
               pop.style.top = '10%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.classList.add('down');
           }
       }
     } else if (this._tutorialStep === 2) {
@@ -650,12 +653,17 @@ class DataComparisonMap extends HTMLElement {
       nextBtn.textContent = this.t('tutorialBtnNext');
 
       const leftPanel = this.$('#leftPanel');
+      const panelWrapper = this.$('#panelWrapper');
       if (leftPanel) {
           leftPanel.classList.add('tutorial-target');
+          if (panelWrapper) panelWrapper.style.zIndex = '10000';
+          
           if (this._isDesktop) {
-              pop.style.top = '20%'; pop.style.left = '360px'; pop.style.transform = 'none';
+              pop.style.top = '25%'; pop.style.left = '380px'; pop.style.transform = 'none';
+              arrow.classList.add('left');
           } else {
-              pop.style.top = '15%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              pop.style.top = 'auto'; pop.style.bottom = '20px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.classList.add('up');
           }
       }
     } else if (this._tutorialStep === 3) {
@@ -666,6 +674,13 @@ class DataComparisonMap extends HTMLElement {
       const leftPanel = this.$('#leftPanel');
       if (leftPanel) {
           leftPanel.classList.add('tutorial-target');
+          if (this._isDesktop) {
+              pop.style.top = '50%'; pop.style.left = '380px'; pop.style.transform = 'none';
+              arrow.classList.add('left');
+          } else {
+              pop.style.top = 'auto'; pop.style.bottom = '20px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.classList.add('up');
+          }
       }
     }
   }
@@ -684,6 +699,8 @@ class DataComparisonMap extends HTMLElement {
     this.$('#tutorialOverlay').classList.remove('active');
     this.$('#tutorialPopover').classList.remove('active');
     this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
+    const wrapper = this.$('#panelWrapper');
+    if (wrapper) wrapper.style.zIndex = '10'; // reset
   }
   
   openAccountTab(tabName) {
@@ -1955,7 +1972,7 @@ class DataComparisonMap extends HTMLElement {
               this.$('#dtWrapper').style.display = 'block';
               this.$('#srcWrapper').style.display = 'block';
           }
-          // Make sure the main macro data accordion wrapper doesn't ever disappear!
+          // Fix: Ensure the macro data accordion itself never disappears
           this.$('.more-data-acc').style.display = 'block';
       }
   }
@@ -2403,9 +2420,12 @@ class DataComparisonMap extends HTMLElement {
   buildCategoryButtons() {
     const c = this.$('#catBtns'); c.innerHTML = '';
     Object.entries(this.categories).forEach(([catKey]) => {
+      // Fix: Skip adding commodity button inside the accordion since it's already above it
+      if (catKey === 'commodities') return; 
+      
       const meta = CATEGORY_META[catKey] || { icon: '', labelKey: catKey };
       const b = document.createElement('button'); 
-      b.className = 'cat-btn' + (meta.isWide ? ' cat-btn-wide' : ''); 
+      b.className = 'cat-btn'; 
       b.dataset.key = catKey;
       b.innerHTML = '<span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + meta.icon + '</svg></span><span class="cat-label">' + this.t(meta.labelKey) + '</span>';
       b.onclick = () => this.selectCategory(catKey); c.appendChild(b);
@@ -2735,6 +2755,7 @@ class DataComparisonMap extends HTMLElement {
 <!-- VISUAL TUTORIAL OVERLAY UI -->
 <div class="tutorial-overlay" id="tutorialOverlay"></div>
 <div class="tutorial-popover" id="tutorialPopover">
+  <svg id="tutArrow" class="tut-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></svg>
   <h3 class="modal-title" id="tutPopTitle" style="font-size:1.2rem; margin-top:0;"></h3>
   <p class="modal-desc" id="tutPopDesc" style="font-size:0.9rem; margin-bottom:0;"></p>
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
