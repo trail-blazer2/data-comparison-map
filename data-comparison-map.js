@@ -118,9 +118,9 @@ const I18N = {
     "simulatedPrice": "Simulated Price:",
     "userSent": "User Sentiment Premium: ",
     tutorialTitle: "Welcome to RealWorldView",
-    tutorialStep1: "1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.",
-    tutorialStep2: "2. Tweak real-world scenarios and geopolitical factors in the side panel.",
-    tutorialStep3: "3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.",
+    tutorialStep1: "Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map to begin.",
+    tutorialStep2: "Tweak real-world scenarios and geopolitical factors in the side panel.",
+    tutorialStep3: "Watch our AI-driven algorithm project future commodity prices based on your sentiment.",
     tutorialBtnNext: "Next",
     tutorialBtnStart: "Get Started",
     rightTutorialTitle: "Quick Guide",
@@ -181,7 +181,7 @@ const I18N = {
     "R&D spending": "Výdaje na výzkum a vývoj", "Poverty rate": "Míra chudoby", "Infant mortality": "Kojenecká úmrtnost", "Tertiary education": "Terciární vzdělávání",
     "Foreign Direct Investment": "Přímé zahraniční investice", "GDP growth": "Růst HDP", "GDP per capita (PPP)": "HDP na obyvatele (PPP)", "Gini coefficient": "Giniho koeficient",
     "persons": "osob", "net persons": "osob (čisté)", "USD/capita": "USD/obyvatele", "int. $": "int. $",
-    "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu", "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 births": "na 1 000 naroz.",
+    "% of GDP": "% HDP", "%": "%", "births/woman": "dětí/ženu", "years": "let", "per 100k inh.": "na 100k obyv.", "per 1,000 naroz.": "na 1 000 naroz.",
     "% gross enrollment": "% hrubé zápisy", "index (0-100)": "index (0-100)",
     "Commodities": "Ceny komodit",
     "proofTitle": "Důkaz Konceptu: Historická Přesnost",
@@ -189,9 +189,9 @@ const I18N = {
     "simulatedPrice": "Simulovaná cena:",
     "userSent": "Prémie sentimentu trhu: ",
     tutorialTitle: "Vítejte v RealWorldView",
-    tutorialStep1: "1. Vyberte podporovanou zemi (USA, Čína, Německo, ČR, SR) na mapě.",
-    tutorialStep2: "2. Upravte reálné scénáře a geopolitické faktory v bočním panelu.",
-    tutorialStep3: "3. Sledujte, jak náš AI algoritmus předpovídá budoucí ceny komodit na základě vašeho sentimentu.",
+    tutorialStep1: "Začněte tím, že na mapě vyberete zemi (USA, Čína, Německo, ČR, SR).",
+    tutorialStep2: "Upravte reálné scénáře a geopolitické faktory v bočním panelu.",
+    tutorialStep3: "Sledujte, jak náš AI algoritmus předpovídá budoucí ceny komodit na základě vašeho sentimentu.",
     tutorialBtnNext: "Další",
     tutorialBtnStart: "Začít",
     rightTutorialTitle: "Rychlý průvodce",
@@ -612,18 +612,61 @@ class DataComparisonMap extends HTMLElement {
 
   showTutorial() {
     this._tutorialStep = 1;
-    this.$('#tutorialModal').classList.add('active');
+    this.$('#tutorialOverlay').classList.add('active');
+    this.$('#tutorialPopover').classList.add('active');
+    
+    this.$('#tutPopSkip').onclick = () => this.endTutorial();
+    this.$('#tutPopNext').onclick = () => this.nextTutorialStep();
+    
     this.updateTutorialStep();
   }
 
   updateTutorialStep() {
-    this.$$('.tut-step').forEach(s => s.classList.remove('active'));
-    this.$(`#tutStep${this._tutorialStep}`).classList.add('active');
-    const nxtBtn = this.$('#tutNextBtn');
-    if (this._tutorialStep === 3) {
-      nxtBtn.textContent = this.t('tutorialBtnStart');
-    } else {
-      nxtBtn.textContent = this.t('tutorialBtnNext');
+    this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
+    
+    const pop = this.$('#tutorialPopover');
+    const title = this.$('#tutPopTitle');
+    const desc = this.$('#tutPopDesc');
+    const nextBtn = this.$('#tutPopNext');
+
+    title.textContent = this.t('tutorialTitle');
+
+    if (this._tutorialStep === 1) {
+      desc.textContent = this.t('tutorialStep1');
+      nextBtn.style.display = 'none'; // Map click advances it
+
+      const mapPanel = this.$('.map-panel');
+      if (mapPanel) {
+          mapPanel.classList.add('tutorial-target');
+          if (this._isDesktop) {
+              pop.style.top = '20%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+          } else {
+              pop.style.top = '10%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+          }
+      }
+    } else if (this._tutorialStep === 2) {
+      desc.textContent = this.t('tutorialStep2');
+      nextBtn.style.display = 'block';
+      nextBtn.textContent = this.t('tutorialBtnNext');
+
+      const leftPanel = this.$('#leftPanel');
+      if (leftPanel) {
+          leftPanel.classList.add('tutorial-target');
+          if (this._isDesktop) {
+              pop.style.top = '20%'; pop.style.left = '360px'; pop.style.transform = 'none';
+          } else {
+              pop.style.top = '15%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+          }
+      }
+    } else if (this._tutorialStep === 3) {
+      desc.textContent = this.t('tutorialStep3');
+      nextBtn.style.display = 'block';
+      nextBtn.textContent = this.t('done') || 'Done';
+
+      const leftPanel = this.$('#leftPanel');
+      if (leftPanel) {
+          leftPanel.classList.add('tutorial-target');
+      }
     }
   }
 
@@ -632,9 +675,15 @@ class DataComparisonMap extends HTMLElement {
       this._tutorialStep++;
       this.updateTutorialStep();
     } else {
-      localStorage.setItem('rwv_tutorial_done', 'true');
-      this.$('#tutorialModal').classList.remove('active');
+      this.endTutorial();
     }
+  }
+
+  endTutorial() {
+    localStorage.setItem('rwv_tutorial_done', 'true');
+    this.$('#tutorialOverlay').classList.remove('active');
+    this.$('#tutorialPopover').classList.remove('active');
+    this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
   }
   
   openAccountTab(tabName) {
@@ -1237,6 +1286,11 @@ class DataComparisonMap extends HTMLElement {
     }
 
     this.$('#panelCountry').textContent = name;
+
+    // Advance the visual tutorial if they just clicked a country
+    if (this._tutorialStep === 1 && this.$('#tutorialOverlay').classList.contains('active')) {
+      this.nextTutorialStep();
+    }
 
     if (this.currentCategory === 'commodities') {
         const cData = window.COMMODITY_DATA[code];
@@ -1858,20 +1912,6 @@ class DataComparisonMap extends HTMLElement {
 
   // General Proof in the right panel
   buildGeneralProof() {
-      let dtWrapper = this.$('#dtWrapper');
-      if (!dtWrapper) {
-          const dtDiv = this.$('#dtBtns').parentElement;
-          const srcDiv = this.$('#srcBtns').parentElement;
-          
-          dtWrapper = document.createElement('div'); dtWrapper.id = 'dtWrapper';
-          dtDiv.parentNode.insertBefore(dtWrapper, dtDiv);
-          dtWrapper.appendChild(dtDiv);
-
-          const srcWrapper = document.createElement('div'); srcWrapper.id = 'srcWrapper';
-          srcDiv.parentNode.insertBefore(srcWrapper, srcDiv);
-          srcWrapper.appendChild(srcDiv);
-      }
-
       let genProofAcc = this.$('#generalProofAcc');
       const pData = window.PROOF_DATA;
 
@@ -1905,17 +1945,18 @@ class DataComparisonMap extends HTMLElement {
           this.updateGeneralProofChart();
 
           if (this.currentCategory === 'commodities') {
-              this.$('.more-data-acc').style.display = 'block';
-              this.$('.more-data-acc').classList.remove('open');
               this.$('.right-tutorial').style.display = 'block';
               genProofAcc.style.display = 'block';
+              this.$('#dtWrapper').style.display = 'none';
+              this.$('#srcWrapper').style.display = 'none';
           } else {
-              this.$('.more-data-acc').style.display = 'none';
-              this.$('#dtWrapper').style.display = 'block';
-              this.$('#srcWrapper').style.display = 'block';
               this.$('.right-tutorial').style.display = 'none';
               genProofAcc.style.display = 'none';
+              this.$('#dtWrapper').style.display = 'block';
+              this.$('#srcWrapper').style.display = 'block';
           }
+          // Make sure the main macro data accordion wrapper doesn't ever disappear!
+          this.$('.more-data-acc').style.display = 'block';
       }
   }
 
@@ -2635,48 +2676,50 @@ class DataComparisonMap extends HTMLElement {
       </div>
     </div>
     
-    <div class="controls glass">
-      <!-- Main Category: Commodities -->
-      <button class="cat-btn cat-btn-wide active" id="btnCatCommodities" data-key="commodities" onclick="document.querySelector('data-comparison-map').selectCategory('commodities')">
-          <span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></span>
-          <span class="cat-label" data-i18n="Commodities">Commodity Prices</span>
-      </button>
-
-      <!-- Static Tutorial Box -->
-      <div class="right-tutorial">
-         <h4 data-i18n="rightTutorialTitle">Quick Guide</h4>
-         <ol>
-            <li data-i18n="tutorialStep1">1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.</li>
-            <li data-i18n="tutorialStep2">2. Tweak real-world scenarios and geopolitical factors in the side panel.</li>
-            <li data-i18n="tutorialStep3">3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.</li>
-         </ol>
-      </div>
-
-      <!-- Right Panel Accordion (General Proof) -->
-      <div id="generalProofAcc" class="proof-accordion open" style="display:none;">
-        <button class="proof-acc-btn">
-          <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+    <div class="controls-wrap glass">
+      <div class="controls">
+        <!-- Main Category: Commodities -->
+        <button class="cat-btn cat-btn-wide active" id="btnCatCommodities" data-key="commodities" onclick="document.querySelector('data-comparison-map').selectCategory('commodities')">
+            <span class="cat-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></span>
+            <span class="cat-label" data-i18n="Commodities">Commodity Prices</span>
         </button>
-        <div class="proof-acc-body">
-          <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
-          <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
-          <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
-          <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
-        </div>
-      </div>
 
-      <!-- Old Macro Data hidden inside Accordion -->
-      <div class="more-data-acc">
-         <button class="more-data-btn" onclick="this.parentElement.classList.toggle('open')">
-            <span data-i18n="moreDataTitle">Explore Macro Data</span>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="#1e3a5f" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
-         </button>
-         <div class="more-data-body">
-            <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
-            <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
-            <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
-         </div>
+        <!-- MORE DATA ACCORDION -->
+        <div class="more-data-acc">
+           <button class="more-data-btn" onclick="this.parentElement.classList.toggle('open')">
+              <span data-i18n="moreDataTitle">Explore Macro Data</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="#1e3a5f" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+           </button>
+           <div class="more-data-body">
+              <div><div class="sec-title" data-i18n="category">Category</div><div class="cat-tabs" id="catBtns"></div></div>
+              <div id="dtWrapper"><div><div class="sec-title" data-i18n="dataType">Data Type</div><div class="btn-group" id="dtBtns"></div></div></div>
+              <div id="srcWrapper"><div><div class="sec-title" data-i18n="source">Source</div><div class="btn-group" id="srcBtns"></div></div></div>
+           </div>
+        </div>
+
+        <!-- Static Tutorial Box -->
+        <div class="right-tutorial">
+           <h4 data-i18n="rightTutorialTitle">Quick Guide</h4>
+           <ol>
+              <li data-i18n="tutorialStep1">Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map to begin.</li>
+              <li data-i18n="tutorialStep2">Tweak real-world scenarios and geopolitical factors in the side panel.</li>
+              <li data-i18n="tutorialStep3">Watch our AI-driven algorithm project future commodity prices based on your sentiment.</li>
+           </ol>
+        </div>
+
+        <!-- Right Panel Accordion (General Proof) -->
+        <div id="generalProofAcc" class="proof-accordion" style="display:none;">
+          <button class="proof-acc-btn">
+            <span style="font-weight:700; color:#b45309; font-size:0.8rem;" data-i18n="proofTitle">Proof of Concept</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="#b45309" style="transition: transform 0.3s;"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="proof-acc-body">
+            <div style="font-size:0.75rem; color:#8395a7; margin-bottom:8px;" id="genProofDesc"></div>
+            <div class="future-factors" id="genProofFactors" style="margin-bottom:12px;"></div>
+            <div class="chart-container" style="height:90px;"><svg class="chart-svg" id="genProofChart"></svg></div>
+            <div style="text-align:center; font-size:0.8rem; font-weight:bold; color:#1e3a5f; margin-top:8px;" id="genProofResult"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2689,35 +2732,14 @@ class DataComparisonMap extends HTMLElement {
   <div class="tt-disc" id="ttDisc"></div>
 </div>
 
-<!-- TUTORIAL MODAL OVERLAY -->
-<div class="modal-overlay" id="tutorialModal" style="z-index: 10001;">
-  <div class="modal-content" style="max-width: 420px; text-align: center;">
-    <button class="modal-close">✕</button>
-    <div class="stepper">
-      <div class="step" data-step="1">1</div><div class="step-line" data-line="1"></div>
-      <div class="step" data-step="2">2</div><div class="step-line" data-line="2"></div>
-      <div class="step" data-step="3">3</div>
-    </div>
-    
-    <div class="tut-step active" id="tutStep1">
-      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p1.png" class="tut-img" alt="">
-      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
-      <p class="modal-desc" data-i18n="tutorialStep1">1. Select a supported country (USA, China, Germany, Czechia, Slovakia) on the map.</p>
-    </div>
-
-    <div class="tut-step" id="tutStep2">
-      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p2.png" class="tut-img" alt="">
-      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
-      <p class="modal-desc" data-i18n="tutorialStep2">2. Tweak real-world scenarios and geopolitical factors in the side panel.</p>
-    </div>
-
-    <div class="tut-step" id="tutStep3">
-      <img src="https://raw.githubusercontent.com/trail-blazer2/data-comparison-map/refs/heads/main/p3.png" class="tut-img" alt="">
-      <h2 class="modal-title" data-i18n="tutorialTitle">Welcome to RealWorldView</h2>
-      <p class="modal-desc" data-i18n="tutorialStep3">3. Watch our AI-driven algorithm project future commodity prices based on your sentiment.</p>
-    </div>
-
-    <button class="btn-primary-large" id="tutNextBtn" onclick="document.querySelector('data-comparison-map').nextTutorialStep()" style="margin-top:20px;" data-i18n="tutorialBtnNext">Next</button>
+<!-- VISUAL TUTORIAL OVERLAY UI -->
+<div class="tutorial-overlay" id="tutorialOverlay"></div>
+<div class="tutorial-popover" id="tutorialPopover">
+  <h3 class="modal-title" id="tutPopTitle" style="font-size:1.2rem; margin-top:0;"></h3>
+  <p class="modal-desc" id="tutPopDesc" style="font-size:0.9rem; margin-bottom:0;"></p>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+    <button class="btn-text" id="tutPopSkip" style="background:none; border:none; color:#8395a7; cursor:pointer; font-size:0.85rem; font-weight:600; padding:0;">Skip</button>
+    <button class="btn-predict" id="tutPopNext" style="border-radius:10px; padding:8px 20px; font-weight:bold; border:none; cursor:pointer; font-size:0.9rem;">Next</button>
   </div>
 </div>
 
