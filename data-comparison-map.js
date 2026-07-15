@@ -611,7 +611,6 @@ class DataComparisonMap extends HTMLElement {
 
   showTutorial() {
     this._tutorialStep = 1;
-    this.$('#tutorialOverlay').classList.add('active');
     this.$('#tutorialPopover').classList.add('active');
     
     this.$('#tutPopSkip').onclick = () => this.endTutorial();
@@ -621,6 +620,7 @@ class DataComparisonMap extends HTMLElement {
   }
 
   updateTutorialStep() {
+    // Clear previous highlights
     this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
     
     const pop = this.$('#tutorialPopover');
@@ -630,22 +630,17 @@ class DataComparisonMap extends HTMLElement {
     const arrow = this.$('#tutArrow');
 
     title.textContent = this.t('tutorialTitle');
-    arrow.className = 'tut-arrow'; // reset class
+    arrow.className = 'tut-arrow'; // reset arrow
 
     if (this._tutorialStep === 1) {
       desc.textContent = this.t('tutorialStep1');
-      nextBtn.style.display = 'none'; // Map click advances it
+      nextBtn.style.display = 'none'; // Map click advances it!
 
-      const mapPanel = this.$('.map-panel');
-      if (mapPanel) {
-          mapPanel.classList.add('tutorial-target');
-          if (this._isDesktop) {
-              pop.style.top = '15%'; pop.style.left = '45%'; pop.style.transform = 'translateX(-50%)';
-              arrow.classList.add('down');
-          } else {
-              pop.style.top = '10%'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
-              arrow.classList.add('down');
-          }
+      const mapWrap = this.$('.map-wrap');
+      if (mapWrap) {
+          mapWrap.classList.add('tutorial-target'); // Highlights the map
+          pop.style.top = '15%'; pop.style.left = '50%'; pop.style.bottom = 'auto'; pop.style.transform = 'translateX(-50%)';
+          arrow.classList.add('down');
       }
     } else if (this._tutorialStep === 2) {
       desc.textContent = this.t('tutorialStep2');
@@ -653,17 +648,15 @@ class DataComparisonMap extends HTMLElement {
       nextBtn.textContent = this.t('tutorialBtnNext');
 
       const leftPanel = this.$('#leftPanel');
-      const panelWrapper = this.$('#panelWrapper');
       if (leftPanel) {
-          leftPanel.classList.add('tutorial-target');
-          if (panelWrapper) panelWrapper.style.zIndex = '10000';
+          leftPanel.classList.add('tutorial-target'); // Highlights side panel
           
           if (this._isDesktop) {
-              pop.style.top = '25%'; pop.style.left = '380px'; pop.style.transform = 'none';
+              pop.style.top = '30%'; pop.style.left = '360px'; pop.style.bottom = 'auto'; pop.style.transform = 'none';
               arrow.classList.add('left');
           } else {
-              pop.style.top = 'auto'; pop.style.bottom = '20px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
-              arrow.classList.add('up');
+              pop.style.top = 'auto'; pop.style.bottom = '120px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.classList.add('down');
           }
       }
     } else if (this._tutorialStep === 3) {
@@ -675,11 +668,8 @@ class DataComparisonMap extends HTMLElement {
       if (leftPanel) {
           leftPanel.classList.add('tutorial-target');
           if (this._isDesktop) {
-              pop.style.top = '50%'; pop.style.left = '380px'; pop.style.transform = 'none';
+              pop.style.top = '60%'; pop.style.left = '360px'; pop.style.bottom = 'auto'; pop.style.transform = 'none';
               arrow.classList.add('left');
-          } else {
-              pop.style.top = 'auto'; pop.style.bottom = '20px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
-              arrow.classList.add('up');
           }
       }
     }
