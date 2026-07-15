@@ -487,9 +487,8 @@ class DataComparisonMap extends HTMLElement {
     }
 
     // Show Tutorial if not done
-    if (!localStorage.getItem('rwv_tutorial_done')) {
-      setTimeout(() => this.showTutorial(), 800);
-    }
+    setTimeout(() => this.showTutorial(), 800);
+
 
     const promoParams = new URLSearchParams(window.location.search);
     if (promoParams.get('promo') === 'true') {
