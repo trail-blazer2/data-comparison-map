@@ -610,18 +610,27 @@ class DataComparisonMap extends HTMLElement {
 
   showTutorial() {
     this._tutorialStep = 1;
-    this.$('#tutorialOverlay').classList.add('active');
-    this.$('#tutorialPopover').classList.add('active');
+    this.$('#tutorialOverlay').style.display = 'block';
+    this.$('#tutorialPopover').style.display = 'flex';
     
     this.$('#tutPopSkip').onclick = () => this.endTutorial();
     this.$('#tutPopNext').onclick = () => this.nextTutorialStep();
+    
+    // Elevates the main app so the glowing map sits ABOVE the dark overlay
+    const mainEl = this.$('.main');
+    if (mainEl) mainEl.style.zIndex = '99995';
     
     this.updateTutorialStep();
   }
 
   updateTutorialStep() {
-    this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
-    
+    // Clear previous glows
+    this.$$('.tut-glow').forEach(el => {
+      el.classList.remove('tut-glow');
+      el.style.boxShadow = '';
+      el.style.backgroundColor = '';
+    });
+
     const pop = this.$('#tutorialPopover');
     const title = this.$('#tutPopTitle');
     const desc = this.$('#tutPopDesc');
@@ -629,7 +638,6 @@ class DataComparisonMap extends HTMLElement {
     const arrow = this.$('#tutArrow');
 
     title.textContent = this.t('tutorialTitle');
-    arrow.className = 'tut-arrow'; 
 
     if (this._tutorialStep === 1) {
       desc.textContent = this.t('tutorialStep1');
@@ -637,14 +645,15 @@ class DataComparisonMap extends HTMLElement {
 
       const mapWrap = this.$('.map-wrap');
       if (mapWrap) {
-          mapWrap.classList.add('tutorial-target'); 
-          // Hard pixels for safety
-          pop.style.top = '150px'; 
-          pop.style.left = '50%'; 
-          pop.style.bottom = 'auto'; 
-          pop.style.transform = 'translateX(-50%)';
-          arrow.classList.add('down');
+          mapWrap.classList.add('tut-glow');
+          mapWrap.style.boxShadow = '0 0 0 4px #34d399, 0 0 40px rgba(52,211,153,0.8)';
+          mapWrap.style.borderRadius = '16px';
       }
+      
+      pop.style.top = '15%'; pop.style.left = '50%'; pop.style.bottom = 'auto'; pop.style.transform = 'translateX(-50%)';
+      arrow.style.transform = 'rotate(0deg)';
+      arrow.style.bottom = '-40px'; arrow.style.top = 'auto'; arrow.style.left = '50%'; arrow.style.marginLeft = '-20px';
+      
     } else if (this._tutorialStep === 2) {
       desc.textContent = this.t('tutorialStep2');
       nextBtn.style.display = 'block';
@@ -652,20 +661,18 @@ class DataComparisonMap extends HTMLElement {
 
       const leftPanel = this.$('#leftPanel');
       if (leftPanel) {
-          leftPanel.classList.add('tutorial-target'); 
+          leftPanel.classList.add('tut-glow');
+          leftPanel.style.boxShadow = '0 0 0 4px #34d399, 0 0 40px rgba(52,211,153,0.8)';
+          leftPanel.style.backgroundColor = 'rgba(255,255,255,0.95)';
           
           if (this._isDesktop) {
-              pop.style.top = '250px'; 
-              pop.style.left = '360px'; 
-              pop.style.bottom = 'auto'; 
-              pop.style.transform = 'none';
-              arrow.classList.add('left');
+              pop.style.top = '25%'; pop.style.left = '380px'; pop.style.bottom = 'auto'; pop.style.transform = 'none';
+              arrow.style.transform = 'rotate(90deg)';
+              arrow.style.bottom = 'auto'; arrow.style.top = '20px'; arrow.style.left = '-45px'; arrow.style.marginLeft = '0';
           } else {
-              pop.style.top = 'auto'; 
-              pop.style.bottom = '120px'; 
-              pop.style.left = '50%'; 
-              pop.style.transform = 'translateX(-50%)';
-              arrow.classList.add('down');
+              pop.style.top = 'auto'; pop.style.bottom = '120px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.style.transform = 'rotate(0deg)';
+              arrow.style.bottom = '-40px'; arrow.style.top = 'auto'; arrow.style.left = '50%'; arrow.style.marginLeft = '-20px';
           }
       }
     } else if (this._tutorialStep === 3) {
@@ -675,13 +682,18 @@ class DataComparisonMap extends HTMLElement {
 
       const leftPanel = this.$('#leftPanel');
       if (leftPanel) {
-          leftPanel.classList.add('tutorial-target');
+          leftPanel.classList.add('tut-glow');
+          leftPanel.style.boxShadow = '0 0 0 4px #34d399, 0 0 40px rgba(52,211,153,0.8)';
+          leftPanel.style.backgroundColor = 'rgba(255,255,255,0.95)';
+          
           if (this._isDesktop) {
-              pop.style.top = '450px'; 
-              pop.style.left = '360px'; 
-              pop.style.bottom = 'auto'; 
-              pop.style.transform = 'none';
-              arrow.classList.add('left');
+              pop.style.top = '50%'; pop.style.left = '380px'; pop.style.bottom = 'auto'; pop.style.transform = 'none';
+              arrow.style.transform = 'rotate(90deg)';
+              arrow.style.bottom = 'auto'; arrow.style.top = '20px'; arrow.style.left = '-45px'; arrow.style.marginLeft = '0';
+          } else {
+              pop.style.top = 'auto'; pop.style.bottom = '120px'; pop.style.left = '50%'; pop.style.transform = 'translateX(-50%)';
+              arrow.style.transform = 'rotate(0deg)';
+              arrow.style.bottom = '-40px'; arrow.style.top = 'auto'; arrow.style.left = '50%'; arrow.style.marginLeft = '-20px';
           }
       }
     }
@@ -698,11 +710,18 @@ class DataComparisonMap extends HTMLElement {
 
   endTutorial() {
     localStorage.setItem('rwv_tutorial_done', 'true');
-    this.$('#tutorialOverlay').classList.remove('active');
-    this.$('#tutorialPopover').classList.remove('active');
-    this.$$('.tutorial-target').forEach(el => el.classList.remove('tutorial-target'));
-    const wrapper = this.$('#panelWrapper');
-    if (wrapper) wrapper.style.zIndex = '10'; // reset
+    this.$('#tutorialOverlay').style.display = 'none';
+    this.$('#tutorialPopover').style.display = 'none';
+    
+    // Clean up
+    this.$$('.tut-glow').forEach(el => {
+      el.classList.remove('tut-glow');
+      el.style.boxShadow = '';
+      el.style.backgroundColor = '';
+    });
+    
+    const mainEl = this.$('.main');
+    if (mainEl) mainEl.style.zIndex = '1';
   }
   
   openAccountTab(tabName) {
@@ -2754,15 +2773,16 @@ class DataComparisonMap extends HTMLElement {
   <div class="tt-disc" id="ttDisc"></div>
 </div>
 
-<!-- VISUAL TUTORIAL OVERLAY UI -->
-<div class="tutorial-overlay" id="tutorialOverlay"></div>
-<div class="tutorial-popover" id="tutorialPopover">
-  <svg id="tutArrow" class="tut-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></svg>
-  <h3 class="modal-title" id="tutPopTitle" style="font-size:1.2rem; margin-top:0;"></h3>
-  <p class="modal-desc" id="tutPopDesc" style="font-size:0.9rem; margin-bottom:0;"></p>
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-    <button class="btn-text" id="tutPopSkip" style="background:none; border:none; color:#8395a7; cursor:pointer; font-size:0.85rem; font-weight:600; padding:0;">Skip</button>
-    <button class="btn-predict" id="tutPopNext" style="border-radius:10px; padding:8px 20px; font-weight:bold; border:none; cursor:pointer; font-size:0.9rem;">Next</button>
+<!-- 100% BULLETPROOF TUTORIAL HTML -->
+<div id="tutorialOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(10,22,40,0.5); z-index:99990; pointer-events:none;"></div>
+
+<div id="tutorialPopover" style="display:none; position:fixed; background:#fff; padding:24px; border-radius:20px; border:3px solid #34d399; z-index:99999; width:300px; box-shadow:0 20px 50px rgba(0,0,0,0.5); pointer-events:auto; flex-direction:column; gap:12px;">
+  <svg id="tutArrow" style="position:absolute; width:40px; height:40px; color:#34d399; transition:all 0.3s;" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"/></svg>
+  <h3 id="tutPopTitle" style="margin:0; font-size:1.2rem; color:#1e3a5f; font-weight:800;"></h3>
+  <p id="tutPopDesc" style="margin:0; font-size:0.9rem; color:#576574; line-height:1.5;"></p>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+    <button id="tutPopSkip" style="background:none; border:none; color:#8395a7; font-weight:bold; cursor:pointer; padding:8px;">Skip</button>
+    <button id="tutPopNext" style="background:rgba(52,211,153,0.15); color:#059669; border:1px solid #34d399; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">Next</button>
   </div>
 </div>
 
