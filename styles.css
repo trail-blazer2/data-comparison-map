@@ -508,49 +508,39 @@
 
 
 
-/* --- EMERGENCY OVERRIDES FOR MEETING --- */
+/* --- PERFECTED OVERRIDES FOR MEETING --- */
 
-/* 1. Force the Right Panel to Scroll perfectly */
-.main {
-  height: calc(100vh - 100px) !important;
-  min-height: 0 !important;
-}
-.controls-wrap {
-  height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-.controls {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding-bottom: 40px !important; /* Ensures bottom isn't cut off */
+/* 1. Right Panel Scrollbar Fix */
+.main { height: calc(100vh - 100px) !important; min-height: 0 !important; }
+.controls-wrap { height: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+.controls { flex: 1 !important; overflow-y: auto !important; padding-bottom: 40px !important; }
+
+/* 2. Beautiful Interactive Tutorial Overlay */
+#tutorialModal { display: none !important; } /* Kills the old static modal */
+
+.tutorial-overlay {
+  display: block !important;
+  background: rgba(10, 22, 40, 0.4) !important; /* Nice dark dim */
+  pointer-events: none !important; /* CRITICAL: Lets your mouse click through to the map! */
 }
 
-/* 2. Fix the Tutorial - Completely remove blur/darkness so it doesn't break the app */
-.tutorial-overlay, #tutorialModal {
-  display: none !important; /* Kills the dark screen blocking your app */
-}
 .tutorial-target {
   position: relative; z-index: 9999 !important;
   box-shadow: 0 0 0 4px #34d399, 0 0 30px rgba(52, 211, 153, 0.8) !important;
   border-radius: 24px;
+  pointer-events: auto !important; /* Keeps the target clickable */
+  background: rgba(255, 255, 255, 0.95);
 }
+
 .tutorial-popover {
   position: fixed; background: #fff; padding: 24px; border-radius: 20px;
   z-index: 10000; width: 320px; box-shadow: 0 24px 48px rgba(0,0,0,0.3);
-  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-  border: 2px solid #34d399;
+  border: 2px solid #34d399; pointer-events: auto !important;
 }
-.tutorial-popover.active { 
-  opacity: 1; pointer-events: auto; 
-}
-.tut-arrow {
-  position: absolute; width: 36px; height: 36px; color: #34d399; pointer-events: none;
-}
+
+/* Bouncing Arrows */
+.tut-arrow { position: absolute; width: 36px; height: 36px; color: #34d399; pointer-events: none; }
 .tut-arrow.down { bottom: -45px; left: 50%; margin-left: -18px; animation: bounce-down 1.5s infinite; }
 @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
 .tut-arrow.left { left: -45px; top: 50%; margin-top: -18px; animation: bounce-left 1.5s infinite; transform: rotate(90deg); }
 @keyframes bounce-left { 0%, 100% { transform: rotate(90deg) translateY(0); } 50% { transform: rotate(90deg) translateY(10px); } }
-.tut-arrow.up { top: -45px; left: 50%; margin-left: -18px; animation: bounce-up 1.5s infinite; transform: rotate(180deg); }
-@keyframes bounce-up { 0%, 100% { transform: rotate(180deg) translateY(0); } 50% { transform: rotate(180deg) translateY(10px); } }
