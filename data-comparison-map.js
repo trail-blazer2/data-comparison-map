@@ -1326,7 +1326,7 @@ class DataComparisonMap extends HTMLElement {
     this.$('#panelCountry').textContent = name;
 
     // Advance the visual tutorial if they just clicked a country
-    if (this._tutorialStep === 1 && this.$('#tutorialOverlay').classList.contains('active')) {
+    if (this._tutorialStep === 1 && this.$('#tutorialOverlay').style.display === 'block') {
       this.nextTutorialStep();
     }
 
