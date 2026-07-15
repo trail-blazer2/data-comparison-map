@@ -98,11 +98,16 @@
 .tt-src { font-size: 0.62rem; color: #8395a7; margin-top: 6px; }
 .tt-disc { display: none; margin-top: 6px; padding: 4px 10px; background: rgba(255,152,0,0.12); border-radius: 10px; font-size: 0.66rem; color: #e65100; font-weight: 500; }
 
-/* CONTROLS PANEL */
-.controls { padding: 16px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; }
-@media (hover: hover) and (pointer: fine) { .controls { position: relative; top: 0; min-height: 0; overflow-y: auto; padding: 12px; gap: 8px; } }
+/* CONTROLS PANEL (Updated for proper scrolling) */
+.controls-wrap { position: sticky; top: 20px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; }
+.controls { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; }
+@media (hover: hover) and (pointer: fine) { 
+  .controls-wrap { position: relative; top: 0; max-height: 100%; }
+  .controls { min-height: 0; padding: 12px; gap: 8px; } 
+}
 .controls::-webkit-scrollbar { width: 3px; }
 .controls::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
 .sec-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; color: #8395a7; margin: 0 0 6px; font-weight: 600; }
 .cat-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 2px; }
 .cat-btn { display: flex; align-items: center; gap: 8px; padding: 12px 12px; border: 1.5px solid rgba(200, 214, 229, 0.35); border-radius: 14px; background: rgb(255 255 255 / 12%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); cursor: pointer; font-family: inherit; transition: all 0.22s ease; text-align: left; }
@@ -310,10 +315,26 @@
 .wiz-view.active { display: block; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Tutorial Modal Specific */
-.tut-step { display: none; }
-.tut-step.active { display: block; animation: fadeIn 0.3s ease; }
-.tut-img { width: 100%; height: 140px; object-fit: contain; margin-bottom: 16px; }
+/* VISUAL TUTORIAL OVERLAY UI */
+.tutorial-overlay {
+  position: fixed; inset: 0; background: rgba(10, 22, 40, 0.5);
+  z-index: 9998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+.tutorial-overlay.active { opacity: 1; pointer-events: auto; }
+.tutorial-target {
+  position: relative; z-index: 9999 !important;
+  box-shadow: 0 0 0 3px #34d399, 0 8px 32px rgba(52, 211, 153, 0.4) !important;
+  border-radius: 24px; pointer-events: auto !important;
+  transition: box-shadow 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+.tutorial-popover {
+  position: fixed; background: #fff; padding: 20px; border-radius: 16px;
+  z-index: 10000; width: 300px; box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.tutorial-popover.active { opacity: 1; pointer-events: auto; }
+
 
 /* Pro Modal & General */
 .pro-badge { display: inline-block; background: #6d28d9; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
@@ -414,7 +435,8 @@
   .lang-option { padding: 6px; font-size: min(2.93vw, 13px); }
   
   .main { grid-template-columns: 1fr; }
-  .controls { position: static; max-height: none; }
+  .controls-wrap { position: static; max-height: none; overflow: visible; }
+  .controls { position: static; max-height: none; overflow: visible; }
   .glass::before { backdrop-filter: none; -webkit-backdrop-filter: none; filter: none; background: rgb(255 255 255 / 85%); }
   
   .map-title { font-size: min(4vw, 17px); }
