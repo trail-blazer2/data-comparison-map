@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RealWorldView - Kalkulace vývoje</title>
+  
+  <style>
+    /* Premium Dark Theme */
+    :root {
+      --bg-body: #020617; 
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --accent: #10b981;
+    }
+
+    body {
+      margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    /* Login Overlay */
+    #loginOverlay {
+      position: fixed; inset: 0; background: var(--bg-body);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.4s ease;
+    }
+    .login-box {
+      background: var(--bg-card); padding: 40px; border-radius: 16px;
+      border: 1px solid var(--border); text-align: center;
+      width: 100%; max-width: 360px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .login-box h2 { margin: 0 0 8px; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; }
+    .login-box p { color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem; }
+    .login-box input {
+      width: 100%; box-sizing: border-box; padding: 14px 16px; margin-bottom: 20px;
+      background: #020617; border: 1px solid var(--border); color: var(--text-main);
+      border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s;
+    }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box button {
+      width: 100%; padding: 14px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; transition: 0.2s;
+    }
+    .login-box button:hover { background: var(--primary-hover); }
+
+    /* Layout Container */
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 60px 24px;
+      display: none; animation: fadeIn 0.6s ease forwards;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Header & Logo */
+    header { text-align: center; margin-bottom: 50px; }
+    .logo-placeholder {
+      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+      font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .logo-dot { width: 12px; height: 12px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 15px var(--primary); }
+    h1 { font-size: 2rem; font-weight: 700; margin: 24px 0 8px; letter-spacing: -0.02em; }
+    .subtitle { color: var(--text-muted); font-size: 1.1rem; margin: 0; }
+
+    /* Model Selection Boxes */
+    .models-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 50px; }
+    .model-card {
+      background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px;
+      padding: 30px; cursor: pointer; transition: all 0.3s ease; position: relative;
+    }
+    .model-card:hover { border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+    .model-card.active { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+    .model-card h3 { font-size: 1.3rem; margin: 0 0 12px; }
+    .model-card p { font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.6; }
+    
+    .radio-circle {
+      position: absolute; top: 24px; right: 24px; width: 20px; height: 20px;
+      border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .model-card.active .radio-circle { border-color: var(--primary); }
+    .model-card.active .radio-circle::after { content: ''; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; }
+
+    /* Features List */
+    .features-section { margin-bottom: 50px; }
+    .features-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .feature-item {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      margin-bottom: 12px; overflow: hidden; transition: 0.3s;
+    }
+    .feature-header {
+      padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
+    }
+    .feature-header:hover { background: var(--bg-card-hover); }
+    .feature-name { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 12px; }
+    .feature-price { color: var(--text-muted); font-family: monospace; font-size: 1.05rem; }
+    .feature-desc {
+      padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease;
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    .feature-item.open .feature-desc { padding: 0 20px 16px 20px; max-height: 150px; }
+    .feature-item.open .feature-price { color: var(--primary); font-weight: 600; }
+
+    /* Checkbox for Control Panel */
+    .checkbox-item { margin-top: 24px; }
+    .checkbox-label {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 20px; cursor: pointer; transition: 0.2s;
+    }
+    .checkbox-label:hover { border-color: rgba(255,255,255,0.3); }
+    .checkbox-left { display: flex; align-items: center; gap: 16px; font-weight: 600; }
+    .checkbox-left input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+    /* Sliders & Outputs */
+    .sliders-section {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px; margin-bottom: 60px;
+    }
+    .slider-group { margin-bottom: 30px; }
+    .slider-group:last-child { margin-bottom: 0; }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+      background: var(--primary); margin-top: -7px; box-shadow: 0 0 10px rgba(59,130,246,0.5);
+      transition: transform 0.1s;
+    }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
+
+    /* Final Output */
+    .output-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border);
+    }
+    .output-box { text-align: left; }
+    .output-box:last-child { text-align: right; }
+    .output-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; }
+    .output-value { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text-main); }
+    .output-box:last-child .output-value { color: var(--primary); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .models-grid { grid-template-columns: 1fr; }
+      .output-grid { grid-template-columns: 1fr; text-align: center; gap: 30px; }
+      .output-box { text-align: center !important; }
+      .sliders-section { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div id="loginOverlay">
+    <div class="login-box">
+      <div class="logo-placeholder" style="margin-bottom: 24px; font-size:1.3rem;">
+        <div class="logo-dot"></div> RWV
+      </div>
+      <h2>Chráněný přístup</h2>
+      <p>Zadejte heslo pro zobrazení kalkulace</p>
+      <input type="password" id="authPass" placeholder="Heslo" autofocus>
+      <button onclick="checkPassword()">Zobrazit nabídku</button>
+      <p id="errText" style="color: #f43f5e; font-size: 0.8rem; margin-top: 12px; display: none; font-weight: 600;">Nesprávné heslo.</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container" id="mainContainer">
+    
+    <header>
+      <div class="logo-placeholder">
+        <div class="logo-dot"></div> RealWorldView
+      </div>
+      <h1>Technická specifikace a nacenění</h1>
+      <p class="subtitle">Přehled zvolených architektur, modulů a kalkulace vývoje</p>
+    </header>
+
+    <!-- Model Selection -->
+    <div class="models-grid">
+      
+      <!-- Basic Box -->
+      <div class="model-card active" id="card-basic" onclick="selectModel('basic')">
+        <div class="radio-circle"></div>
+        <h3>Stochastický základ</h3>
+        <p>Přímá softwarová implementace pro výpočet tržní rovnováhy a Monte Carlo simulací. Stabilní lineární výpočet přesně přepisující dodané rovnice, ideální pro čistou aplikaci statických vzorců.</p>
+      </div>
+
+      <!-- Complex Box -->
+      <div class="model-card" id="card-complex" onclick="selectModel('complex')">
+        <div class="radio-circle"></div>
+        <h3>Reflexivní ekosystém</h3>
+        <p>Komplexní simulační engine (Demand Destruction). Algoritmus iterativně přepočítává poptávku, substituty a cenové šoky v uzavřených cyklech, dokud nenajde stabilní rovnováhu. Pokročilé pravděpodobnostní větvení rizik.</p>
+      </div>
+
+    </div>
+
+    <!-- Options List -->
+    <div class="features-section">
+      <div class="features-title">Obsažené moduly a funkce</div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Matematické jádro modelu</div>
+          <div class="feature-price" id="mathPriceDisplay">105 000 Kč</div>
+        </div>
+        <div class="feature-desc">Základní cena zvolené architektury. U základního modelu je aplikována sleva (původně 155 000 Kč) za nevyužití korporátního zabezpečení (-10 000 Kč) a dodání přesných matematických vzorců (-40 000 Kč).</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Uživatelské rozhraní (UI Systém)</div>
+          <div class="feature-price">15 000 Kč</div>
+        </div>
+        <div class="feature-desc">Design a kompletní vývoj interaktivního frontendu, díky kterému budou komplexní výpočty snadno čitelné a ovladatelné pro koncového uživatele.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Cloudová architektura (AWS Lambda)</div>
+          <div class="feature-price">15 000 Kč</div>
+        </div>
+        <div class="feature-desc">Infrastrukturní můstek a napojení na GPU clustery pro zajištění maximálního výkonu simulací v cloudu.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Logování (Aktivity a Boti)</div>
+          <div class="feature-price">7 000 Kč</div>
+        </div>
+        <div class="feature-desc">Systém pro bezpečné zaznamenávání uskutečněných obchodů a analýzu potenciálních tržních vstupů automatizovaných botů.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Faktorová atribuce</div>
+          <div class="feature-price">3 000 Kč</div>
+        </div>
+        <div class="feature-desc">Rozpad cenového pohybu, který vizualizuje a vyčísluje, jaký konkrétní makro nebo tržní faktor měl jaký podíl na výsledku.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Pravděpodobnostní křivky</div>
+          <div class="feature-price">4 000 Kč</div>
+        </div>
+        <div class="feature-desc">Generování a projekce rozptylu možných budoucích scénářů na časové ose podle volatility.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Index Momentum</div>
+          <div class="feature-price">5 000 Kč</div>
+        </div>
+        <div class="feature-desc">Algoritmus pro vyhodnocování tržního sentimentu a síly nastoupeného trendu v reálném čase.</div>
+      </div>
+
+      <div class="feature-item" onclick="toggleAcc(this)">
+        <div class="feature-header">
+          <div class="feature-name">Reverzní Goal Seek</div>
+          <div class="feature-price">6 000 Kč</div>
+        </div>
+        <div class="feature-desc">Nástroj umožňující zadat cílovou požadovanou cenu a systém zpětně dopočítá, jaké makroekonomické proměnné by k ní vedly.</div>
+      </div>
+
+      <!-- Addon Checkbox -->
+      <label class="checkbox-label checkbox-item">
+        <div class="checkbox-left">
+          <input type="checkbox" id="controlPanelAddon" onchange="updateCalc()">
+          Korporátní řídicí panel (Statistiky systému)
+        </div>
+        <div class="feature-price" style="margin: 0;">+ 5 000 Kč</div>
+      </label>
+    </div>
+
+    <!-- Interactive Sliders -->
+    <div class="sliders-section">
+      
+      <div class="slider-group">
+        <div class="slider-labels">
+          <span>Kvalita & Rozsah testování</span>
+          <span id="qualityValDisplay">100 %</span>
+        </div>
+        <input type="range" id="qualitySlider" min="50" max="100" value="100" step="1" oninput="handleQualitySlide()">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-labels">
+          <span>Rozpočet (Prioritizace)</span>
+          <span id="priceModDisplay">Střed</span>
+        </div>
+        <input type="range" id="priceSlider" min="-50" max="50" value="0" step="1" oninput="handlePriceSlide()">
+      </div>
+
+      <!-- Final Output -->
+      <div class="output-grid">
+        <div class="output-box">
+          <div class="output-label">Odhadovaný čas (Týdny)</div>
+          <div class="output-value" id="finalTimeDisplay">5</div>
+        </div>
+        <div class="output-box">
+          <div class="output-label">Finální cena projektu</div>
+          <div class="output-value" id="finalPriceDisplay">160 000 Kč</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Authentication ---
+    function checkPassword() {
+      const input = document.getElementById('authPass').value;
+      if (input === 'rwv2026') { // Zde můžeš změnit heslo
+        document.getElementById('loginOverlay').style.opacity = '0';
+        setTimeout(() => {
+          document.getElementById('loginOverlay').style.display = 'none';
+          document.getElementById('mainContainer').style.display = 'block';
+        }, 400);
+      } else {
+        document.getElementById('errText').style.display = 'block';
+      }
+    }
+    
+    document.getElementById('authPass').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // --- Accordion Logic ---
+    function toggleAcc(el) {
+      el.classList.toggle('open');
+    }
+
+    // --- Pricing Logic & State ---
+    const pricing = {
+      basicModel: 105000,
+      complexModel: 185000,
+      fixedOptions: 15000 + 15000 + 7000 + 3000 + 4000 + 5000 + 6000, // 55,000
+      addonPanel: 5000
+    };
+
+    let activeModel = 'basic'; // 'basic' or 'complex'
+    let tension = 0; // scale from -50 to +50
+
+    function selectModel(modelType) {
+      activeModel = modelType;
+      document.getElementById('card-basic').classList.remove('active');
+      document.getElementById('card-complex').classList.remove('active');
+      document.getElementById('card-' + modelType).classList.add('active');
+      
+      const mathPrice = (modelType === 'basic') ? pricing.basicModel : pricing.complexModel;
+      document.getElementById('mathPriceDisplay').textContent = formatCurrency(mathPrice);
+      
+      updateCalc();
+    }
+
+    // Slider Interconnectivity
+    const qSlider = document.getElementById('qualitySlider');
+    const pSlider = document.getElementById('priceSlider');
+
+    // When dragging Price Slider
+    function handlePriceSlide() {
+      tension = parseInt(pSlider.value); // -50 to 50
+      
+      // Update Quality slider visually if tension goes negative
+      if (tension < 0) {
+        qSlider.value = 100 + tension; // slides down from 100 to 50
+      } else {
+        qSlider.value = 100;
+      }
+      
+      updateCalc();
+    }
+
+    // When dragging Quality Slider
+    function handleQualitySlide() {
+      const qVal = parseInt(qSlider.value); // 50 to 100
+      tension = qVal - 100; // -50 to 0
+      pSlider.value = tension; // update price slider to match negative tension
+      
+      updateCalc();
+    }
+
+    function updateCalc() {
+      // 1. Base Values depending on Model
+      let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
+      let baseTime = (activeModel === 'basic') ? 5 : 8; // Weeks
+      
+      // 2. Add Fixed Options + Checkboxes
+      let totalBasePrice = baseMath + pricing.fixedOptions;
+      if (document.getElementById('controlPanelAddon').checked) {
+        totalBasePrice += pricing.addonPanel;
+      }
+
+      // 3. Apply Tension (-50 to +50)
+      // tension > 0: Price increases up to +50% (1.5x), Time decreases down to 50% (0.5x)
+      // tension < 0: Price decreases down to -50% (0.5x), Time increases up to +50% (1.5x)
+      
+      let priceMultiplier = 1 + (tension / 100); 
+      let timeMultiplier = 1 - (tension / 100);
+
+      let finalPrice = totalBasePrice * priceMultiplier;
+      let finalTime = baseTime * timeMultiplier;
+      
+      // 4. Update UI labels
+      document.getElementById('finalPriceDisplay').textContent = formatCurrency(finalPrice);
+      
+      // Formatting time to look clean (e.g., 5, 5.5, 7.5, etc.)
+      let displayTime = finalTime % 1 === 0 ? finalTime : finalTime.toFixed(1);
+      document.getElementById('finalTimeDisplay').textContent = displayTime;
+      
+      // Update small visual labels above sliders
+      let qVal = (tension < 0) ? (100 + tension) : 100;
+      document.getElementById('qualityValDisplay').textContent = qVal + ' %';
+      
+      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Střed';
+      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
+      else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
+    }
+
+    function formatCurrency(num) {
+      return Math.round(num).toLocaleString('cs-CZ') + ' Kč';
+    }
+
+    // Init
+    updateCalc();
+
+  </script>
+</body>
+</html>
