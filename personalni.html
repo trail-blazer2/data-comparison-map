@@ -126,7 +126,7 @@
     .menu-item.open .menu-desc { max-height: 250px; margin-top: 12px; }
     .menu-item.open .menu-price { color: var(--accent); font-weight: 600; }
 
-    /* Checkbox pro panel */
+    /* Checkboxy (Doplňky) */
     .checkbox-item { padding: 24px 0; border-bottom: 1px solid var(--line-color); }
     .checkbox-label {
       display: flex; justify-content: space-between; align-items: center;
@@ -135,7 +135,7 @@
     .checkbox-left { display: flex; align-items: center; gap: 14px; font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; }
     
     .checkbox-left input { display: none; }
-    .custom-check { width: 14px; height: 14px; border: 1px solid var(--text-muted); position: relative; transition: 0.2s; border-radius: 2px; }
+    .custom-check { width: 14px; height: 14px; border: 1px solid var(--text-muted); position: relative; transition: 0.2s; border-radius: 2px; flex-shrink: 0; }
     .checkbox-left input:checked + .custom-check { border-color: var(--accent); background: var(--accent); }
     .checkbox-left input:checked + .custom-check::after {
       content: ''; position: absolute; left: 4px; top: 1px; width: 3px; height: 7px;
@@ -203,8 +203,8 @@
     
     <header>
       <img src="/logo.png" alt="RWV Logo" class="main-logo">
-      <h1>Architektura & Nacenění</h1>
-      <p class="subtitle">Technická specifikace simulačních modulů</p>
+      <h1>Technická specifikace a nacenění</h1>
+      <p class="subtitle">Přehled zvolených architektur, modulů a kalkulace vývoje</p>
     </header>
 
     <!-- Modely (Checklisty) -->
@@ -216,10 +216,10 @@
           <div class="radio-circle"></div>
         </div>
         <ul class="tech-checklist">
-          <li><strong>Spolehlivé výpočetní jádro</strong> navržené pro exaktní deterministické a stochastické modelování cenových trajektorií přímým matematickým průchodem.</li>
-          <li>Implementace <strong>Large ML optimalizeru</strong> (Market Curve Optimizer) pro minimalizaci logistických odchylek z logiky rovnice <em>argmin</em>.</li>
-          <li>Generování scénářů a větvení trajektorií pro <em>Regulatory Risk</em> na bázi distribučních pravděpodobnostních modelů.</li>
-          <li>Přímá resoluce spot ceny a strukturální/volatilní vrstvy skrz dodané statické rovnice bez interní rekurence.</li>
+          <li><strong>Solidní výpočetní jádro</strong> navržené pro rychlé a spolehlivé modelování cenových trajektorií přímým matematickým průchodem dodaných rovnic.</li>
+          <li>Implementace <strong>Large ML optimalizeru</strong> (Market Curve Optimizer) pro minimalizaci logistických odchylek z logiky výpočtu minim.</li>
+          <li>Generování scénářů a větvení distribučních pravděpodobnostních stromů pro vyhodnocování <strong>Regulatory Risk</strong>.</li>
+          <li>Nelineární šíření šoků přes přepínání <strong>tržních režimů</strong> a asynchronní správa časových řad (princip <em>ragged edge</em>).</li>
         </ul>
       </div>
 
@@ -229,10 +229,10 @@
           <div class="radio-circle"></div>
         </div>
         <ul class="tech-checklist">
-          <li><strong>Autonomní softwarový engine</strong> transformující standardní rovnice do plně uzavřených výpočetních cyklů s dynamickou zpětnou vazbou.</li>
-          <li>Vývoj logiky pro <em>Demand Destruction</em> s využitím <strong>rekurzivních while-smyček</strong> (kontinuální iterace spotřeby, substitutů a deficitu až do matematické rovnováhy).</li>
-          <li>Implementace přechodových stavových matic (tržních režimů) ovlivňujících šíření šoků a nelineární korelace komodit v reálném čase.</li>
-          <li>Asynchronní správa časových řad (princip <em>ragged edge</em>) s kontinuální dopřednou projekcí skrytého makroekonomického stavu.</li>
+          <li><strong>Autonomní softwarový engine</strong> transformující rovnice do plně uzavřených výpočetních cyklů s dynamickou zpětnou vazbou.</li>
+          <li>Vývoj logiky pro <em>Demand Destruction</em> s využitím <strong>rekurzivních while-smyček</strong>: kontinuální iterace spotřeby, substitutů a deficitu do dosažení absolutní matematické rovnováhy.</li>
+          <li>Dynamické přepočítávání fyzické bilance a indexu deficitu v každém kroku výpočetního cyklu.</li>
+          <li>Ochranné softwarové brzdy navržené specificky k prevenci vzniku nekonečných vzájemně se posilujících spirál.</li>
         </ul>
       </div>
 
@@ -305,14 +305,37 @@
       <div class="menu-desc">Analytický nástroj pro reverzní inženýrství: manuální zadání požadované cílové ceny spouští odvození nutných makroekonomických podmínek.</div>
     </div>
 
+    <!-- Rozšíření moduly (Add-ons) -->
     <div class="checkbox-item">
       <label class="checkbox-label">
         <div class="checkbox-left">
-          <input type="checkbox" id="controlPanelAddon" onchange="updateCalc()">
+          <input type="checkbox" id="controlPanelAddon" onchange="updateCalc()" data-price="5000">
           <div class="custom-check"></div>
           Korporátní řídicí panel (Systémové statistiky)
         </div>
         <div class="menu-price" style="color: var(--text-main);">+ 5 000 Kč</div>
+      </label>
+    </div>
+    
+    <div class="checkbox-item" style="border-top: none;">
+      <label class="checkbox-label">
+        <div class="checkbox-left">
+          <input type="checkbox" id="apiEndpointAddon" onchange="updateCalc()" data-price="10000">
+          <div class="custom-check"></div>
+          API Endpoint & Datový Export (JSON/CSV)
+        </div>
+        <div class="menu-price" style="color: var(--text-main);">+ 10 000 Kč</div>
+      </label>
+    </div>
+
+    <div class="checkbox-item" style="border-top: none;">
+      <label class="checkbox-label">
+        <div class="checkbox-left">
+          <input type="checkbox" id="alertingAddon" onchange="updateCalc()" data-price="8000">
+          <div class="custom-check"></div>
+          Geografický makro-alerting systém
+        </div>
+        <div class="menu-price" style="color: var(--text-main);">+ 8 000 Kč</div>
       </label>
     </div>
 
@@ -320,7 +343,7 @@
     <div class="sliders-section">
       <div class="slider-group">
         <div class="slider-labels">
-          <span>Hloubka & Rozsah (QA)</span>
+          <span>Kvalita & Rozsah testování</span>
           <span id="qualityValDisplay">100 %</span>
         </div>
         <input type="range" id="qualitySlider" min="50" max="100" value="100" step="1" oninput="handleQualitySlide()">
@@ -328,8 +351,8 @@
 
       <div class="slider-group" style="margin-bottom: 0;">
         <div class="slider-labels">
-          <span>Rozpočet (Priorita vývoje)</span>
-          <span id="priceModDisplay">Standard</span>
+          <span>Rozpočet (Prioritizace)</span>
+          <span id="priceModDisplay">Střed</span>
         </div>
         <input type="range" id="priceSlider" min="-50" max="50" value="0" step="1" oninput="handlePriceSlide()">
       </div>
@@ -344,7 +367,7 @@
           </div>
         </div>
         <div class="output-box">
-          <div class="output-label">Celková investice</div>
+          <div class="output-label">Finální cena projektu</div>
           <div class="output-value" id="finalPriceDisplay">160 000 Kč</div>
         </div>
       </div>
@@ -377,8 +400,7 @@
     const pricing = {
       basicModel: 105000,
       complexModel: 185000,
-      fixedOptions: 15000 + 15000 + 7000 + 3000 + 4000 + 5000 + 6000, // 55 000 Kč
-      addonPanel: 5000
+      fixedOptions: 15000 + 15000 + 7000 + 3000 + 4000 + 5000 + 6000 // 55 000 Kč
     };
 
     let activeModel = 'basic';
@@ -425,21 +447,32 @@
     function updateCalc() {
       let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
       
-      // Nastavení limitů času podle zvoleného modelu
       let baseTime = (activeModel === 'basic') ? 5 : 8;
       let minTime = (activeModel === 'basic') ? 4 : 7;
       let maxTime = (activeModel === 'basic') ? 8 : 11;
       
       let totalBasePrice = baseMath + pricing.fixedOptions;
-      if (document.getElementById('controlPanelAddon').checked) totalBasePrice += pricing.addonPanel;
+      
+      // Započítání zaškrtnutých add-onů
+      const addons = document.querySelectorAll('input[type="checkbox"]');
+      addons.forEach(addon => {
+        if(addon.checked) totalBasePrice += parseInt(addon.getAttribute('data-price'));
+      });
 
-      let priceMultiplier = 1 + (tension / 100); 
-      let timeMultiplier = 1 - (tension / 100);
+      // Zastropování vlivu slideru na cenu, pokud narazíme na minimální čas
+      let maxPositiveTension = 100 * (1 - (minTime / baseTime)); 
+      let effectiveTension = tension;
+      
+      if (effectiveTension > maxPositiveTension) {
+          effectiveTension = maxPositiveTension; // Zastaví růst ceny, pokud je čas na minimu
+      }
+
+      let priceMultiplier = 1 + (effectiveTension / 100); 
+      let timeMultiplier = 1 - (effectiveTension / 100);
 
       let baseFinalTime = baseTime * timeMultiplier;
       let finalTime = baseFinalTime + manualTimeOffset;
       
-      // Kontrola limitů (min/max týdnů)
       if (finalTime < minTime) {
         finalTime = minTime;
         manualTimeOffset = finalTime - baseFinalTime;
@@ -449,12 +482,12 @@
         manualTimeOffset = finalTime - baseFinalTime;
       }
 
-      // Modifikátor ceny podle manuální úpravy času
+      // Manuální úprava ceny přes tlačítka času (+/-)
       let timePriceMod = 1.0;
       if (manualTimeOffset < 0) {
-        timePriceMod += Math.abs(manualTimeOffset) * 0.15; // Příplatek za urychlení
+        timePriceMod += Math.abs(manualTimeOffset) * 0.15;
       } else if (manualTimeOffset > 0) {
-        timePriceMod -= manualTimeOffset * 0.05; // Sleva za prodloužení
+        timePriceMod -= manualTimeOffset * 0.05;
         if (timePriceMod < 0.6) timePriceMod = 0.6;
       }
 
@@ -468,8 +501,8 @@
       let qVal = (tension < 0) ? (100 + tension) : 100;
       document.getElementById('qualityValDisplay').textContent = qVal + ' %';
       
-      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Standard';
-      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Rychlejší vývoj';
+      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Střed';
+      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
       else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
     }
 
