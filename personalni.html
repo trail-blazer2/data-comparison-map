@@ -5,23 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RealWorldView - Architektura & Nacenění</title>
   
-  <!-- Moderní, zaoblené a elegantní fonty (Outfit & Nunito) -->
+  <!-- Elegantní fonty -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --bg-color: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --line-color: #e2e8f0;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
+      --bg-color: #fdfdfc;
+      --text-main: #111111;
+      --text-muted: #666666;
+      --line-color: #e5e5e5;
+      --accent: #000000;
       
-      --font-heading: 'Outfit', sans-serif;
-      --font-body: 'Nunito', sans-serif;
+      --font-heading: 'Cormorant Garamond', serif;
+      --font-body: 'Inter', sans-serif;
     }
 
     body {
@@ -29,9 +27,9 @@
       font-family: var(--font-body);
       background-color: var(--bg-color);
       color: var(--text-main);
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
-      font-weight: 400;
+      font-weight: 300;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -42,170 +40,147 @@
       z-index: 9999; transition: opacity 0.5s ease;
     }
     .login-box {
-      width: 100%; max-width: 340px; text-align: center;
-      padding: 40px; background: var(--card-bg);
-      border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+      width: 100%; max-width: 320px; text-align: center; padding: 40px;
     }
-    .login-box img { max-height: 50px; margin-bottom: 24px; }
-    .login-box h2 { font-family: var(--font-heading); font-size: 1.8rem; margin: 0 0 8px; font-weight: 600; letter-spacing: -0.02em; }
-    .login-box p { color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem; }
+    .login-box img { max-height: 45px; margin-bottom: 30px; }
+    .login-box h2 { font-family: var(--font-heading); font-size: 1.8rem; margin: 0 0 10px; font-weight: 500; }
+    .login-box p { color: var(--text-muted); margin-bottom: 30px; font-size: 0.9rem; }
     .login-box input {
-      width: 100%; box-sizing: border-box; padding: 14px 20px; margin-bottom: 24px;
-      background: var(--bg-color); border: 1px solid var(--line-color); border-radius: 12px;
-      color: var(--text-main); font-size: 1rem; outline: none; transition: 0.2s;
-      font-family: var(--font-body); text-align: center; font-weight: 600;
+      width: 100%; box-sizing: border-box; padding: 12px 0; margin-bottom: 24px;
+      background: transparent; border: none; border-bottom: 1px solid var(--line-color);
+      color: var(--text-main); font-size: 0.95rem; outline: none; transition: 0.3s;
+      font-family: var(--font-body); text-align: center;
     }
-    .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .login-box input:focus { border-bottom-color: var(--accent); }
     .login-box button {
-      width: 100%; background: var(--text-main); color: #fff; border: none;
-      padding: 14px; font-size: 0.95rem; font-weight: 700; border-radius: 12px;
-      cursor: pointer; transition: 0.2s; font-family: var(--font-body);
+      background: transparent; color: var(--text-main); border: 1px solid var(--text-main);
+      padding: 12px 32px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; transition: 0.3s; font-family: var(--font-body);
     }
-    .login-box button:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37,99,235,0.15); }
+    .login-box button:hover { background: var(--text-main); color: #fff; }
 
     /* Hlavní kontejner */
     .container {
-      max-width: 760px; margin: 0 auto; padding: 60px 24px 100px;
-      display: none; animation: fadeIn 0.6s ease forwards;
+      max-width: 740px; margin: 0 auto; padding: 60px 24px 100px;
+      display: none; animation: fadeIn 0.8s ease forwards;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-    header { text-align: center; margin-bottom: 50px; }
-    .main-logo { max-height: 50px; margin-bottom: 24px; }
-    h1 { font-family: var(--font-heading); font-size: 2.4rem; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.03em; }
-    .subtitle { color: var(--text-muted); font-size: 1.05rem; margin: 0; font-weight: 600; }
+    header { text-align: center; margin-bottom: 60px; }
+    .main-logo { max-height: 45px; margin-bottom: 30px; }
+    h1 { font-family: var(--font-heading); font-size: 2.2rem; font-weight: 500; margin: 0 0 12px; }
+    .subtitle { color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
 
-    /* Výběr modelů */
-    .models-grid { display: flex; flex-direction: column; gap: 20px; margin-bottom: 50px; }
+    /* Výběr modelů (Checklisty) */
+    .models-grid { display: flex; flex-direction: column; gap: 24px; margin-bottom: 60px; }
     
     .model-card {
-      background: var(--card-bg); border: 2px solid var(--line-color); border-radius: 20px;
-      padding: 30px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      border: 1px solid var(--line-color); padding: 35px 35px 40px;
+      cursor: pointer; transition: all 0.4s ease; position: relative;
+      background: #fff;
     }
-    .model-card:hover { border-color: #cbd5e1; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.04); }
-    .model-card.active { border-color: var(--accent); background: rgba(37, 99, 235, 0.02); box-shadow: 0 12px 24px rgba(37, 99, 235, 0.06); }
+    .model-card:hover { border-color: #cccccc; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+    .model-card.active { border-color: var(--accent); box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
     
-    .model-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .model-card h3 { font-family: var(--font-heading); font-size: 1.5rem; margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+    .model-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .model-card h3 { font-family: var(--font-heading); font-size: 1.7rem; margin: 0; font-weight: 600; letter-spacing: -0.02em; }
     
     .radio-circle {
-      width: 22px; height: 22px; border: 2px solid var(--line-color); border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+      width: 16px; height: 16px; border: 1px solid var(--line-color); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; transition: 0.3s;
     }
     .model-card.active .radio-circle { border-color: var(--accent); }
-    .model-card.active .radio-circle::after { content: ''; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+    .model-card.active .radio-circle::after { content: ''; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
 
-    /* Checklist */
+    /* Technický checklist */
     ul.tech-checklist {
-      list-style: none; padding: 0; margin: 0; color: var(--text-muted); font-size: 0.95rem;
+      list-style: none; padding: 0; margin: 0; color: var(--text-muted); font-size: 0.9rem;
     }
     ul.tech-checklist li {
-      position: relative; padding-left: 24px; margin-bottom: 12px; line-height: 1.5;
+      position: relative; padding-left: 20px; margin-bottom: 12px; line-height: 1.5;
     }
     ul.tech-checklist li::before {
-      content: ''; position: absolute; left: 0; top: 7px; width: 6px; height: 6px;
-      background-color: var(--accent); border-radius: 50%; opacity: 0.7;
+      content: '■'; position: absolute; left: 0; top: 1px; font-size: 0.5rem; color: var(--accent); opacity: 0.6;
     }
 
     /* Menu položky (Rozbalovací) */
     .menu-section-title {
-      font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700;
-      margin-bottom: 16px; color: var(--text-main); letter-spacing: -0.02em;
+      font-family: var(--font-heading); font-size: 1.5rem; font-weight: 600;
+      margin-bottom: 10px; border-bottom: 1px solid var(--accent); padding-bottom: 15px;
     }
     
-    .menu-container {
-      background: var(--card-bg); border-radius: 20px; border: 1px solid var(--line-color);
-      padding: 0 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    }
-
-    .menu-item { border-bottom: 1px solid var(--line-color); padding: 20px 0; cursor: pointer; transition: 0.2s; }
-    .menu-item:last-child { border-bottom: none; }
+    .menu-item { border-bottom: 1px solid var(--line-color); cursor: pointer; padding: 18px 0; transition: 0.2s; }
     .menu-header { display: flex; justify-content: space-between; align-items: center; }
     
-    .menu-name { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-    .menu-price { font-family: monospace; font-size: 1.05rem; color: var(--text-muted); font-weight: 600; }
+    .menu-name { font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .menu-price { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-muted); }
     
-    .arrow {
-      font-size: 0.8rem; transition: transform 0.3s; opacity: 0.4;
-      background: var(--bg-color); border-radius: 50%; width: 24px; height: 24px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .menu-item:hover .arrow { opacity: 1; background: var(--line-color); }
-    .menu-item.open .arrow { transform: rotate(180deg); background: var(--accent); color: #fff; opacity: 1; }
+    .arrow { font-size: 0.6rem; transition: transform 0.3s; opacity: 0.4; margin-left: 5px; }
+    .menu-item:hover .arrow { opacity: 0.8; }
+    .menu-item.open .arrow { transform: rotate(180deg); opacity: 1; }
     
     .menu-desc {
-      max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin-top 0.3s ease;
-      color: var(--text-muted); font-size: 0.95rem; padding-right: 40px;
+      max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin-top 0.4s ease;
+      color: var(--text-muted); font-size: 0.9rem; padding-right: 40px; line-height: 1.6;
     }
     .menu-item.open .menu-desc { max-height: 250px; margin-top: 12px; }
-    .menu-item.open .menu-price { color: var(--accent); }
+    .menu-item.open .menu-price { color: var(--accent); font-weight: 600; }
 
-    /* Checkbox */
-    .checkbox-item { padding: 20px 0; border-top: 1px solid var(--line-color); margin-top: 20px; }
+    /* Checkbox pro panel */
+    .checkbox-item { padding: 24px 0; border-bottom: 1px solid var(--line-color); }
     .checkbox-label {
       display: flex; justify-content: space-between; align-items: center;
       cursor: pointer; width: 100%;
     }
-    .checkbox-left { display: flex; align-items: center; gap: 16px; font-weight: 700; font-size: 1rem; }
+    .checkbox-left { display: flex; align-items: center; gap: 14px; font-weight: 500; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; }
     
     .checkbox-left input { display: none; }
-    .custom-check { width: 22px; height: 22px; border: 2px solid var(--line-color); border-radius: 6px; position: relative; transition: 0.2s; background: var(--bg-color); }
+    .custom-check { width: 14px; height: 14px; border: 1px solid var(--text-muted); position: relative; transition: 0.2s; border-radius: 2px; }
     .checkbox-left input:checked + .custom-check { border-color: var(--accent); background: var(--accent); }
     .checkbox-left input:checked + .custom-check::after {
-      content: ''; position: absolute; left: 7px; top: 3px; width: 4px; height: 9px;
-      border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+      content: ''; position: absolute; left: 4px; top: 1px; width: 3px; height: 7px;
+      border: solid white; border-width: 0 1px 1px 0; transform: rotate(45deg);
     }
 
     /* Slidery */
-    .sliders-section {
-      margin-top: 40px; padding: 40px; background: var(--card-bg);
-      border: 1px solid var(--line-color); border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    }
-    .slider-group { margin-bottom: 30px; }
-    .slider-labels {
-      display: flex; justify-content: space-between; font-size: 0.9rem;
-      font-weight: 700; margin-bottom: 16px; color: var(--text-main);
-    }
-    .val-display { color: var(--accent); background: rgba(37,99,235,0.1); padding: 2px 10px; border-radius: 12px; }
+    .sliders-section { margin-top: 60px; padding: 45px 40px; background: #fff; border: 1px solid var(--line-color); }
+    .slider-group { margin-bottom: 40px; }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; color: var(--text-muted); font-weight: 500; }
     
     input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
-    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: var(--line-color); border-radius: 3px; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 1px; background: var(--text-muted); opacity: 0.3; }
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
-      background: #fff; border: 3px solid var(--accent); margin-top: -7px; transition: transform 0.1s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+      background: var(--accent); margin-top: -6px; transition: transform 0.2s;
     }
-    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.5); }
 
     /* Výstupní grid a Tlačítka pro čas */
     .output-grid {
       display: flex; justify-content: space-between; align-items: flex-end;
-      margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--line-color);
+      margin-top: 50px; padding-top: 40px; border-top: 1px solid var(--line-color);
     }
-    .output-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; }
-    .output-value { font-family: var(--font-heading); font-size: 2.8rem; font-weight: 700; line-height: 1; color: var(--text-main); letter-spacing: -0.03em; }
+    .output-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; font-weight: 500; }
+    .output-value { font-family: var(--font-heading); font-size: 3rem; font-weight: 500; line-height: 1; color: var(--accent); }
     
-    .time-adjuster { display: flex; align-items: center; gap: 16px; }
+    .time-adjuster { display: flex; align-items: center; gap: 20px; }
     .btn-time {
-      width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--line-color);
+      width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-color);
       background: transparent; color: var(--text-main); font-size: 1.2rem; font-weight: 300;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       transition: all 0.2s; padding: 0; line-height: 0;
     }
-    .btn-time:hover { border-color: var(--accent); color: var(--accent); background: rgba(37,99,235,0.05); transform: scale(1.05); }
+    .btn-time:hover { border-color: var(--accent); background: #fafafa; }
     .btn-time:active { transform: scale(0.95); }
 
     .output-box:last-child { text-align: right; }
-    .output-box:last-child .output-value { color: var(--accent); }
 
     @media (max-width: 600px) {
       .container { padding: 40px 20px 80px; }
-      .sliders-section { padding: 24px; }
-      .output-grid { flex-direction: column; align-items: center; gap: 40px; }
-      .output-box { display: flex; flex-direction: column; align-items: center; }
+      .sliders-section { padding: 35px 20px; }
+      .output-grid { flex-direction: column; align-items: center; gap: 40px; text-align: center; }
       .output-box:last-child { text-align: center; }
+      .time-adjuster { justify-content: center; }
     }
   </style>
 </head>
@@ -215,24 +190,24 @@
   <div id="loginOverlay">
     <div class="login-box">
       <img src="/logo.png" alt="RWV Logo">
-      <h2>Zabezpečený přístup</h2>
-      <p>Technická specifikace a nacenění platformy</p>
+      <h2>Autorizační portál</h2>
+      <p>Pro zobrazení technické specifikace zadejte heslo.</p>
       <input type="password" id="authPass" placeholder="Zadejte heslo" autofocus>
-      <button onclick="checkPassword()">Zobrazit dokument</button>
-      <p id="errText" style="color: #ef4444; font-size: 0.85rem; margin-top: 16px; display: none; font-weight: 600;">Ověření selhalo.</p>
+      <button onclick="checkPassword()">Vstoupit</button>
+      <p id="errText" style="color: #d93025; font-size: 0.8rem; margin-top: 16px; display: none;">Neplatné oprávnění.</p>
     </div>
   </div>
 
-  <!-- Obsah -->
+  <!-- Obsah menu -->
   <div class="container" id="mainContainer">
     
     <header>
       <img src="/logo.png" alt="RWV Logo" class="main-logo">
-      <h1>Technická specifikace</h1>
-      <p class="subtitle">Architektura, moduly a kalkulace vývoje</p>
+      <h1>Architektura & Nacenění</h1>
+      <p class="subtitle">Technická specifikace simulačních modulů</p>
     </header>
 
-    <!-- Modely -->
+    <!-- Modely (Checklisty) -->
     <div class="models-grid">
       
       <div class="model-card active" id="card-basic" onclick="selectModel('basic')">
@@ -241,10 +216,10 @@
           <div class="radio-circle"></div>
         </div>
         <ul class="tech-checklist">
-          <li><strong>Solidní výpočetní jádro</strong> navržené k rychlému a spolehlivému modelování cenových drah přímým matematickým průchodem.</li>
-          <li>Implementace tržního optimalizátoru (Market Curve Optimizer) pro minimalizaci odchylek z logiky rovnice <em>argmin</em>[span_0](start_span)[span_0](end_span).</li>
-          <li>Přímý výpočet spot ceny a modelování strukturální a volatilní vrstvy přes dodané statické vzorce bez interní iterace[span_1](start_span)[span_1](end_span).</li>
-          <li>Programování jednosměrné Monte Carlo simulace pro generování scénářů a využití <em>tanh</em> normalizace pro vstupy[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span).</li>
+          <li><strong>Spolehlivé výpočetní jádro</strong> navržené pro exaktní deterministické a stochastické modelování cenových trajektorií přímým matematickým průchodem.</li>
+          <li>Implementace <strong>Large ML optimalizeru</strong> (Market Curve Optimizer) pro minimalizaci logistických odchylek z logiky rovnice <em>argmin</em>.</li>
+          <li>Generování scénářů a větvení trajektorií pro <em>Regulatory Risk</em> na bázi distribučních pravděpodobnostních modelů.</li>
+          <li>Přímá resoluce spot ceny a strukturální/volatilní vrstvy skrz dodané statické rovnice bez interní rekurence.</li>
         </ul>
       </div>
 
@@ -254,102 +229,99 @@
           <div class="radio-circle"></div>
         </div>
         <ul class="tech-checklist">
-          <li><strong>Komplexní softwarový engine</strong> přetvářející rovnice do uzavřených výpočetních cyklů s plnou zpětnou vazbou.</li>
-          <li>Vývoj logiky pro <em>Demand Destruction</em> s využitím rekurzivních while-smyček (přepočty spotřeby a substitutů do nalezení rovnováhy)[span_4](start_span)[span_4](end_span).</li>
-          <li>Architektura větvících se pravděpodobnostních stromů pro vyhodnocování paralelních scénářů <em>Regulatory Risk</em>[span_5](start_span)[span_5](end_span).</li>
-          <li>Implementace stavových matic pro přepínání "tržních režimů" ovlivňujících šíření šoků a nelineární korelaci komodit[span_6](start_span)[span_6](end_span).</li>
-          <li>Asynchronní správa časových řad (princip <em>ragged edge</em>) s projekcí skrytého ekonomického stavu[span_7](start_span)[span_7](end_span).</li>
+          <li><strong>Autonomní softwarový engine</strong> transformující standardní rovnice do plně uzavřených výpočetních cyklů s dynamickou zpětnou vazbou.</li>
+          <li>Vývoj logiky pro <em>Demand Destruction</em> s využitím <strong>rekurzivních while-smyček</strong> (kontinuální iterace spotřeby, substitutů a deficitu až do matematické rovnováhy).</li>
+          <li>Implementace přechodových stavových matic (tržních režimů) ovlivňujících šíření šoků a nelineární korelace komodit v reálném čase.</li>
+          <li>Asynchronní správa časových řad (princip <em>ragged edge</em>) s kontinuální dopřednou projekcí skrytého makroekonomického stavu.</li>
         </ul>
       </div>
 
     </div>
 
-    <!-- Moduly -->
+    <!-- Funkce a moduly (Akordeon) -->
     <div class="menu-section-title">Infrastruktura & Moduly</div>
-    <div class="menu-container">
-      
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Matematické jádro <span class="arrow">▼</span></span>
-          <span class="menu-price" id="mathPriceDisplay">105 000 Kč</span>
-        </div>
-        <div class="menu-desc">Cena pokrývající zvolenou architekturu. U základní varianty aplikována srážka (původní základ 155 000 Kč) za nevyužití korporátního zabezpečení (-10 000 Kč) a dodání přesných vzorců (-40 000 Kč).</div>
+    
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Matematické jádro <span class="arrow">▼</span></span>
+        <span class="menu-price" id="mathPriceDisplay">105 000 Kč</span>
       </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">UI / UX Systém <span class="arrow">▼</span></span>
-          <span class="menu-price">15 000 Kč</span>
-        </div>
-        <div class="menu-desc">Design a kompletní front-end vývoj platformy, transformující složité výpočty do přehledných vizualizací a prvků.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">AWS Lambda Clustery <span class="arrow">▼</span></span>
-          <span class="menu-price">15 000 Kč</span>
-        </div>
-        <div class="menu-desc">Infrastrukturní napojení na GPU clustery pro zajištění okamžitého výkonu výpočetních simulací.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Logování aktivit & Botů <span class="arrow">▼</span></span>
-          <span class="menu-price">7 000 Kč</span>
-        </div>
-        <div class="menu-desc">Zabezpečené logování tržních vstupů, realizovaných obchodů a analýza behaviorálního vzorce automatizovaných systémů.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Faktorová atribuce <span class="arrow">▼</span></span>
-          <span class="menu-price">3 000 Kč</span>
-        </div>
-        <div class="menu-desc">Rozpad cenového výstupu definující přesnou vahou podíl konkrétních makro a tržních faktorů na predikci.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Pravděpodobnostní křivky <span class="arrow">▼</span></span>
-          <span class="menu-price">4 000 Kč</span>
-        </div>
-        <div class="menu-desc">Generování a projekce vějíře hraničních budoucích scénářů vycházejících z měření aktuální tržní volatility.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Index Momentum <span class="arrow">▼</span></span>
-          <span class="menu-price">5 000 Kč</span>
-        </div>
-        <div class="menu-desc">Analytický sledovací systém pro vyhodnocování tržního sentimentu a síly nastoupeného fundamentálního trendu.</div>
-      </div>
-
-      <div class="menu-item" onclick="toggleAcc(this)">
-        <div class="menu-header">
-          <span class="menu-name">Reverzní Goal Seek <span class="arrow">▼</span></span>
-          <span class="menu-price">6 000 Kč</span>
-        </div>
-        <div class="menu-desc">Inverzní analytický nástroj: zadání cílové požadované ceny zaručí odvození nutných makroekonomických podmínek na trhu.</div>
-      </div>
-
-      <div class="checkbox-item">
-        <label class="checkbox-label">
-          <div class="checkbox-left">
-            <input type="checkbox" id="controlPanelAddon" onchange="updateCalc()">
-            <div class="custom-check"></div>
-            Korporátní řídicí panel (Statistiky)
-          </div>
-          <div class="menu-price" style="color: var(--text-main);">+ 5 000 Kč</div>
-        </label>
-      </div>
+      <div class="menu-desc">Základní cena pokrývající zvolenou architekturu. U základní varianty je aplikována srážka (původní základ 155 000 Kč) za nevyužití těžkého korporátního zabezpečení (-10 000 Kč) a za dodání čistých matematických rovnic (-40 000 Kč).</div>
     </div>
 
-    <!-- Slidery -->
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">UI / UX Systém <span class="arrow">▼</span></span>
+        <span class="menu-price">15 000 Kč</span>
+      </div>
+      <div class="menu-desc">Design a kompletní front-end vývoj platformy, transformující složité algoritmické výpočty do přehledných vizualizací a interaktivních prvků.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">AWS Lambda Clustery <span class="arrow">▼</span></span>
+        <span class="menu-price">15 000 Kč</span>
+      </div>
+      <div class="menu-desc">Infrastrukturní implementace a napojení na externí GPU clustery pro zajištění okamžitého výkonu asynchronních výpočetních simulací.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Logování aktivit & Botů <span class="arrow">▼</span></span>
+        <span class="menu-price">7 000 Kč</span>
+      </div>
+      <div class="menu-desc">Bezpečné logování tržních vstupů, uskutečněných transakcí a analýza behaviorálních vzorců automatizovaných obchodních systémů.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Faktorová atribuce <span class="arrow">▼</span></span>
+        <span class="menu-price">3 000 Kč</span>
+      </div>
+      <div class="menu-desc">Algoritmický rozpad výstupní ceny definující přesnou vahou, jakým podílem se na celkové predikci podílí konkrétní makroekonomické a tržní faktory.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Pravděpodobnostní křivky <span class="arrow">▼</span></span>
+        <span class="menu-price">4 000 Kč</span>
+      </div>
+      <div class="menu-desc">Matematické zpracování a projekce vějíře možných budoucích hraničních scénářů odvozených z aktuálně měřené tržní volatility.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Index Momentum <span class="arrow">▼</span></span>
+        <span class="menu-price">5 000 Kč</span>
+      </div>
+      <div class="menu-desc">Kontinuální sledování dynamiky tržního sentimentu a kvantitativní vyhodnocování síly nastoupeného fundamentálního trendu.</div>
+    </div>
+
+    <div class="menu-item" onclick="toggleAcc(this)">
+      <div class="menu-header">
+        <span class="menu-name">Reverzní Goal Seek <span class="arrow">▼</span></span>
+        <span class="menu-price">6 000 Kč</span>
+      </div>
+      <div class="menu-desc">Analytický nástroj pro reverzní inženýrství: manuální zadání požadované cílové ceny spouští odvození nutných makroekonomických podmínek.</div>
+    </div>
+
+    <div class="checkbox-item">
+      <label class="checkbox-label">
+        <div class="checkbox-left">
+          <input type="checkbox" id="controlPanelAddon" onchange="updateCalc()">
+          <div class="custom-check"></div>
+          Korporátní řídicí panel (Systémové statistiky)
+        </div>
+        <div class="menu-price" style="color: var(--text-main);">+ 5 000 Kč</div>
+      </label>
+    </div>
+
+    <!-- Slidery pro kontrolu parametrů -->
     <div class="sliders-section">
       <div class="slider-group">
         <div class="slider-labels">
-          <span>Hloubka & Rozsah kontroly kvality (QA)</span>
-          <span class="val-display" id="qualityValDisplay">100 %</span>
+          <span>Hloubka & Rozsah (QA)</span>
+          <span id="qualityValDisplay">100 %</span>
         </div>
         <input type="range" id="qualitySlider" min="50" max="100" value="100" step="1" oninput="handleQualitySlide()">
       </div>
@@ -357,14 +329,14 @@
       <div class="slider-group" style="margin-bottom: 0;">
         <div class="slider-labels">
           <span>Rozpočet (Priorita vývoje)</span>
-          <span class="val-display" id="priceModDisplay">Standardní</span>
+          <span id="priceModDisplay">Standard</span>
         </div>
         <input type="range" id="priceSlider" min="-50" max="50" value="0" step="1" oninput="handlePriceSlide()">
       </div>
 
       <div class="output-grid">
         <div class="output-box">
-          <div class="output-label">Odhadovaný čas realizace</div>
+          <div class="output-label">Odhadovaný čas (Týdny)</div>
           <div class="time-adjuster">
             <button class="btn-time" onclick="adjustTime(-0.5)">-</button>
             <div class="output-value" id="finalTimeDisplay">5</div>
@@ -372,7 +344,7 @@
           </div>
         </div>
         <div class="output-box">
-          <div class="output-label">Finální projektová investice</div>
+          <div class="output-label">Celková investice</div>
           <div class="output-value" id="finalPriceDisplay">160 000 Kč</div>
         </div>
       </div>
@@ -398,10 +370,10 @@
       if (e.key === 'Enter') checkPassword();
     });
 
-    // Rozbalování menu
+    // Rozbalování položek menu
     function toggleAcc(el) { el.classList.toggle('open'); }
 
-    // Logika výpočtu
+    // Logika výpočtu cen a času
     const pricing = {
       basicModel: 105000,
       complexModel: 185000,
@@ -410,8 +382,8 @@
     };
 
     let activeModel = 'basic';
-    let tension = 0; // Provázanost kvality a ceny (-50 až +50)
-    let manualTimeOffset = 0; // Manuální úprava času z tlačítek
+    let tension = 0;
+    let manualTimeOffset = 0;
 
     function selectModel(modelType) {
       activeModel = modelType;
@@ -422,20 +394,18 @@
       const mathPrice = (modelType === 'basic') ? pricing.basicModel : pricing.complexModel;
       document.getElementById('mathPriceDisplay').textContent = formatCurrency(mathPrice);
       
-      // Reset manuálního času při změně modelu pro čistý výpočet
-      manualTimeOffset = 0; 
+      manualTimeOffset = 0;
       updateCalc();
     }
 
     const qSlider = document.getElementById('qualitySlider');
     const pSlider = document.getElementById('priceSlider');
 
-    // Slidery mění tension a resetují manuální úpravu času
     function handlePriceSlide() {
       tension = parseInt(pSlider.value);
       if (tension < 0) qSlider.value = 100 + tension;
       else qSlider.value = 100;
-      manualTimeOffset = 0; 
+      manualTimeOffset = 0;
       updateCalc();
     }
 
@@ -447,7 +417,6 @@
       updateCalc();
     }
 
-    // Tlačítka pro manuální úpravu času
     function adjustTime(amount) {
       manualTimeOffset += amount;
       updateCalc();
@@ -455,38 +424,42 @@
 
     function updateCalc() {
       let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
-      let baseTime = (activeModel === 'basic') ? 5 : 8; // Základní týdny
+      
+      // Nastavení limitů času podle zvoleného modelu
+      let baseTime = (activeModel === 'basic') ? 5 : 8;
+      let minTime = (activeModel === 'basic') ? 4 : 7;
+      let maxTime = (activeModel === 'basic') ? 8 : 11;
       
       let totalBasePrice = baseMath + pricing.fixedOptions;
       if (document.getElementById('controlPanelAddon').checked) totalBasePrice += pricing.addonPanel;
 
-      // Základní modifikátor ze sliderů
       let priceMultiplier = 1 + (tension / 100); 
       let timeMultiplier = 1 - (tension / 100);
 
       let baseFinalTime = baseTime * timeMultiplier;
-      
-      // Aplikace manuálního posunu času
       let finalTime = baseFinalTime + manualTimeOffset;
-      if (finalTime < 1) { 
-        finalTime = 1; // Minimum 1 týden
-        manualTimeOffset = 1 - baseFinalTime;
+      
+      // Kontrola limitů (min/max týdnů)
+      if (finalTime < minTime) {
+        finalTime = minTime;
+        manualTimeOffset = finalTime - baseFinalTime;
+      }
+      if (finalTime > maxTime) {
+        finalTime = maxTime;
+        manualTimeOffset = finalTime - baseFinalTime;
       }
 
-      // Úprava ceny na základě manuálního zkrácení/prodloužení
+      // Modifikátor ceny podle manuální úpravy času
       let timePriceMod = 1.0;
       if (manualTimeOffset < 0) {
-        // Příplatek za urychlení navíc (15 % za každý ušetřený týden)
-        timePriceMod += Math.abs(manualTimeOffset) * 0.15;
+        timePriceMod += Math.abs(manualTimeOffset) * 0.15; // Příplatek za urychlení
       } else if (manualTimeOffset > 0) {
-        // Mírná sleva za benevolenci v čase (5 % za každý prodloužený týden)
-        timePriceMod -= manualTimeOffset * 0.05;
-        if (timePriceMod < 0.6) timePriceMod = 0.6; // Maximální časová sleva 40 %
+        timePriceMod -= manualTimeOffset * 0.05; // Sleva za prodloužení
+        if (timePriceMod < 0.6) timePriceMod = 0.6;
       }
 
       let finalPrice = totalBasePrice * priceMultiplier * timePriceMod;
       
-      // Zobrazení
       document.getElementById('finalPriceDisplay').textContent = formatCurrency(finalPrice);
       
       let displayTime = finalTime % 1 === 0 ? finalTime : finalTime.toFixed(1);
@@ -495,8 +468,8 @@
       let qVal = (tension < 0) ? (100 + tension) : 100;
       document.getElementById('qualityValDisplay').textContent = qVal + ' %';
       
-      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Standardní';
-      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
+      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Standard';
+      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Rychlejší vývoj';
       else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
     }
 
