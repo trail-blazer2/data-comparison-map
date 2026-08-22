@@ -364,7 +364,7 @@
 
   </div>
 
-  <script>
+    <script>
     // Přihlášení
     function checkPassword() {
       const input = document.getElementById('authPass').value;
@@ -385,7 +385,7 @@
     // Rozbalování položek menu
     function toggleAcc(el) { el.classList.toggle('open'); }
 
-    // Logika výpočtu cen a času
+    // Globální proměnné a nastavení
     const pricing = {
       basicModel: 105000,
       complexModel: 185000,
@@ -393,8 +393,12 @@
     };
 
     let activeModel = 'basic';
-    let tension = 0;
-    let manualTimeOffset = 0;
+    let qualityPct = 100;
+    let currentTime = 5;
+
+    // DOM elementy
+    const qSlider = document.getElementById('qualitySlider');
+    const pSlider = document.getElementById('priceSlider'); // Funguje jako "Speed/Budget" ovladač
 
     function selectModel(modelType) {
       activeModel = modelType;
@@ -405,89 +409,97 @@
       const mathPrice = (modelType === 'basic') ? pricing.basicModel : pricing.complexModel;
       document.getElementById('mathPriceDisplay').textContent = formatCurrency(mathPrice);
       
-      manualTimeOffset = 0;
-      updateCalc();
-    }
-
-    const qSlider = document.getElementById('qualitySlider');
-    const pSlider = document.getElementById('priceSlider');
-
-    function handlePriceSlide() {
-      tension = parseInt(pSlider.value);
-      if (tension < 0) qSlider.value = 100 + tension;
-      else qSlider.value = 100;
-      manualTimeOffset = 0;
+      // Reset na ideální hodnoty při změně modelu
+      currentTime = (activeModel === 'basic') ? 5 : 8;
+      pSlider.value = 0; 
+      
       updateCalc();
     }
 
     function handleQualitySlide() {
-      const qVal = parseInt(qSlider.value);
-      tension = qVal - 100;
-      pSlider.value = tension;
-      manualTimeOffset = 0;
+      qualityPct = parseInt(qSlider.value);
+      updateCalc();
+    }
+
+    function handlePriceSlide() {
+      let val = parseInt(pSlider.value); // Hodnota -100 až 100
+      let baseTime = (activeModel === 'basic') ? 5 : 8;
+      let minTime = (activeModel === 'basic') ? 4 : 7;
+      let maxTime = (activeModel === 'basic') ? 8 : 11;
+
+      if (val < 0) {
+        // Posun doleva = nižší rozpočet = více času
+        let ratio = Math.abs(val) / 100;
+        currentTime = baseTime + (maxTime - baseTime) * ratio;
+      } else {
+        // Posun doprava = vyšší rozpočet = méně času
+        let ratio = val / 100;
+        currentTime = baseTime - (baseTime - minTime) * ratio;
+      }
+      
+      // Zaokrouhlení na půltýdny pro čisté zobrazení
+      currentTime = Math.round(currentTime * 2) / 2;
       updateCalc();
     }
 
     function adjustTime(amount) {
-      manualTimeOffset += amount;
-      updateCalc();
-    }
-
-        function updateCalc() {
-      let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
-      
       let baseTime = (activeModel === 'basic') ? 5 : 8;
       let minTime = (activeModel === 'basic') ? 4 : 7;
       let maxTime = (activeModel === 'basic') ? 8 : 11;
+
+      // Změna času tlačítky
+      currentTime += amount;
+      if (currentTime < minTime) currentTime = minTime;
+      if (currentTime > maxTime) currentTime = maxTime;
+
+      // Automatická vizuální aktualizace Budget slideru podle tlačítek
+      if (currentTime > baseTime) {
+        let ratio = (currentTime - baseTime) / (maxTime - baseTime);
+        pSlider.value = -Math.round(ratio * 100);
+      } else {
+        let ratio = (baseTime - currentTime) / (baseTime - minTime);
+        pSlider.value = Math.round(ratio * 100);
+      }
+
+      updateCalc();
+    }
+
+    function updateCalc() {
+      let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
+      let baseTime = (activeModel === 'basic') ? 5 : 8;
       
       let totalBasePrice = baseMath + pricing.fixedOptions;
       
-      // Započítání zaškrtnutých add-onů
       const addons = document.querySelectorAll('input[type="checkbox"]');
       addons.forEach(addon => {
         if(addon.checked) totalBasePrice += parseInt(addon.getAttribute('data-price'));
       });
 
-      // 1. Výpočet času pouze na základě posuvníků (tension)
-      let sliderTimeMultiplier = 1 - (tension / 100);
-      let sliderTime = baseTime * sliderTimeMultiplier;
+      // 1. Časový modifikátor: Pokud je aktuální čas nižší než základní, cena roste proporčně.
+      let timeModifier = baseTime / currentTime;
 
-      // 2. Přidání manuální úpravy času z tlačítek (+/-)
-      let finalTime = sliderTime + manualTimeOffset;
+      // 2. Modifikátor kvality: Zcela odděleno od času. 
+      // 100% kvalita = 1.0 (žádná sleva). 50% kvalita ušetří 25% budgetu.
+      let qualityModifier = 0.5 + (qualityPct / 200);
+
+      // Finální matematický výpočet
+      let finalPrice = totalBasePrice * timeModifier * qualityModifier;
       
-      // 3. Pevné uzamčení limitů (min/max týdnů)
-      if (finalTime < minTime) {
-        finalTime = minTime;
-        manualTimeOffset = finalTime - sliderTime; // Zabrání "překlikání" do prázdna
-      }
-      if (finalTime > maxTime) {
-        finalTime = maxTime;
-        manualTimeOffset = finalTime - sliderTime;
-      }
-
-      // 4. SJEDNOCENÁ LOGIKA: Cena se počítá čistě z výsledného poměru času.
-      // Posuvník i tlačítka nyní dělají matematicky naprosto to samé.
-      let effectiveTimeRatio = finalTime / baseTime;
-      let priceMultiplier = 2 - effectiveTimeRatio; 
-
-      let finalPrice = totalBasePrice * priceMultiplier;
-      
+      // Aktualizace rozhraní
       document.getElementById('finalPriceDisplay').textContent = formatCurrency(finalPrice);
       
-      let displayTime = finalTime % 1 === 0 ? finalTime : finalTime.toFixed(1);
+      let displayTime = currentTime % 1 === 0 ? currentTime : currentTime.toFixed(1);
       document.getElementById('finalTimeDisplay').textContent = displayTime;
       
-      let qVal = (tension < 0) ? (100 + tension) : 100;
-      document.getElementById('qualityValDisplay').textContent = qVal + ' %';
+      document.getElementById('qualityValDisplay').textContent = qualityPct + ' %';
       
-      if (tension === 0 && manualTimeOffset === 0) document.getElementById('priceModDisplay').textContent = 'Ideální';
-      else if (finalTime < baseTime) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
+      if (pSlider.value == 0) document.getElementById('priceModDisplay').textContent = 'Ideální';
+      else if (pSlider.value > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
       else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
     }
 
-
     function formatCurrency(num) {
-    return Math.round(num / 1000).toLocaleString('cs-CZ') + ' tis. Kč';
+      return Math.round(num / 1000).toLocaleString('cs-CZ') + ' tis. Kč';
     }
 
     // Inicializace
