@@ -433,7 +433,7 @@
       updateCalc();
     }
 
-    function updateCalc() {
+        function updateCalc() {
       let baseMath = (activeModel === 'basic') ? pricing.basicModel : pricing.complexModel;
       
       let baseTime = (activeModel === 'basic') ? 5 : 8;
@@ -448,52 +448,43 @@
         if(addon.checked) totalBasePrice += parseInt(addon.getAttribute('data-price'));
       });
 
-      // Zastropování vlivu slideru na cenu, pokud narazíme na minimální čas
-      let maxPositiveTension = 100 * (1 - (minTime / baseTime)); 
-      let effectiveTension = tension;
-      
-      if (effectiveTension > maxPositiveTension) {
-          effectiveTension = maxPositiveTension; // Zastaví růst ceny, pokud je čas na minimu
-      }
+      // 1. Výpočet času pouze na základě posuvníků (tension)
+      let sliderTimeMultiplier = 1 - (tension / 100);
+      let sliderTime = baseTime * sliderTimeMultiplier;
 
-      let priceMultiplier = 1 + (effectiveTension / 100); 
-      let timeMultiplier = 1 - (effectiveTension / 100);
-
-      let baseFinalTime = baseTime * timeMultiplier;
-      let finalTime = baseFinalTime + manualTimeOffset;
+      // 2. Přidání manuální úpravy času z tlačítek (+/-)
+      let finalTime = sliderTime + manualTimeOffset;
       
+      // 3. Pevné uzamčení limitů (min/max týdnů)
       if (finalTime < minTime) {
         finalTime = minTime;
-        manualTimeOffset = finalTime - baseFinalTime;
+        manualTimeOffset = finalTime - sliderTime; // Zabrání "překlikání" do prázdna
       }
       if (finalTime > maxTime) {
         finalTime = maxTime;
-        manualTimeOffset = finalTime - baseFinalTime;
+        manualTimeOffset = finalTime - sliderTime;
       }
 
-      // Manuální úprava ceny přes tlačítka času (+/-)
-      let timePriceMod = 1.0;
-      if (manualTimeOffset < 0) {
-        timePriceMod += Math.abs(manualTimeOffset) * 0.15;
-      } else if (manualTimeOffset > 0) {
-        timePriceMod -= manualTimeOffset * 0.05;
-        if (timePriceMod < 0.6) timePriceMod = 0.6;
-      }
+      // 4. SJEDNOCENÁ LOGIKA: Cena se počítá čistě z výsledného poměru času.
+      // Posuvník i tlačítka nyní dělají matematicky naprosto to samé.
+      let effectiveTimeRatio = finalTime / baseTime;
+      let priceMultiplier = 2 - effectiveTimeRatio; 
 
-      let finalPrice = totalBasePrice * priceMultiplier * timePriceMod;
+      let finalPrice = totalBasePrice * priceMultiplier;
       
       document.getElementById('finalPriceDisplay').textContent = formatCurrency(finalPrice);
       
-      let displayTime= finalTime % 1 === 0 ? finalTime : finalTime.toFixed(1);
+      let displayTime = finalTime % 1 === 0 ? finalTime : finalTime.toFixed(1);
       document.getElementById('finalTimeDisplay').textContent = displayTime;
       
       let qVal = (tension < 0) ? (100 + tension) : 100;
       document.getElementById('qualityValDisplay').textContent = qVal + ' %';
       
-      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Ideální';
-      else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
+      if (tension === 0 && manualTimeOffset === 0) document.getElementById('priceModDisplay').textContent = 'Ideální';
+      else if (finalTime < baseTime) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
       else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
     }
+
 
     function formatCurrency(num) {
     return Math.round(num / 1000).toLocaleString('cs-CZ') + ' tis. Kč';
