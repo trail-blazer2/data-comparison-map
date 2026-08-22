@@ -8,7 +8,7 @@
   <!-- Elegantní fonty -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -18,8 +18,8 @@
       --line-color: #e5e5e5;
       --accent: #000000;
       
-      --font-heading: 'Cormorant Garamond', serif;
-      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Nunito', sans-serif;
     }
 
     body {
@@ -68,7 +68,7 @@
 
     header { text-align: center; margin-bottom: 60px; }
     .main-logo { max-height: 45px; margin-bottom: 30px; }
-    h1 { font-family: var(--font-heading); font-size: 2.2rem; font-weight: 500; margin: 0 0 12px; }
+    h1 { font-family: var(--font-heading); font-size: 2rem; font-weight: 500; margin: 0 0 12px; }
     .subtitle { color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
 
     /* Výběr modelů (Checklisty) */
@@ -320,6 +320,17 @@
     <div class="checkbox-item" style="border-top: none;">
       <label class="checkbox-label">
         <div class="checkbox-left">
+          <input type="checkbox" id="apiEndpointAddon" onchange="updateCalc()" data-price="10000">
+          <div class="custom-check"></div>
+          API Endpoint & Datový Export (JSON/CSV)
+        </div>
+        <div class="menu-price" style="color: var(--text-main);">+ 10 000 Kč</div>
+      </label>
+    </div>
+
+    <div class="checkbox-item" style="border-top: none;">
+      <label class="checkbox-label">
+        <div class="checkbox-left">
           <input type="checkbox" id="alertingAddon" onchange="updateCalc()" data-price="8000">
           <div class="custom-check"></div>
           Geografický makro-alerting systém
@@ -490,7 +501,7 @@
       let qVal = (tension < 0) ? (100 + tension) : 100;
       document.getElementById('qualityValDisplay').textContent = qVal + ' %';
       
-      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Střed';
+      if (tension === 0) document.getElementById('priceModDisplay').textContent = 'Ideální';
       else if (tension > 0) document.getElementById('priceModDisplay').textContent = 'Zrychlený vývoj';
       else document.getElementById('priceModDisplay').textContent = 'Nižší rozpočet';
     }
