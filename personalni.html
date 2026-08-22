@@ -364,7 +364,7 @@
 
   </div>
 
-    <script>
+      <script>
     // Přihlášení
     function checkPassword() {
       const input = document.getElementById('authPass').value;
@@ -475,12 +475,14 @@
         if(addon.checked) totalBasePrice += parseInt(addon.getAttribute('data-price'));
       });
 
-      // 1. Časový modifikátor: Pokud je aktuální čas nižší než základní, cena roste proporčně.
-      let timeModifier = baseTime / currentTime;
+      // 1. Časový modifikátor (zjemněn o 40 %)
+      // Přímá úměra (baseTime / currentTime) je příliš brutální. Aplikujeme jen 60 % tohoto efektu.
+      let rawTimeRatio = baseTime / currentTime;
+      let timeModifier = 1.0 + ((rawTimeRatio - 1.0) * 0.6);
 
-      // 2. Modifikátor kvality: Zcela odděleno od času. 
-      // 100% kvalita = 1.0 (žádná sleva). 50% kvalita ušetří 25% budgetu.
-      let qualityModifier = 0.5 + (qualityPct / 200);
+      // 2. Modifikátor kvality (zjemněn o 30 %)
+      // Snížení kvality na 50% nyní aplikuje maximální slevu 17.5% (místo původních 25%).
+      let qualityModifier = 1.0 - ((100 - qualityPct) * 0.0035);
 
       // Finální matematický výpočet
       let finalPrice = totalBasePrice * timeModifier * qualityModifier;
