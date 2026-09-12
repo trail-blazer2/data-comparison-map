@@ -3,71 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RWV Phase 1 Control</title>
+    <title>RWV Phase 1 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: system-ui, sans-serif; background: #111; color: #fff; padding: 2rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #333; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; font-size: 0.9rem; }
         th { color: #888; background: #151515; }
-        .regime-1 { color: #a1a1aa; } /* Normal */
-        .regime-2 { color: #4ade80; } /* Growth */
-        .regime-3 { color: #fb923c; } /* Deficit */
-        .regime-4 { color: #f87171; } /* Crisis */
-        .target { color: #60a5fa; font-weight: bold; }
+        .chart-container { background: #1e1e1e; padding: 1rem; border-radius: 8px; }
+        select { background: #333; color: #fff; padding: 8px; border: none; border-radius: 4px; margin-bottom: 1rem; width: 100%; }
     </style>
 </head>
 <body>
     <h2>Realworldview Target Engine</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Commodity</th>
-                <th>Spot Price</th>
-                <th>Target Price</th>
-                <th>Econ Activity (A)</th>
-                <th>Deficit Index (D)</th>
-                <th>Systemic Risk (R)</th>
-                <th>Regime (Z)</th>
-            </tr>
-        </thead>
-        <tbody id="data-body">
-            <tr><td colspan="7">Waking Modal server and calculating matrix...</td></tr>
-        </tbody>
-    </table>
+    <div class="grid">
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Spot</th>
+                        <th>Target</th>
+                        <th>Regime</th>
+                    </tr>
+                </thead>
+                <tbody id="data-body">
+                    <tr><td colspan="4">Loading matrix...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="chart-container">
+            <select id="commodity-select" onchange="updateChart()"></select>
+            <canvas id="projectionChart"></canvas>
+        </div>
+    </div>
 
     <script>
         const MODAL_URL = "https://ivanmazurov--rwv-phase-1-predict-dev.modal.run";
+        let engineData = {};
+        let chartInstance = null;
 
         async function loadData() {
             try {
                 const response = await fetch(MODAL_URL);
                 const json = await response.json();
+                engineData = json.data;
                 
                 let rows = "";
-                for (const [commodity, data] of Object.entries(json.data)) {
-                    // Regime names based on Z value
-                    let regimeName = "";
-                    if (data.market_regime_Z === 1) regimeName = "1 (Normal)";
-                    if (data.market_regime_Z === 2) regimeName = "2 (Growth)";
-                    if (data.market_regime_Z === 3) regimeName = "3 (Deficit)";
-                    if (data.market_regime_Z === 4) regimeName = "4 (Crisis)";
-                    
-                    rows += `
-                        <tr>
-                            <td><strong>${commodity}</strong></td>
-                            <td>$${data.spot_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                            <td class="target">$${data.target_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                            <td>${data.economic_activity_A}</td>
-                            <td>${data.deficit_index_D}</td>
-                            <td>${data.systemic_risk_R}</td>
-                            <td class="regime-${data.market_regime_Z}">${regimeName}</td>
-                        </tr>
-                    `;
+                let options = "";
+                
+                for (const [commodity, data] of Object.entries(engineData)) {
+                    rows += `<tr>
+                        <td><strong>${commodity}</strong></td>
+                        <td>$${data.spot_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td style="color:#60a5fa">$${data.target_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td>Z${data.market_regime_Z}</td>
+                    </tr>`;
+                    options += `<option value="${commodity}">${commodity}</option>`;
                 }
+                
                 document.getElementById("data-body").innerHTML = rows;
+                document.getElementById("commodity-select").innerHTML = options;
+                
+                initChart();
             } catch (error) {
-                document.getElementById("data-body").innerHTML = `<tr><td colspan="7" style="color: #f87171;">Error: Server unreachable.</td></tr>`;
+                document.getElementById("data-body").innerHTML = `<tr><td colspan="4" style="color: #f87171;">Server unreachable.</td></tr>`;
             }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Projected Price', data: [], borderColor: '#60a5fa', tension: 0.4 }] },
+                options: { responsive: true, scales: { x: { title: { display: true, text: 'Days Out' } }, y: { title: { display: true, text: 'Price' } } } }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            const selected = document.getElementById("commodity-select").value;
+            const curve = engineData[selected].projection_curve;
+            
+            chartInstance.data.labels = curve.map(point => `Day ${point.day}`);
+            chartInstance.data.datasets[0].data = curve.map(point => point.price);
+            chartInstance.data.datasets[0].label = `${selected} Projection`;
+            chartInstance.update();
         }
         
         loadData();
