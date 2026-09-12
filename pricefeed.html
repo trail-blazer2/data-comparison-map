@@ -3,96 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RWV Phase 1 Dashboard</title>
+    <title>RWV Engine - Unabridged Phase 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: system-ui, sans-serif; background: #111; color: #fff; padding: 2rem; }
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
-        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; font-size: 0.9rem; }
-        th { color: #888; background: #151515; }
-        .chart-container { background: #1e1e1e; padding: 1rem; border-radius: 8px; }
-        select { background: #333; color: #fff; padding: 8px; border: none; border-radius: 4px; margin-bottom: 1rem; width: 100%; }
-    </style>
 </head>
-<body>
-    <h2>Realworldview Target Engine</h2>
-    <div class="grid">
-        <div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Asset</th>
-                        <th>Spot</th>
-                        <th>Target</th>
-                        <th>Regime</th>
-                    </tr>
-                </thead>
-                <tbody id="data-body">
-                    <tr><td colspan="4">Loading matrix...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="chart-container">
-            <select id="commodity-select" onchange="updateChart()"></select>
-            <canvas id="projectionChart"></canvas>
+<body class="bg-gray-900 text-gray-100 p-8 font-sans">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-blue-400 mb-2">Realworldview (RWV) Prediction Engine</h1>
+        <p class="text-gray-400 mb-8">Phase 1: Full Unabridged SDE Monte Carlo & Regime Synthesis</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-lg">
+                <label class="block text-sm font-semibold text-gray-300 mb-2">Select Commodity</label>
+                <select id="assetSelect" class="w-full bg-gray-900 border border-gray-600 text-white rounded p-2 mb-8 outline-none">
+                    <option>Loading Backend Equations...</option>
+                </select>
+                
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Model State Vector</h3>
+                <div id="metrics" class="space-y-4">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-lg md:col-span-3">
+                <h2 class="text-xl font-bold text-white mb-4">27-Step Extrapolation ($\widehat P_{i,t}^{fut}(T_\ell)$)</h2>
+                <div class="relative h-96 w-full">
+                    <canvas id="rwvChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const MODAL_URL = "https://ivanmazurov--rwv-phase-1-predict-dev.modal.run";
-        let engineData = {};
-        let chartInstance = null;
+        // --> IMPORTANT: PASTE YOUR MODAL URL HERE <--
+        const API_URL = "https://YOUR_MODAL_WORKSPACE_NAME--rwv-unabridged-engine-fastapi-app.modal.run/api/v1/predict";
+        
+        let globalData = {};
+        let chartObj = null;
 
-        async function loadData() {
+        async function boot() {
             try {
-                const response = await fetch(MODAL_URL);
-                const json = await response.json();
-                engineData = json.data;
+                const res = await fetch(API_URL);
+                const json = await res.json();
+                globalData = json.data;
                 
-                let rows = "";
-                let options = "";
+                const select = document.getElementById('assetSelect');
+                select.innerHTML = "";
+                Object.keys(globalData).forEach(sym => {
+                    select.innerHTML += `<option value="${sym}">${sym}</option>`;
+                });
                 
-                for (const [commodity, data] of Object.entries(engineData)) {
-                    rows += `<tr>
-                        <td><strong>${commodity}</strong></td>
-                        <td>$${data.spot_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                        <td style="color:#60a5fa">$${data.target_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                        <td>Z${data.market_regime_Z}</td>
-                    </tr>`;
-                    options += `<option value="${commodity}">${commodity}</option>`;
-                }
-                
-                document.getElementById("data-body").innerHTML = rows;
-                document.getElementById("commodity-select").innerHTML = options;
-                
-                initChart();
-            } catch (error) {
-                document.getElementById("data-body").innerHTML = `<tr><td colspan="4" style="color: #f87171;">Server unreachable.</td></tr>`;
+                select.addEventListener('change', (e) => updateUI(e.target.value));
+                updateUI(Object.keys(globalData)[0]);
+            } catch(e) {
+                document.getElementById('assetSelect').innerHTML = `<option>API Connection Error</option>`;
+                console.error(e);
             }
         }
 
-        function initChart() {
-            const ctx = document.getElementById('projectionChart').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'Projected Price', data: [], borderColor: '#60a5fa', tension: 0.4 }] },
-                options: { responsive: true, scales: { x: { title: { display: true, text: 'Days Out' } }, y: { title: { display: true, text: 'Price' } } } }
-            });
-            updateChart();
-        }
-
-        function updateChart() {
-            const selected = document.getElementById("commodity-select").value;
-            const curve = engineData[selected].projection_curve;
+        function updateUI(symbol) {
+            const d = globalData[symbol];
             
-            chartInstance.data.labels = curve.map(point => `Day ${point.day}`);
-            chartInstance.data.datasets[0].data = curve.map(point => point.price);
-            chartInstance.data.datasets[0].label = `${selected} Projection`;
-            chartInstance.update();
+            // Render Metrics mapping to A_t, D_t, R_t
+            document.getElementById('metrics').innerHTML = `
+                <div><span class="text-gray-400 text-xs block">Spot Price ($P_t$)</span><span class="text-green-400 font-mono text-lg">$${d.spot.toFixed(2)}</span></div>
+                <div><span class="text-gray-400 text-xs block">Econ Activity ($A_{i,t}$)</span><span class="text-blue-300 font-mono text-lg">${d.A_index}</span></div>
+                <div><span class="text-gray-400 text-xs block">Deficit Index ($D_{i,t}$)</span><span class="text-red-300 font-mono text-lg">${d.D_index}</span></div>
+                <div><span class="text-gray-400 text-xs block">Systemic Risk ($R_t$)</span><span class="text-purple-300 font-mono text-lg">${d.R_index}</span></div>
+            `;
+            
+            // Chart rendering
+            const ctx = document.getElementById('rwvChart').getContext('2d');
+            if(chartObj) chartObj.destroy();
+            
+            chartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: d.dates,
+                    datasets: [{
+                        label: `Final Integrated Prediction (\u03B1 weighted)`,
+                        data: d.forecast,
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
         }
-        
-        loadData();
+        boot();
     </script>
 </body>
 </html>
