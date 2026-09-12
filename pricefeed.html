@@ -9,25 +9,29 @@
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
         th, td { padding: 16px; text-align: left; border-bottom: 1px solid #333; }
         th { color: #888; background: #151515; }
-        .positive { color: #4ade80; }
-        .negative { color: #f87171; }
-        .neutral { color: #94a3b8; }
+        .regime-1 { color: #a1a1aa; } /* Normal */
+        .regime-2 { color: #4ade80; } /* Growth */
+        .regime-3 { color: #fb923c; } /* Deficit */
+        .regime-4 { color: #f87171; } /* Crisis */
+        .target { color: #60a5fa; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>Realworldview Data Feed</h2>
+    <h2>Realworldview Target Engine</h2>
     <table>
         <thead>
             <tr>
                 <th>Commodity</th>
                 <th>Spot Price</th>
-                <th>Volatility (τ)</th>
-                <th>Economic Activity (A)</th>
+                <th>Target Price</th>
+                <th>Econ Activity (A)</th>
                 <th>Deficit Index (D)</th>
+                <th>Systemic Risk (R)</th>
+                <th>Regime (Z)</th>
             </tr>
         </thead>
         <tbody id="data-body">
-            <tr><td colspan="5">Loading Modal backend...</td></tr>
+            <tr><td colspan="7">Waking Modal server and calculating matrix...</td></tr>
         </tbody>
     </table>
 
@@ -41,21 +45,28 @@
                 
                 let rows = "";
                 for (const [commodity, data] of Object.entries(json.data)) {
-                    const tauColor = data.tau_normalized >= 0 ? "positive" : "negative";
+                    // Regime names based on Z value
+                    let regimeName = "";
+                    if (data.market_regime_Z === 1) regimeName = "1 (Normal)";
+                    if (data.market_regime_Z === 2) regimeName = "2 (Growth)";
+                    if (data.market_regime_Z === 3) regimeName = "3 (Deficit)";
+                    if (data.market_regime_Z === 4) regimeName = "4 (Crisis)";
                     
                     rows += `
                         <tr>
                             <td><strong>${commodity}</strong></td>
                             <td>$${data.spot_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                            <td class="${tauColor}">${data.tau_normalized}</td>
-                            <td class="neutral">${data.economic_activity_A}</td>
-                            <td class="neutral">${data.deficit_index_D}</td>
+                            <td class="target">$${data.target_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            <td>${data.economic_activity_A}</td>
+                            <td>${data.deficit_index_D}</td>
+                            <td>${data.systemic_risk_R}</td>
+                            <td class="regime-${data.market_regime_Z}">${regimeName}</td>
                         </tr>
                     `;
                 }
                 document.getElementById("data-body").innerHTML = rows;
             } catch (error) {
-                document.getElementById("data-body").innerHTML = `<tr><td colspan="5" class="negative">Error loading data. Ensure the Modal terminal is serving.</td></tr>`;
+                document.getElementById("data-body").innerHTML = `<tr><td colspan="7" style="color: #f87171;">Error: Server unreachable.</td></tr>`;
             }
         }
         
