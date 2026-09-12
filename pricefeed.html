@@ -11,6 +11,7 @@
         th { color: #888; background: #151515; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
+        .neutral { color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -20,16 +21,17 @@
             <tr>
                 <th>Commodity</th>
                 <th>Spot Price</th>
-                <th>Normalized Volatility (τ)</th>
+                <th>Volatility (τ)</th>
+                <th>Economic Activity (A)</th>
+                <th>Deficit Index (D)</th>
             </tr>
         </thead>
         <tbody id="data-body">
-            <tr><td colspan="3">Loading Modal backend...</td></tr>
+            <tr><td colspan="5">Loading Modal backend...</td></tr>
         </tbody>
     </table>
 
     <script>
-        // Your active Modal development URL
         const MODAL_URL = "https://ivanmazurov--rwv-phase-1-predict-dev.modal.run";
 
         async function loadData() {
@@ -39,7 +41,6 @@
                 
                 let rows = "";
                 for (const [commodity, data] of Object.entries(json.data)) {
-                    // Make positive values green, negative values red
                     const tauColor = data.tau_normalized >= 0 ? "positive" : "negative";
                     
                     rows += `
@@ -47,13 +48,14 @@
                             <td><strong>${commodity}</strong></td>
                             <td>$${data.spot_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                             <td class="${tauColor}">${data.tau_normalized}</td>
+                            <td class="neutral">${data.economic_activity_A}</td>
+                            <td class="neutral">${data.deficit_index_D}</td>
                         </tr>
                     `;
                 }
-                // Inject the rows into the HTML table
                 document.getElementById("data-body").innerHTML = rows;
             } catch (error) {
-                document.getElementById("data-body").innerHTML = `<tr><td colspan="3" class="negative">Error loading data. Ensure the Modal terminal is still serving.</td></tr>`;
+                document.getElementById("data-body").innerHTML = `<tr><td colspan="5" class="negative">Error loading data. Ensure the Modal terminal is serving.</td></tr>`;
             }
         }
         
