@@ -21,17 +21,17 @@
                         }
                     },
                     animation: {
-                        'flow': 'flowData 2s linear infinite',
                         'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'data-flow': 'dataFlow 1.5s linear infinite',
                     },
                     keyframes: {
-                        flowData: {
-                            '0%': { strokeDashoffset: '100' },
-                            '100%': { strokeDashoffset: '0' },
-                        },
                         pulseGlow: {
                             '0%, 100%': { boxShadow: '0 0 15px rgba(198,243,79,0.1)' },
                             '50%': { boxShadow: '0 0 25px rgba(198,243,79,0.4)' },
+                        },
+                        dataFlow: {
+                            '0%': { strokeDashoffset: '20' },
+                            '100%': { strokeDashoffset: '0' },
                         }
                     }
                 }
@@ -39,15 +39,6 @@
         }
     </script>
     
-    <!-- MathJax for rendering LaTeX formulas dynamically -->
-    <script>
-        MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            startup: { typeset: false } // We will trigger it manually in React
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -58,7 +49,7 @@
     
     <style>
         /* Sleek custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0B1011; }
         ::-webkit-scrollbar-thumb { background: #232E30; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3a4a4d; }
@@ -72,17 +63,31 @@
             background: #C6F34F;
             cursor: pointer; margin-top: -5px;
             box-shadow: 0 0 10px rgba(198, 243, 79, 0.4);
+            transition: transform 0.1s ease;
         }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 4px;
             cursor: pointer; background: #232E30; border-radius: 2px;
         }
 
-        /* Flowing Path Animation for Diagram */
-        .path-line {
-            stroke-dasharray: 10;
-            animation: flowData 1s linear infinite;
+        /* SVG Diagram specific styles */
+        .svg-node { transition: all 0.5s ease; }
+        .svg-path { 
+            transition: stroke 0.5s ease, stroke-opacity 0.5s ease;
+            stroke-dasharray: 8 4;
         }
+        .path-active {
+            stroke: #C6F34F !important;
+            stroke-opacity: 0.8 !important;
+            animation: dataFlow 0.8s linear infinite;
+        }
+        .node-active {
+            fill: #151E20 !important;
+            stroke: #C6F34F !important;
+            filter: drop-shadow(0 0 10px rgba(198,243,79,0.3));
+        }
+        .node-text-active { fill: #C6F34F !important; }
     </style>
 </head>
 <body class="bg-rwv-bg text-gray-200 min-h-screen font-sans selection:bg-rwv-lime selection:text-rwv-bg overflow-hidden">
@@ -94,7 +99,7 @@
         const API_BASE = "https://ivanmazurov--rwv-engine-production-fastapi-app.modal.run"; 
         const COMMODITIES = ["Gold", "Gas", "Brent", "Copper", "Palladium", "Platinum", "Cocoa", "Silver"];
 
-        // Custom Chart.js Plugin for 2-Axis Glowing Crosshair
+        // Custom Chart.js Plugin for 2-Axis Glowing Crosshair with Fade
         const crosshairGlowPlugin = {
             id: 'crosshairGlow',
             afterDraw: (chart) => {
@@ -110,267 +115,288 @@
 
                     ctx.save();
                     
-                    // Draw glowing intersecting lines
+                    // Create fading gradient for X-axis (Vertical line)
+                    const gradY = ctx.createLinearGradient(0, topY, 0, bottomY);
+                    gradY.addColorStop(0, 'rgba(198, 243, 79, 0)');
+                    gradY.addColorStop(Math.max(0, Math.min(1, (y - topY) / (bottomY - topY))), 'rgba(198, 243, 79, 0.6)');
+                    gradY.addColorStop(1, 'rgba(198, 243, 79, 0)');
+
+                    // Create fading gradient for Y-axis (Horizontal line)
+                    const gradX = ctx.createLinearGradient(leftX, 0, rightX, 0);
+                    gradX.addColorStop(0, 'rgba(198, 243, 79, 0)');
+                    gradX.addColorStop(Math.max(0, Math.min(1, (x - leftX) / (rightX - leftX))), 'rgba(198, 243, 79, 0.6)');
+                    gradX.addColorStop(1, 'rgba(198, 243, 79, 0)');
+
+                    // Draw Crosshairs
                     ctx.beginPath();
-                    ctx.moveTo(x, topY);
-                    ctx.lineTo(x, bottomY);
-                    ctx.moveTo(leftX, y);
-                    ctx.lineTo(rightX, y);
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = 'rgba(198, 243, 79, 0.5)';
-                    ctx.shadowColor = 'rgba(198, 243, 79, 0.9)';
-                    ctx.shadowBlur = 15;
+                    ctx.moveTo(x, topY); ctx.lineTo(x, bottomY);
+                    ctx.strokeStyle = gradY; ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(leftX, y); ctx.lineTo(rightX, y);
+                    ctx.strokeStyle = gradX; ctx.lineWidth = 1;
                     ctx.stroke();
                     
-                    // Draw exact point hollow circle
+                    // Draw massive glowing point
                     ctx.beginPath();
                     ctx.arc(x, y, 6, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#0B1011';
+                    ctx.fillStyle = '#C6F34F'; // Solid inner core
                     ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = '#C6F34F';
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = 'rgba(198, 243, 79, 0.2)'; // Outer halo
+                    ctx.shadowColor = '#C6F34F';
+                    ctx.shadowBlur = 20; // Massive glow
                     ctx.stroke();
 
                     ctx.restore();
                 }
             }
         };
-
-        // Register custom plugin
         Chart.register(crosshairGlowPlugin);
 
         // --- DASHBOARD CHART COMPONENT ---
         function ProjectionChart({ data, commodity, isSimulating }) {
             const canvasRef = useRef(null);
-            const chartRef = useRef(null);
+            const chartInstanceRef = useRef(null);
 
+            // Initialize or smoothly update the chart
             useEffect(() => {
                 if (!canvasRef.current || !data || data.length === 0) return;
-                
-                const ctx = canvasRef.current.getContext('2d');
-                if (chartRef.current) chartRef.current.destroy();
 
                 const labels = data.map(d => `+${d.day}d`);
                 const prices = data.map(d => d.price);
 
-                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(198, 243, 79, 0.3)'); 
-                gradient.addColorStop(1, 'rgba(198, 243, 79, 0)');
+                if (!chartInstanceRef.current) {
+                    // 1. Initial Chart Creation
+                    const ctx = canvasRef.current.getContext('2d');
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(198, 243, 79, 0.3)'); 
+                    gradient.addColorStop(1, 'rgba(198, 243, 79, 0)');
 
-                chartRef.current = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: `${commodity} Forecast`,
-                            data: prices,
-                            borderColor: '#C6F34F',
-                            backgroundColor: gradient,
-                            borderWidth: 2,
-                            tension: 0.4, 
-                            pointRadius: 0, 
-                            pointHoverRadius: 0, 
-                            fill: true,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: { duration: 400 },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index',
+                    chartInstanceRef.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: `${commodity} Forecast`,
+                                data: prices,
+                                borderColor: '#C6F34F',
+                                backgroundColor: gradient,
+                                borderWidth: 2,
+                                tension: 0.4, 
+                                pointRadius: 0, 
+                                pointHoverRadius: 0, // Handled by custom plugin
+                                fill: true,
+                            }]
                         },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#151E20',
-                                titleColor: '#6B8286',
-                                bodyColor: '#C6F34F',
-                                borderColor: '#232E30',
-                                borderWidth: 1,
-                                padding: 12,
-                                displayColors: false
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 600, easing: 'easeOutQuart' },
+                            interaction: { intersect: false, mode: 'index' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#151E20', titleColor: '#6B8286',
+                                    bodyColor: '#C6F34F', borderColor: '#232E30',
+                                    borderWidth: 1, padding: 12, displayColors: false,
+                                    animation: { duration: 150 } // Smooth tooltip tracking
+                                }
+                            },
+                            scales: {
+                                x: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { display: false } },
+                                y: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { color: '#232E30', borderDash: [5, 5], drawBorder: false } }
                             }
-                        },
-                        scales: {
-                            x: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { display: false } },
-                            y: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { color: '#232E30', borderDash: [5, 5], drawBorder: false } }
                         }
-                    }
-                });
-
-                return () => { if (chartRef.current) chartRef.current.destroy(); }
+                    });
+                } else {
+                    // 2. Smooth update (morphs existing points to new points)
+                    chartInstanceRef.current.data.labels = labels;
+                    chartInstanceRef.current.data.datasets[0].data = prices;
+                    chartInstanceRef.current.update(); // Triggers the smooth snake-like glide
+                }
             }, [data, commodity]);
+
+            // Cleanup on unmount only
+            useEffect(() => {
+                return () => {
+                    if (chartInstanceRef.current) chartInstanceRef.current.destroy();
+                }
+            }, []);
 
             return (
                 <div className="relative w-full h-[500px] bg-rwv-panel p-6 rounded-2xl border border-rwv-border shadow-2xl flex-1 flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex justify-between items-center mb-4 z-10">
                         <h3 className="text-lg font-bold text-white tracking-wide">Monte Carlo Trajectory</h3>
-                        <span className="text-xs text-rwv-textMuted flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-rwv-lime shadow-[0_0_8px_#C6F34F]"></div>
-                            Live Simulation
-                        </span>
+                        
+                        {/* Sleek inline loading indicator instead of overlay */}
+                        <div className="h-6 flex items-center">
+                            {isSimulating ? (
+                                <span className="text-rwv-lime font-mono text-xs font-bold animate-pulse tracking-widest border border-rwv-lime/30 bg-rwv-lime/10 px-3 py-1 rounded-md shadow-[0_0_10px_rgba(198,243,79,0.2)]">
+                                    [ RECALCULATING ]
+                                </span>
+                            ) : (
+                                <span className="text-xs text-rwv-textMuted flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-rwv-lime shadow-[0_0_8px_#C6F34F]"></div>
+                                    Synchronized
+                                </span>
+                            )}
+                        </div>
                     </div>
                     
                     <div className="relative flex-1 w-full">
-                        {isSimulating && (
-                            <div className="absolute inset-0 bg-rwv-panel/70 backdrop-blur-sm flex items-center justify-center rounded-xl z-10 transition-opacity">
-                                <span className="text-rwv-lime font-mono text-sm animate-pulse tracking-widest border border-rwv-lime/30 px-4 py-2 rounded-full">
-                                    RECALCULATING SDE...
-                                </span>
-                            </div>
-                        )}
                         <canvas ref={canvasRef}></canvas>
                     </div>
                 </div>
             );
         }
 
-        // --- MATH ENGINE SIMULATION DIAGRAM COMPONENT ---
+        // --- MATH ENGINE SVG SIMULATION DIAGRAM ---
         function MathSimulationTab() {
-            const [isPlaying, setIsPlaying] = useState(false);
-            const [currentStep, setCurrentStep] = useState(0);
-            const [logs, setLogs] = useState(["[SYSTEM] Initializing Mathematical Pipeline..."]);
-            const containerRef = useRef(null);
-
-            // The pipeline definitions heavily citing the provided document
-            const pipeline = [
-                {
-                    id: 1,
-                    title: "Index Normalization",
-                    desc: "Ingesting raw metrics into centered indices.",
-                    formula: "$$ D_{i,t} = 1 - \\exp\\left[-\\frac{\\Lambda_{D,i,t}}{1 + \\psi_i B_{i,t}}\\right] $$", //[cite: 4]
-                    log: "[ENGINE] Calculating Deficit Index (D_it). Applying Market Adaptability buffer (B_it)."
-                },
-                {
-                    id: 2,
-                    title: "Regime Probability",
-                    desc: "Calculating Structural Market States (1-4).",
-                    formula: "$$ \\pi_{k,t} = \\frac{f_k(\\mathbf{y}_t) \\pi_{k,t}^-}{\\sum_\\ell f_\\ell(\\mathbf{y}_t) \\pi_{\\ell,t}^-} $$", //[cite: 4]
-                    log: "[ENGINE] Transition Probability applied. Identifying normal vs deficit state."
-                },
-                {
-                    id: 3,
-                    title: "Base Target Assembly",
-                    desc: "Assembling long-term equilibrium price logarithm.",
-                    formula: "$$ M_{i,t} = \\sum_{k=1}^K \\pi_{k,t} M^{(k)}_{i,t} $$", //[cite: 4]
-                    log: "[ENGINE] Centering indices (MADR). Assembling Target Price (M_it)."
-                },
-                {
-                    id: 4,
-                    title: "Stochastic Diff. Equations",
-                    desc: "Running Monte Carlo Base & Market Layers.",
-                    formula: "$$ dm_{t} = K_{m}[M(A_t, D_t, R_t) - m_{t}]dt + \\Sigma_{m} dW_{t}^{m} $$", //[cite: 4]
-                    log: "[ENGINE] Triggering Geometric Brownian Motion. Applying Kalman Gain external correction."
-                },
-                {
-                    id: 5,
-                    title: "Forward Curve Aggregation",
-                    desc: "Probability-weighted trajectory mapping.",
-                    formula: "$$ \\hat{P}_{i,t}^{fut}(T_\\ell) = \\sum_{s=1}^{N_s} p_s \\tilde{P}_{i,t}^{(s)}(T_\\ell) $$", //[cite: 4]
-                    log: "[ENGINE] 27-Step forecast extracted. Injecting convenience yield and carry costs."
-                }
-            ];
+            const [phase, setPhase] = useState(0); 
+            const [logs, setLogs] = useState(["[SYSTEM] Diagnostic visualizer ready. Waiting for simulation trigger."]);
 
             useEffect(() => {
-                if (window.MathJax) {
-                    window.MathJax.typesetPromise([containerRef.current]).catch(err => console.log(err));
+                let timer;
+                if (phase > 0 && phase < 5) {
+                    timer = setTimeout(() => {
+                        setPhase(p => p + 1);
+                        const newLogs = [
+                            "[SYSTEM] Initializing Data Ingestion...",
+                            "[PIPELINE] World Bank & FRED streams bound. Normalizing MADR indices.",
+                            "[ENGINE] Market Regimes calculated. Firing Stochastic Differential Equations.",
+                            "[OUTPUT] Monte Carlo aggregated. Final 27-step forward curve crystallized."
+                        ];
+                        if (phase <= newLogs.length) setLogs(l => [...l, newLogs[phase-1]]);
+                    }, 2000); // Progress every 2 seconds
+                } else if (phase === 5) {
+                    timer = setTimeout(() => {
+                        setPhase(0); // Reset
+                        setLogs(["[SYSTEM] Simulation complete. Standing by."]);
+                    }, 4000);
                 }
-            }, [currentStep]);
-
-            useEffect(() => {
-                let interval;
-                if (isPlaying) {
-                    interval = setInterval(() => {
-                        setCurrentStep(prev => {
-                            const next = prev + 1;
-                            if (next > pipeline.length) {
-                                setIsPlaying(false);
-                                return 0; // reset
-                            }
-                            if (next > 0 && next <= pipeline.length) {
-                                setLogs(l => [...l, pipeline[next-1].log]);
-                            }
-                            return next;
-                        });
-                    }, 2500); // Slow motion speed
-                }
-                return () => clearInterval(interval);
-            }, [isPlaying]);
+                return () => clearTimeout(timer);
+            }, [phase]);
 
             const triggerPlay = () => {
-                if (!isPlaying) {
-                    setCurrentStep(0);
-                    setLogs(["[SYSTEM] Pipeline execution initiated..."]);
-                    setIsPlaying(true);
-                } else {
-                    setIsPlaying(false);
-                }
+                if (phase === 0) setPhase(1);
+                else setPhase(0);
+            };
+
+            // SVG Coordinates & Data
+            const nodes = {
+                // Phase 1: Sources[cite: 1, 3]
+                wb: { x: 50, y: 80, label: "World Bank (Macro)", phase: 1 },
+                fred: { x: 50, y: 220, label: "FRED (Volatile)", phase: 1 },
+                meteo: { x: 50, y: 360, label: "Open-Meteo", phase: 1 },
+                eia: { x: 50, y: 500, label: "EIA Fundamentals", phase: 1 },
+                
+                // Phase 2: Indices[cite: 4]
+                econ: { x: 350, y: 150, label: "Economic Act. (A)", phase: 2 },
+                risk: { x: 350, y: 290, label: "Systemic Risk (R)", phase: 2 },
+                def: { x: 350, y: 430, label: "Deficit Index (D)", phase: 2 },
+                
+                // Phase 3: Engine[cite: 4]
+                regime: { x: 650, y: 220, label: "Market Regimes (z)", phase: 3 },
+                sde: { x: 650, y: 360, label: "Monte Carlo SDEs", phase: 3 },
+                
+                // Phase 4: Output[cite: 3, 4]
+                output: { x: 950, y: 290, label: "27-Step Curve", phase: 4 }
+            };
+
+            const connections = [
+                { from: 'wb', to: 'econ', reqPhase: 2 }, { from: 'wb', to: 'risk', reqPhase: 2 },
+                { from: 'fred', to: 'econ', reqPhase: 2 }, { from: 'fred', to: 'risk', reqPhase: 2 }, { from: 'fred', to: 'def', reqPhase: 2 },
+                { from: 'meteo', to: 'def', reqPhase: 2 }, { from: 'eia', to: 'def', reqPhase: 2 },
+                
+                { from: 'econ', to: 'regime', reqPhase: 3 }, { from: 'econ', to: 'sde', reqPhase: 3 },
+                { from: 'risk', to: 'regime', reqPhase: 3 }, { from: 'risk', to: 'sde', reqPhase: 3 },
+                { from: 'def', to: 'regime', reqPhase: 3 }, { from: 'def', to: 'sde', reqPhase: 3 },
+                
+                { from: 'regime', to: 'sde', reqPhase: 3 },
+                { from: 'sde', to: 'output', reqPhase: 4 }
+            ];
+
+            const renderPath = (conn, i) => {
+                const n1 = nodes[conn.from]; const n2 = nodes[conn.to];
+                // Box width is 160, height is 60
+                const startX = n1.x + 160; const startY = n1.y + 30;
+                const endX = n2.x; const endY = n2.y + 30;
+                // Create bezier curve for smooth plumbing look
+                const cp1X = startX + (endX - startX) / 2;
+                const pathD = `M ${startX} ${startY} C ${cp1X} ${startY}, ${cp1X} ${endY}, ${endX} ${endY}`;
+                
+                const isActive = phase >= conn.reqPhase;
+
+                return (
+                    <path key={i} d={pathD} fill="none" strokeWidth="2" 
+                        className={`svg-path ${isActive ? 'path-active' : 'stroke-rwv-border stroke-opacity-30'}`} 
+                    />
+                );
             };
 
             return (
-                <div ref={containerRef} className="flex-1 flex gap-6 h-full p-8 overflow-hidden">
-                    {/* Visual Diagram Area */}
-                    <div className="flex-1 bg-rwv-panel rounded-2xl border border-rwv-border p-8 flex flex-col relative shadow-2xl overflow-y-auto custom-scrollbar">
-                        <div className="flex justify-between items-center mb-8">
+                <div className="flex-1 flex gap-6 h-full p-8 overflow-hidden bg-rwv-bg">
+                    
+                    {/* Visual 2D Diagram Area */}
+                    <div className="flex-1 bg-rwv-panel rounded-2xl border border-rwv-border p-6 flex flex-col relative shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 shrink-0">
                             <div>
-                                <h2 className="text-2xl font-bold text-white">Mathematical Architecture</h2>
-                                <p className="text-rwv-textMuted text-sm mt-1">Live visualization of the stochastic simulation pipeline</p>
+                                <h2 className="text-2xl font-bold text-white">Architecture Flow</h2>
+                                <p className="text-rwv-textMuted text-sm mt-1">Real-time data telemetry through the mathematical pipeline</p>
                             </div>
                             <button 
                                 onClick={triggerPlay}
-                                className={`px-8 py-3 rounded-lg font-bold text-sm tracking-widest transition-all ${isPlaying ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-rwv-lime text-rwv-bg hover:bg-rwv-limeHover shadow-[0_0_20px_rgba(198,243,79,0.3)]'}`}
+                                className={`px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${phase > 0 ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-rwv-lime text-rwv-bg hover:bg-rwv-limeHover shadow-[0_0_15px_rgba(198,243,79,0.3)]'}`}
                             >
-                                {isPlaying ? "HALT SIMULATION" : "▶ SIMULATE ENGINE"}
+                                {phase > 0 ? "HALT TELEMETRY" : "▶ START TELEMETRY"}
                             </button>
                         </div>
 
-                        <div className="relative flex flex-col gap-6 pl-6 mt-4">
-                            {/* Connecting vertical line */}
-                            <div className="absolute left-[52px] top-4 bottom-12 w-0.5 bg-rwv-border z-0"></div>
-                            
-                            {pipeline.map((node, idx) => {
-                                const isActive = currentStep === node.id;
-                                const isPassed = currentStep > node.id;
-                                
-                                return (
-                                    <div key={node.id} className={`relative z-10 flex gap-6 items-start transition-all duration-700 ${isActive ? 'opacity-100 scale-[1.02]' : isPassed ? 'opacity-60' : 'opacity-30 blur-[1px]'}`}>
-                                        
-                                        {/* Status Node */}
-                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors duration-500 ${isActive ? 'bg-rwv-bg border-rwv-lime shadow-[0_0_15px_rgba(198,243,79,0.5)]' : isPassed ? 'bg-rwv-lime border-rwv-lime' : 'bg-rwv-bg border-rwv-border'}`}>
-                                            <span className={`font-mono font-bold ${isActive ? 'text-rwv-lime' : isPassed ? 'text-rwv-bg' : 'text-rwv-border'}`}>{node.id}</span>
-                                        </div>
-
-                                        {/* Formula Card */}
-                                        <div className={`flex-1 p-5 rounded-xl border transition-all duration-500 ${isActive ? 'bg-rwv-bg border-rwv-lime animate-pulse-glow' : 'bg-rwv-bg border-rwv-border'}`}>
-                                            <h3 className={`font-bold text-sm mb-1 ${isActive ? 'text-white' : 'text-gray-400'}`}>{node.title}</h3>
-                                            <p className="text-xs text-rwv-textMuted mb-4">{node.desc}</p>
-                                            <div className="bg-[#080c0d] p-4 rounded-lg border border-[#1a2325] overflow-x-auto custom-scrollbar flex items-center justify-center text-gray-300">
-                                                {/* Raw string for MathJax to interpret */}
-                                                <span dangerouslySetInnerHTML={{__html: node.formula}} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
+                        <div className="flex-1 w-full relative overflow-auto custom-scrollbar">
+                            <div className="min-w-[1150px] min-h-[600px] w-full h-full relative">
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1150 600" preserveAspectRatio="xMidYMid meet">
+                                    {/* Draw all connections first so they render under nodes */}
+                                    {connections.map((c, i) => renderPath(c, i))}
+                                    
+                                    {/* Draw Nodes */}
+                                    {Object.entries(nodes).map(([key, n]) => {
+                                        const isActive = phase >= n.phase;
+                                        return (
+                                            <g key={key} transform={`translate(${n.x}, ${n.y})`} className="svg-node">
+                                                <rect width="160" height="60" rx="8" 
+                                                    className={`fill-[#0B1011] stroke-2 ${isActive ? 'node-active' : 'stroke-rwv-border'}`} 
+                                                />
+                                                <text x="80" y="35" textAnchor="middle" 
+                                                    className={`text-xs font-bold font-sans ${isActive ? 'node-text-active' : 'fill-gray-500'}`}
+                                                >
+                                                    {n.label}
+                                                </text>
+                                                {/* Blinking indicator for active nodes */}
+                                                {isActive && <circle cx="10" cy="10" r="3" fill="#C6F34F" className="animate-ping" />}
+                                            </g>
+                                        );
+                                    })}
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
                     {/* Terminal Log Output */}
-                    <div className="w-[320px] bg-rwv-panel border border-rwv-border rounded-2xl p-5 flex flex-col shadow-2xl">
+                    <div className="w-[300px] bg-rwv-panel border border-rwv-border rounded-2xl p-5 flex flex-col shadow-2xl shrink-0">
                         <div className="border-b border-rwv-border pb-3 mb-3 flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-rwv-lime animate-pulse"></div>
+                            <div className={`w-2 h-2 rounded-full ${phase > 0 ? 'bg-rwv-lime animate-pulse shadow-[0_0_8px_#C6F34F]' : 'bg-gray-600'}`}></div>
                             <h3 className="font-mono text-xs font-bold text-gray-300 uppercase tracking-widest">Engine Diagnostics</h3>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[10px] text-rwv-textMuted space-y-3">
                             {logs.map((log, i) => (
-                                <div key={i} className={`${i === logs.length - 1 ? 'text-rwv-lime' : ''}`}>
+                                <div key={i} className={`${i === logs.length - 1 && phase > 0 ? 'text-rwv-lime' : ''}`}>
                                     <span className="text-gray-600 mr-2">[{new Date().toISOString().split('T')[1].split('.')[0]}]</span>
                                     {log}
                                 </div>
                             ))}
-                            {isPlaying && (
+                            {phase > 0 && phase < 5 && (
                                 <div className="text-rwv-lime animate-pulse mt-2">_</div>
                             )}
                         </div>
@@ -378,7 +404,6 @@
                 </div>
             );
         }
-
 
         // --- PHASE 3 ADDONS (LOCKED) ---
         function Phase3LockedFeatures() {
@@ -449,7 +474,7 @@
 
         // --- MAIN APP COMPONENT ---
         function App() {
-            const [viewTab, setViewTab] = useState('dashboard'); // 'dashboard' or 'simulation'
+            const [viewTab, setViewTab] = useState('dashboard');
             const [selectedCommodity, setSelectedCommodity] = useState("Brent");
             const [defaultPredictions, setDefaultPredictions] = useState(null);
             const [chartData, setChartData] = useState([]);
@@ -460,7 +485,7 @@
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
 
-            // Fetch from backend
+            // Fetch from backend[cite: 3]
             useEffect(() => {
                 Promise.all([
                     fetch(`${API_BASE}/api/v1/predict`).then(res => res.json()),
@@ -485,16 +510,12 @@
             useEffect(() => {
                 if (defaultPredictions && defaultPredictions[selectedCommodity]) {
                     const data = defaultPredictions[selectedCommodity];
-                    setSliders({
-                        A_it: data.indices.A,
-                        D_it: data.indices.D,
-                        R_it: data.indices.R,
-                    });
+                    setSliders({ A_it: data.indices.A, D_it: data.indices.D, R_it: data.indices.R });
                     setChartData(data.projection_curve);
                 }
             }, [selectedCommodity, defaultPredictions]);
 
-            // Debounced Custom Simulation call
+            // Debounced Custom Simulation call bypassing cache[cite: 3]
             useEffect(() => {
                 if (!defaultPredictions) return;
 
@@ -522,7 +543,7 @@
                         console.error("Simulation failed", err);
                         setIsSimulating(false);
                     });
-                }, 500);
+                }, 400); // slightly faster debounce for better UX feel
 
                 return () => clearTimeout(timer);
             }, [sliders, selectedCommodity]);
@@ -570,11 +591,10 @@
                     {/* Main Workspace Split */}
                     <div className="flex-1 flex overflow-hidden">
                         
-                        {/* Persistent Sidebar (Only visible on Dashboard Tab) */}
+                        {/* Persistent Sidebar */}
                         {viewTab === 'dashboard' && (
                             <div className="w-[340px] bg-rwv-panel border-r border-rwv-border flex flex-col shadow-xl z-20 shrink-0">
                                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-8">
-                                    {/* Commodity Selector (Gradient Buttons) */}
                                     <div>
                                         <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-3">Target Asset</h2>
                                         <div className="grid grid-cols-2 gap-2">
@@ -596,7 +616,6 @@
 
                                     <hr className="border-rwv-border" />
 
-                                    {/* Macro Sliders */}
                                     <div>
                                         <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-4">Live Parameter Tuning</h2>
                                         <div className="flex flex-col gap-6">
