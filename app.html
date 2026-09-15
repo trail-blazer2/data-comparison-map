@@ -12,18 +12,42 @@
                 extend: {
                     colors: {
                         rwv: {
-                            bg: '#0B1011',       // Deepest dark for background
-                            panel: '#151E20',    // Slightly lighter for panels
-                            border: '#232E30',   // Subtle borders
-                            lime: '#C6F34F',     // Main active accent from image
+                            bg: '#0B1011',       
+                            panel: '#151E20',    
+                            border: '#232E30',   
+                            lime: '#C6F34F',     
                             limeHover: '#b3db46',
-                            textMuted: '#6B8286' // Muted teal-gray text
+                            textMuted: '#6B8286' 
+                        }
+                    },
+                    animation: {
+                        'flow': 'flowData 2s linear infinite',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        flowData: {
+                            '0%': { strokeDashoffset: '100' },
+                            '100%': { strokeDashoffset: '0' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(198,243,79,0.1)' },
+                            '50%': { boxShadow: '0 0 25px rgba(198,243,79,0.4)' },
                         }
                     }
                 }
             }
         }
     </script>
+    
+    <!-- MathJax for rendering LaTeX formulas dynamically -->
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { typeset: false } // We will trigger it manually in React
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -31,48 +55,91 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        /* Sleek custom scrollbar to match the design */
+        /* Sleek custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0B1011; }
         ::-webkit-scrollbar-thumb { background: #232E30; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3a4a4d; }
         
         /* Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
+        input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 14px;
-            width: 14px;
+            height: 14px; width: 14px;
             border-radius: 50%;
             background: #C6F34F;
-            cursor: pointer;
-            margin-top: -5px;
+            cursor: pointer; margin-top: -5px;
             box-shadow: 0 0 10px rgba(198, 243, 79, 0.4);
         }
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #232E30;
-            border-radius: 2px;
+            width: 100%; height: 4px;
+            cursor: pointer; background: #232E30; border-radius: 2px;
+        }
+
+        /* Flowing Path Animation for Diagram */
+        .path-line {
+            stroke-dasharray: 10;
+            animation: flowData 1s linear infinite;
         }
     </style>
 </head>
-<body class="bg-rwv-bg text-gray-200 min-h-screen font-sans selection:bg-rwv-lime selection:text-rwv-bg">
+<body class="bg-rwv-bg text-gray-200 min-h-screen font-sans selection:bg-rwv-lime selection:text-rwv-bg overflow-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Configuration
         const API_BASE = "https://ivanmazurov--rwv-engine-production-fastapi-app.modal.run"; 
         const COMMODITIES = ["Gold", "Gas", "Brent", "Copper", "Palladium", "Platinum", "Cocoa", "Silver"];
 
-        // --- CHART COMPONENT ---
+        // Custom Chart.js Plugin for 2-Axis Glowing Crosshair
+        const crosshairGlowPlugin = {
+            id: 'crosshairGlow',
+            afterDraw: (chart) => {
+                if (chart.tooltip?._active?.length) {
+                    const activePoint = chart.tooltip._active[0];
+                    const ctx = chart.ctx;
+                    const x = activePoint.element.x;
+                    const y = activePoint.element.y;
+                    const topY = chart.scales.y.top;
+                    const bottomY = chart.scales.y.bottom;
+                    const leftX = chart.scales.x.left;
+                    const rightX = chart.scales.x.right;
+
+                    ctx.save();
+                    
+                    // Draw glowing intersecting lines
+                    ctx.beginPath();
+                    ctx.moveTo(x, topY);
+                    ctx.lineTo(x, bottomY);
+                    ctx.moveTo(leftX, y);
+                    ctx.lineTo(rightX, y);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = 'rgba(198, 243, 79, 0.5)';
+                    ctx.shadowColor = 'rgba(198, 243, 79, 0.9)';
+                    ctx.shadowBlur = 15;
+                    ctx.stroke();
+                    
+                    // Draw exact point hollow circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#0B1011';
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#C6F34F';
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+            }
+        };
+
+        // Register custom plugin
+        Chart.register(crosshairGlowPlugin);
+
+        // --- DASHBOARD CHART COMPONENT ---
         function ProjectionChart({ data, commodity, isSimulating }) {
             const canvasRef = useRef(null);
             const chartRef = useRef(null);
@@ -86,9 +153,8 @@
                 const labels = data.map(d => `+${d.day}d`);
                 const prices = data.map(d => d.price);
 
-                // Create sleek gradient matching the image
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(198, 243, 79, 0.25)'); // Lime with opacity
+                gradient.addColorStop(0, 'rgba(198, 243, 79, 0.3)'); 
                 gradient.addColorStop(1, 'rgba(198, 243, 79, 0)');
 
                 chartRef.current = new Chart(ctx, {
@@ -101,10 +167,9 @@
                             borderColor: '#C6F34F',
                             backgroundColor: gradient,
                             borderWidth: 2,
-                            tension: 0.4, // Smooth curves
-                            pointRadius: 0, // Hide points by default for sleekness
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: '#C6F34F',
+                            tension: 0.4, 
+                            pointRadius: 0, 
+                            pointHoverRadius: 0, 
                             fill: true,
                         }]
                     },
@@ -129,25 +194,13 @@
                             }
                         },
                         scales: {
-                            x: { 
-                                ticks: { color: '#6B8286', font: { size: 11 } }, 
-                                grid: { display: false } 
-                            },
-                            y: { 
-                                ticks: { color: '#6B8286', font: { size: 11 } }, 
-                                grid: { 
-                                    color: '#232E30', 
-                                    borderDash: [5, 5], 
-                                    drawBorder: false 
-                                } 
-                            }
+                            x: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { display: false } },
+                            y: { ticks: { color: '#6B8286', font: { size: 11 } }, grid: { color: '#232E30', borderDash: [5, 5], drawBorder: false } }
                         }
                     }
                 });
 
-                return () => {
-                    if (chartRef.current) chartRef.current.destroy();
-                }
+                return () => { if (chartRef.current) chartRef.current.destroy(); }
             }, [data, commodity]);
 
             return (
@@ -164,7 +217,7 @@
                         {isSimulating && (
                             <div className="absolute inset-0 bg-rwv-panel/70 backdrop-blur-sm flex items-center justify-center rounded-xl z-10 transition-opacity">
                                 <span className="text-rwv-lime font-mono text-sm animate-pulse tracking-widest border border-rwv-lime/30 px-4 py-2 rounded-full">
-                                    RECALCULATING...
+                                    RECALCULATING SDE...
                                 </span>
                             </div>
                         )}
@@ -174,10 +227,162 @@
             );
         }
 
+        // --- MATH ENGINE SIMULATION DIAGRAM COMPONENT ---
+        function MathSimulationTab() {
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [currentStep, setCurrentStep] = useState(0);
+            const [logs, setLogs] = useState(["[SYSTEM] Initializing Mathematical Pipeline..."]);
+            const containerRef = useRef(null);
+
+            // The pipeline definitions heavily citing the provided document
+            const pipeline = [
+                {
+                    id: 1,
+                    title: "Index Normalization",
+                    desc: "Ingesting raw metrics into centered indices.",
+                    formula: "$$ D_{i,t} = 1 - \\exp\\left[-\\frac{\\Lambda_{D,i,t}}{1 + \\psi_i B_{i,t}}\\right] $$", //[cite: 4]
+                    log: "[ENGINE] Calculating Deficit Index (D_it). Applying Market Adaptability buffer (B_it)."
+                },
+                {
+                    id: 2,
+                    title: "Regime Probability",
+                    desc: "Calculating Structural Market States (1-4).",
+                    formula: "$$ \\pi_{k,t} = \\frac{f_k(\\mathbf{y}_t) \\pi_{k,t}^-}{\\sum_\\ell f_\\ell(\\mathbf{y}_t) \\pi_{\\ell,t}^-} $$", //[cite: 4]
+                    log: "[ENGINE] Transition Probability applied. Identifying normal vs deficit state."
+                },
+                {
+                    id: 3,
+                    title: "Base Target Assembly",
+                    desc: "Assembling long-term equilibrium price logarithm.",
+                    formula: "$$ M_{i,t} = \\sum_{k=1}^K \\pi_{k,t} M^{(k)}_{i,t} $$", //[cite: 4]
+                    log: "[ENGINE] Centering indices (MADR). Assembling Target Price (M_it)."
+                },
+                {
+                    id: 4,
+                    title: "Stochastic Diff. Equations",
+                    desc: "Running Monte Carlo Base & Market Layers.",
+                    formula: "$$ dm_{t} = K_{m}[M(A_t, D_t, R_t) - m_{t}]dt + \\Sigma_{m} dW_{t}^{m} $$", //[cite: 4]
+                    log: "[ENGINE] Triggering Geometric Brownian Motion. Applying Kalman Gain external correction."
+                },
+                {
+                    id: 5,
+                    title: "Forward Curve Aggregation",
+                    desc: "Probability-weighted trajectory mapping.",
+                    formula: "$$ \\hat{P}_{i,t}^{fut}(T_\\ell) = \\sum_{s=1}^{N_s} p_s \\tilde{P}_{i,t}^{(s)}(T_\\ell) $$", //[cite: 4]
+                    log: "[ENGINE] 27-Step forecast extracted. Injecting convenience yield and carry costs."
+                }
+            ];
+
+            useEffect(() => {
+                if (window.MathJax) {
+                    window.MathJax.typesetPromise([containerRef.current]).catch(err => console.log(err));
+                }
+            }, [currentStep]);
+
+            useEffect(() => {
+                let interval;
+                if (isPlaying) {
+                    interval = setInterval(() => {
+                        setCurrentStep(prev => {
+                            const next = prev + 1;
+                            if (next > pipeline.length) {
+                                setIsPlaying(false);
+                                return 0; // reset
+                            }
+                            if (next > 0 && next <= pipeline.length) {
+                                setLogs(l => [...l, pipeline[next-1].log]);
+                            }
+                            return next;
+                        });
+                    }, 2500); // Slow motion speed
+                }
+                return () => clearInterval(interval);
+            }, [isPlaying]);
+
+            const triggerPlay = () => {
+                if (!isPlaying) {
+                    setCurrentStep(0);
+                    setLogs(["[SYSTEM] Pipeline execution initiated..."]);
+                    setIsPlaying(true);
+                } else {
+                    setIsPlaying(false);
+                }
+            };
+
+            return (
+                <div ref={containerRef} className="flex-1 flex gap-6 h-full p-8 overflow-hidden">
+                    {/* Visual Diagram Area */}
+                    <div className="flex-1 bg-rwv-panel rounded-2xl border border-rwv-border p-8 flex flex-col relative shadow-2xl overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">Mathematical Architecture</h2>
+                                <p className="text-rwv-textMuted text-sm mt-1">Live visualization of the stochastic simulation pipeline</p>
+                            </div>
+                            <button 
+                                onClick={triggerPlay}
+                                className={`px-8 py-3 rounded-lg font-bold text-sm tracking-widest transition-all ${isPlaying ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-rwv-lime text-rwv-bg hover:bg-rwv-limeHover shadow-[0_0_20px_rgba(198,243,79,0.3)]'}`}
+                            >
+                                {isPlaying ? "HALT SIMULATION" : "▶ SIMULATE ENGINE"}
+                            </button>
+                        </div>
+
+                        <div className="relative flex flex-col gap-6 pl-6 mt-4">
+                            {/* Connecting vertical line */}
+                            <div className="absolute left-[52px] top-4 bottom-12 w-0.5 bg-rwv-border z-0"></div>
+                            
+                            {pipeline.map((node, idx) => {
+                                const isActive = currentStep === node.id;
+                                const isPassed = currentStep > node.id;
+                                
+                                return (
+                                    <div key={node.id} className={`relative z-10 flex gap-6 items-start transition-all duration-700 ${isActive ? 'opacity-100 scale-[1.02]' : isPassed ? 'opacity-60' : 'opacity-30 blur-[1px]'}`}>
+                                        
+                                        {/* Status Node */}
+                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors duration-500 ${isActive ? 'bg-rwv-bg border-rwv-lime shadow-[0_0_15px_rgba(198,243,79,0.5)]' : isPassed ? 'bg-rwv-lime border-rwv-lime' : 'bg-rwv-bg border-rwv-border'}`}>
+                                            <span className={`font-mono font-bold ${isActive ? 'text-rwv-lime' : isPassed ? 'text-rwv-bg' : 'text-rwv-border'}`}>{node.id}</span>
+                                        </div>
+
+                                        {/* Formula Card */}
+                                        <div className={`flex-1 p-5 rounded-xl border transition-all duration-500 ${isActive ? 'bg-rwv-bg border-rwv-lime animate-pulse-glow' : 'bg-rwv-bg border-rwv-border'}`}>
+                                            <h3 className={`font-bold text-sm mb-1 ${isActive ? 'text-white' : 'text-gray-400'}`}>{node.title}</h3>
+                                            <p className="text-xs text-rwv-textMuted mb-4">{node.desc}</p>
+                                            <div className="bg-[#080c0d] p-4 rounded-lg border border-[#1a2325] overflow-x-auto custom-scrollbar flex items-center justify-center text-gray-300">
+                                                {/* Raw string for MathJax to interpret */}
+                                                <span dangerouslySetInnerHTML={{__html: node.formula}} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Terminal Log Output */}
+                    <div className="w-[320px] bg-rwv-panel border border-rwv-border rounded-2xl p-5 flex flex-col shadow-2xl">
+                        <div className="border-b border-rwv-border pb-3 mb-3 flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-rwv-lime animate-pulse"></div>
+                            <h3 className="font-mono text-xs font-bold text-gray-300 uppercase tracking-widest">Engine Diagnostics</h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar font-mono text-[10px] text-rwv-textMuted space-y-3">
+                            {logs.map((log, i) => (
+                                <div key={i} className={`${i === logs.length - 1 ? 'text-rwv-lime' : ''}`}>
+                                    <span className="text-gray-600 mr-2">[{new Date().toISOString().split('T')[1].split('.')[0]}]</span>
+                                    {log}
+                                </div>
+                            ))}
+                            {isPlaying && (
+                                <div className="text-rwv-lime animate-pulse mt-2">_</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+
         // --- PHASE 3 ADDONS (LOCKED) ---
         function Phase3LockedFeatures() {
             const features = ["Factor Attribution", "Probability Curves", "Index Momentum"];
-            
             return (
                 <div className="mt-6 bg-rwv-panel rounded-2xl border border-rwv-border p-5">
                     <div className="flex items-center justify-between mb-4">
@@ -186,8 +391,7 @@
                     </div>
                     <div className="flex flex-wrap gap-4">
                         {features.map((feature, idx) => (
-                            <div key={idx} className="flex items-center gap-3 bg-rwv-bg px-4 py-3 rounded-xl border border-rwv-border opacity-60 cursor-not-allowed select-none">
-                                {/* Fake Switch styling */}
+                            <div key={idx} className="flex items-center gap-3 bg-rwv-bg px-4 py-3 rounded-xl border border-rwv-border opacity-50 cursor-not-allowed select-none transition hover:opacity-70">
                                 <div className="w-9 h-5 bg-rwv-border rounded-full relative">
                                     <div className="w-3 h-3 bg-rwv-textMuted rounded-full absolute left-1 top-1"></div>
                                 </div>
@@ -219,7 +423,7 @@
                     </div>
                     
                     {isOpen && (
-                        <div className="p-4 max-h-80 overflow-y-auto bg-rwv-bg rounded-b-xl border-t border-rwv-border">
+                        <div className="p-4 max-h-80 overflow-y-auto custom-scrollbar bg-rwv-bg rounded-b-xl border-t border-rwv-border">
                             {Object.entries(healthData).map(([category, metrics]) => (
                                 <div key={category} className="mb-4 last:mb-0">
                                     <h4 className="text-[10px] font-bold uppercase text-rwv-textMuted mb-2 tracking-widest border-b border-rwv-border pb-1">
@@ -243,8 +447,9 @@
             );
         }
 
-        // --- MAIN APP ---
+        // --- MAIN APP COMPONENT ---
         function App() {
+            const [viewTab, setViewTab] = useState('dashboard'); // 'dashboard' or 'simulation'
             const [selectedCommodity, setSelectedCommodity] = useState("Brent");
             const [defaultPredictions, setDefaultPredictions] = useState(null);
             const [chartData, setChartData] = useState([]);
@@ -255,7 +460,7 @@
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
 
-            // Fetch default predictions from /api/v1/predict[cite: 3]
+            // Fetch from backend
             useEffect(() => {
                 Promise.all([
                     fetch(`${API_BASE}/api/v1/predict`).then(res => res.json()),
@@ -289,7 +494,7 @@
                 }
             }, [selectedCommodity, defaultPredictions]);
 
-            // Debounced Custom Simulation call to /api/v1/simulate-custom[cite: 3]
+            // Debounced Custom Simulation call
             useEffect(() => {
                 if (!defaultPredictions) return;
 
@@ -326,88 +531,109 @@
                 setSliders(prev => ({ ...prev, [key]: parseFloat(e.target.value) }));
             };
 
-            if (loading) return <div className="flex items-center justify-center min-h-screen text-rwv-lime text-xl font-mono">INITIALIZING TERMINAL...</div>;
+            if (loading) return <div className="flex items-center justify-center min-h-screen text-rwv-lime text-xl font-mono animate-pulse">INITIALIZING TERMINAL...</div>;
             if (error) return <div className="flex items-center justify-center min-h-screen text-red-500 font-mono">{error}</div>;
 
             const spotPrice = defaultPredictions?.[selectedCommodity]?.spot_price || 0.00;
 
             return (
-                <div className="flex h-screen overflow-hidden">
-                    {/* LEFT SIDEBAR */}
-                    <div className="w-[340px] bg-rwv-panel border-r border-rwv-border flex flex-col shadow-xl z-20">
-                        {/* Branding */}
-                        <div className="p-6 border-b border-rwv-border flex items-center gap-3">
-                            <div className="w-8 h-8 bg-rwv-lime rounded flex items-center justify-center">
+                <div className="flex flex-col h-screen overflow-hidden">
+                    
+                    {/* Top Global Navigation Bar */}
+                    <div className="h-16 bg-rwv-panel border-b border-rwv-border flex items-center justify-between px-6 shrink-0 z-30">
+                        <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 bg-rwv-lime rounded flex items-center justify-center shadow-[0_0_15px_rgba(198,243,79,0.3)]">
                                 <span className="text-rwv-bg font-black text-xl">R</span>
                             </div>
                             <div>
                                 <h1 className="text-lg font-bold text-white tracking-tight leading-none">REALWORLDVIEW</h1>
-                                <p className="text-[10px] text-rwv-textMuted tracking-widest uppercase mt-1">Forecasting Engine</p>
+                                <p className="text-[10px] text-rwv-lime tracking-widest uppercase mt-0.5">Mathematical Engine</p>
                             </div>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-8">
-                            
-                            {/* Commodity 2x4 Grid */}
-                            <div>
-                                <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-3">Select Asset</h2>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {COMMODITIES.map(c => (
-                                        <button
-                                            key={c}
-                                            onClick={() => setSelectedCommodity(c)}
-                                            className={`w-full text-center px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border ${
-                                                selectedCommodity === c 
-                                                ? 'bg-rwv-lime text-rwv-bg border-rwv-lime shadow-[0_0_15px_rgba(198,243,79,0.2)]' 
-                                                : 'bg-rwv-bg text-gray-400 border-rwv-border hover:border-rwv-textMuted hover:text-white'
-                                            }`}
-                                        >
-                                            {c}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <hr className="border-rwv-border" />
-
-                            {/* Sliders Area */}
-                            <div>
-                                <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-4">Macro Controls</h2>
-                                <div className="flex flex-col gap-6">
-                                    <SidebarSlider title="Economic Activity (A)" value={sliders.A_it} onChange={(e) => handleSliderChange(e, 'A_it')} />
-                                    <SidebarSlider title="Deficit Intensity (D)" value={sliders.D_it} onChange={(e) => handleSliderChange(e, 'D_it')} />
-                                    <SidebarSlider title="Systemic Risk (R)" value={sliders.R_it} onChange={(e) => handleSliderChange(e, 'R_it')} />
-                                </div>
-                            </div>
-
+                        <div className="flex gap-2 bg-rwv-bg p-1 rounded-lg border border-rwv-border">
+                            <button 
+                                onClick={() => setViewTab('dashboard')}
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition ${viewTab === 'dashboard' ? 'bg-rwv-panel text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}
+                            >
+                                Output Matrix
+                            </button>
+                            <button 
+                                onClick={() => setViewTab('simulation')}
+                                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition ${viewTab === 'simulation' ? 'bg-rwv-panel text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}
+                            >
+                                Math Pipeline
+                            </button>
                         </div>
                     </div>
 
-                    {/* MAIN CONTENT AREA */}
-                    <div className="flex-1 p-8 overflow-y-auto flex flex-col relative">
-                        {/* Header */}
-                        <header className="flex justify-between items-end mb-6">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-rwv-textMuted text-sm font-medium">Market /</span>
-                                    <span className="text-rwv-lime text-sm font-bold uppercase tracking-wider">{selectedCommodity}</span>
+                    {/* Main Workspace Split */}
+                    <div className="flex-1 flex overflow-hidden">
+                        
+                        {/* Persistent Sidebar (Only visible on Dashboard Tab) */}
+                        {viewTab === 'dashboard' && (
+                            <div className="w-[340px] bg-rwv-panel border-r border-rwv-border flex flex-col shadow-xl z-20 shrink-0">
+                                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-8">
+                                    {/* Commodity Selector (Gradient Buttons) */}
+                                    <div>
+                                        <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-3">Target Asset</h2>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {COMMODITIES.map(c => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => setSelectedCommodity(c)}
+                                                    className={`w-full text-center px-2 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 border ${
+                                                        selectedCommodity === c 
+                                                        ? 'bg-gradient-to-br from-rwv-lime to-[#9abf3b] text-rwv-bg border-transparent shadow-[0_0_15px_rgba(198,243,79,0.3)]' 
+                                                        : 'bg-rwv-bg text-gray-400 border-rwv-border hover:border-rwv-textMuted hover:text-white'
+                                                    }`}
+                                                >
+                                                    {c}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <hr className="border-rwv-border" />
+
+                                    {/* Macro Sliders */}
+                                    <div>
+                                        <h2 className="text-[10px] font-bold text-rwv-textMuted uppercase tracking-widest mb-4">Live Parameter Tuning</h2>
+                                        <div className="flex flex-col gap-6">
+                                            <SidebarSlider title="Economic Activity (A_it)" value={sliders.A_it} onChange={(e) => handleSliderChange(e, 'A_it')} />
+                                            <SidebarSlider title="Deficit Intensity (D_it)" value={sliders.D_it} onChange={(e) => handleSliderChange(e, 'D_it')} />
+                                            <SidebarSlider title="Systemic Risk (R_it)" value={sliders.R_it} onChange={(e) => handleSliderChange(e, 'R_it')} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <h2 className="text-4xl font-bold text-white tracking-tight">{selectedCommodity} <span className="text-gray-500 font-light">/ USD</span></h2>
                             </div>
-                            <div className="text-right">
-                                <p className="text-xs text-rwv-textMuted uppercase tracking-widest mb-1">Spot Price</p>
-                                <p className="text-4xl font-mono font-bold text-white">${spotPrice.toFixed(2)}</p>
+                        )}
+
+                        {/* Dynamic Main View */}
+                        {viewTab === 'dashboard' ? (
+                            <div className="flex-1 p-8 overflow-y-auto flex flex-col relative bg-rwv-bg">
+                                <header className="flex justify-between items-end mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-rwv-textMuted text-sm font-medium">Market /</span>
+                                            <span className="text-rwv-lime text-sm font-bold uppercase tracking-wider">{selectedCommodity}</span>
+                                        </div>
+                                        <h2 className="text-4xl font-bold text-white tracking-tight">{selectedCommodity} <span className="text-gray-500 font-light">/ USD</span></h2>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-rwv-textMuted uppercase tracking-widest mb-1">Spot Anchor</p>
+                                        <p className="text-4xl font-mono font-bold text-white">${spotPrice.toFixed(2)}</p>
+                                    </div>
+                                </header>
+                                <ProjectionChart data={chartData} commodity={selectedCommodity} isSimulating={isSimulating} />
+                                <Phase3LockedFeatures />
                             </div>
-                        </header>
+                        ) : (
+                            <MathSimulationTab />
+                        )}
 
-                        {/* Chart Hero Container */}
-                        <ProjectionChart data={chartData} commodity={selectedCommodity} isSimulating={isSimulating} />
-
-                        {/* Phase 3 Locked Features */}
-                        <Phase3LockedFeatures />
+                        <DataHealthWidget healthData={healthData} />
                     </div>
-
-                    <DataHealthWidget healthData={healthData} />
                 </div>
             );
         }
@@ -418,15 +644,11 @@
                 <div className="flex flex-col">
                     <div className="flex justify-between items-center mb-2">
                         <label className="text-xs font-semibold text-gray-300">{title}</label>
-                        <span className="font-mono text-xs font-bold text-rwv-lime bg-rwv-lime/10 px-2 py-0.5 rounded">
+                        <span className="font-mono text-xs font-bold text-rwv-lime bg-rwv-lime/10 px-2 py-0.5 rounded border border-rwv-lime/20 shadow-[0_0_5px_rgba(198,243,79,0.2)]">
                             {value.toFixed(2)}
                         </span>
                     </div>
-                    <input 
-                        type="range" min="0.00" max="1.00" step="0.01" 
-                        value={value} 
-                        onChange={onChange}
-                    />
+                    <input type="range" min="0.00" max="1.00" step="0.01" value={value} onChange={onChange} />
                     <div className="flex justify-between text-[10px] text-rwv-textMuted mt-1.5 font-mono">
                         <span>0.00</span>
                         <span>1.00</span>
