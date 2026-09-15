@@ -72,28 +72,28 @@
         }
 
         /* SVG Diagram & Flow Animations */
-        .svg-node { transition: all 0.5s ease; }
+        .svg-node { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .node-active {
             fill: #151E20 !important;
             stroke: #C6F34F !important;
-            filter: drop-shadow(0 0 10px rgba(198,243,79,0.3));
+            filter: drop-shadow(0 0 12px rgba(198,243,79,0.3));
         }
         .node-text-active { fill: #C6F34F !important; }
         
         .svg-path {
             stroke: #232E30;
-            stroke-width: 2;
-            transition: stroke 0.3s;
+            stroke-width: 1.5;
+            transition: stroke 0.3s ease;
         }
         
         @keyframes dashMove {
-            to { stroke-dashoffset: -24; } /* Negative offset creates forward directional movement */
+            to { stroke-dashoffset: -24; }
         }
         
         .path-active {
             stroke: #C6F34F !important;
-            stroke-dasharray: 12 12; /* Creates the segmented 'trackers' */
-            animation: dashMove 0.8s linear infinite; /* Animates them directionally */
+            stroke-dasharray: 8 8;
+            animation: dashMove 0.8s linear infinite;
         }
     </style>
 </head>
@@ -265,14 +265,14 @@
 
             useEffect(() => {
                 let timer;
-                if (phase > 0 && phase < 7) {
+                if (phase > 0 && phase < 8) {
                     timer = setTimeout(() => {
                         setPhase(p => p + 1);
-                    }, 3500); // Progress every 3.5 seconds to allow reading
-                } else if (phase === 7) {
+                    }, 4000); // Progress every 4 seconds to allow reading
+                } else if (phase === 8) {
                     timer = setTimeout(() => {
                         setPhase(0); // Reset after showing output
-                    }, 5000);
+                    }, 6000);
                 }
                 return () => clearTimeout(timer);
             }, [phase]);
@@ -282,76 +282,88 @@
                 else setPhase(0);
             };
 
-            // Architectural Nodes Mapping[cite: 1, 4]
+            // Deep Architectural Nodes Mapping based on Formulas[cite: 5]
             const nodes = {
-                // Phase 1: Sources
+                // Phase 1: Raw Sources
                 wb: { x: 10, y: 40, label: "World Bank API", phase: 1 },
-                fred: { x: 10, y: 140, label: "FRED Macros", phase: 1 },
-                meteo: { x: 10, y: 240, label: "Open-Meteo", phase: 1 },
-                eia: { x: 10, y: 340, label: "EIA Physicals", phase: 1 },
+                fred: { x: 10, y: 120, label: "FRED Macros", phase: 1 },
+                meteo: { x: 10, y: 200, label: "Open-Meteo", phase: 1 },
+                eia: { x: 10, y: 280, label: "EIA Physicals", phase: 1 },
+                yf: { x: 10, y: 360, label: "yfinance (Spreads)", phase: 1 },
 
-                // Phase 2: Sub-Index Aggregation
-                l_it: { x: 200, y: 10, label: "Base L(it)", phase: 2 },
-                f_it: { x: 200, y: 80, label: "Volatile F(it)", phase: 2 },
-                v_t: { x: 200, y: 150, label: "Fund. Risk V(t)", phase: 2 },
-                f_r: { x: 200, y: 220, label: "Fin. Stress F(r)", phase: 2 },
-                lam: { x: 200, y: 290, label: "Deficit Λ(it)", phase: 2 },
-                buf: { x: 200, y: 360, label: "Buffer B(it)", phase: 2 },
+                // Phase 2: Sub-Component Formulas[cite: 5]
+                l_it: { x: 180, y: 10, label: "Base Econ L(it)", phase: 2 },
+                f_it: { x: 180, y: 85, label: "Volatile Econ F(it)", phase: 2 },
+                v_t: { x: 180, y: 160, label: "Fund. Risk V(t)", phase: 2 },
+                f_r: { x: 180, y: 235, label: "Fin. Stress F(r)", phase: 2 },
+                lam: { x: 180, y: 310, label: "Deficit Int. Λ(it)", phase: 2 },
+                buf: { x: 180, y: 385, label: "Adapt. Buffer B(it)", phase: 2 },
 
-                // Phase 3: Core Indices
-                A: { x: 390, y: 45, label: "Activity (A)", phase: 3 },
-                R: { x: 390, y: 185, label: "System Risk (R)", phase: 3 },
-                D: { x: 390, y: 325, label: "Deficit (D)", phase: 3 },
+                // Phase 3: Core Indices[cite: 5]
+                A: { x: 350, y: 50, label: "Activity Index (A)", phase: 3 },
+                R: { x: 350, y: 200, label: "System Risk (R)", phase: 3 },
+                D: { x: 350, y: 350, label: "Deficit Index (D)", phase: 3 },
 
-                // Phase 4: MADR & Regimes
-                madr: { x: 580, y: 115, label: "MADR (a, d, r)", phase: 4 },
-                regime: { x: 580, y: 255, label: "Regime z(t)", phase: 4 },
-                shocks: { x: 580, y: 350, label: "Shocks Q(t)", phase: 4 },
+                // Phase 4: Regimes & Modifiers[cite: 5]
+                madr: { x: 520, y: 50, label: "MADR (a, d, r)", phase: 4 },
+                regime: { x: 520, y: 150, label: "Markov Regime z(t)", phase: 4 },
+                shock: { x: 520, y: 250, label: "Shock Index Q(t)", phase: 4 },
+                season: { x: 520, y: 350, label: "Seasonality S(t)", phase: 4 },
 
-                // Phase 5: Stochastic Base
-                base: { x: 770, y: 150, label: "Base Layer m(t)", phase: 5 },
-                mkt: { x: 770, y: 270, label: "Market Layer x(t)", phase: 5 },
+                // Phase 5: Equilibrium Targets[cite: 5]
+                M_target: { x: 690, y: 150, label: "Base Target M(it)", phase: 5 },
+                y_carry: { x: 690, y: 300, label: "Carry Cost c(it)", phase: 5 },
 
-                // Phase 6: Engine
-                mc: { x: 960, y: 210, label: "SDE Monte Carlo", phase: 6 },
+                // Phase 6: SDE Layers[cite: 5]
+                dm_base: { x: 860, y: 150, label: "Base SDE dm(t)", phase: 6 },
+                dx_mkt: { x: 860, y: 250, label: "Market SDE dx(t)", phase: 6 },
 
-                // Phase 7: Output
-                out: { x: 1150, y: 210, label: "27-Step Curve", phase: 7 }
+                // Phase 7: Trajectory Filter[cite: 5]
+                kalman: { x: 1030, y: 200, label: "Kalman Filter K(ext)", phase: 7 },
+
+                // Phase 8: Final Output[cite: 5]
+                curve: { x: 1200, y: 200, label: "27-Step Curve", phase: 8 }
             };
 
             const connections = [
-                // Phase 2 Flow
+                // Phase 2 Routing
                 { from: 'wb', to: 'l_it', reqPhase: 2 }, { from: 'wb', to: 'v_t', reqPhase: 2 },
                 { from: 'fred', to: 'f_it', reqPhase: 2 }, { from: 'fred', to: 'f_r', reqPhase: 2 }, { from: 'fred', to: 'lam', reqPhase: 2 },
-                { from: 'meteo', to: 'lam', reqPhase: 2 }, { from: 'eia', to: 'buf', reqPhase: 2 },
+                { from: 'meteo', to: 'lam', reqPhase: 2 }, { from: 'eia', to: 'lam', reqPhase: 2 }, { from: 'eia', to: 'buf', reqPhase: 2 },
+                { from: 'yf', to: 'lam', reqPhase: 2 },
                 
-                // Phase 3 Flow
+                // Phase 3 Routing
                 { from: 'l_it', to: 'A', reqPhase: 3 }, { from: 'f_it', to: 'A', reqPhase: 3 },
                 { from: 'v_t', to: 'R', reqPhase: 3 }, { from: 'f_r', to: 'R', reqPhase: 3 },
                 { from: 'lam', to: 'D', reqPhase: 3 }, { from: 'buf', to: 'D', reqPhase: 3 },
 
-                // Phase 4 Flow
+                // Phase 4 Routing
                 { from: 'A', to: 'madr', reqPhase: 4 }, { from: 'R', to: 'madr', reqPhase: 4 }, { from: 'D', to: 'madr', reqPhase: 4 },
-                { from: 'madr', to: 'regime', reqPhase: 4 }, { from: 'D', to: 'shocks', reqPhase: 4 }, 
+                { from: 'A', to: 'regime', reqPhase: 4 }, { from: 'R', to: 'regime', reqPhase: 4 }, { from: 'D', to: 'regime', reqPhase: 4 },
+                { from: 'D', to: 'shock', reqPhase: 4 }, { from: 'D', to: 'season', reqPhase: 4 }, 
                 
-                // Phase 5 Flow
-                { from: 'madr', to: 'base', reqPhase: 5 }, { from: 'regime', to: 'base', reqPhase: 5 },
-                { from: 'madr', to: 'mkt', reqPhase: 5 }, { from: 'regime', to: 'mkt', reqPhase: 5 }, { from: 'shocks', to: 'mkt', reqPhase: 5 },
+                // Phase 5 Routing
+                { from: 'madr', to: 'M_target', reqPhase: 5 }, { from: 'regime', to: 'M_target', reqPhase: 5 },
+                { from: 'D', to: 'y_carry', reqPhase: 5 }, { from: 'regime', to: 'y_carry', reqPhase: 5 },
 
-                // Phase 6 Flow
-                { from: 'base', to: 'mc', reqPhase: 6 }, { from: 'mkt', to: 'mc', reqPhase: 6 },
+                // Phase 6 Routing
+                { from: 'M_target', to: 'dm_base', reqPhase: 6 },
+                { from: 'madr', to: 'dx_mkt', reqPhase: 6 }, { from: 'regime', to: 'dx_mkt', reqPhase: 6 }, 
+                { from: 'shock', to: 'dx_mkt', reqPhase: 6 }, { from: 'season', to: 'dx_mkt', reqPhase: 6 },
 
-                // Phase 7 Flow
-                { from: 'mc', to: 'out', reqPhase: 7 }
+                // Phase 7 Routing
+                { from: 'dm_base', to: 'kalman', reqPhase: 7 }, { from: 'dx_mkt', to: 'kalman', reqPhase: 7 },
+
+                // Phase 8 Routing
+                { from: 'kalman', to: 'curve', reqPhase: 8 }, { from: 'y_carry', to: 'curve', reqPhase: 8 }
             ];
 
             const renderPath = (conn, i) => {
                 const n1 = nodes[conn.from]; const n2 = nodes[conn.to];
-                const startX = n1.x + 140; const startY = n1.y + 25; // Adjusted for new box size
-                const endX = n2.x; const endY = n2.y + 25;
+                const startX = n1.x + 130; const startY = n1.y + 20; 
+                const endX = n2.x; const endY = n2.y + 20;
                 const cp1X = startX + (endX - startX) / 2;
                 
-                // Bezier curve for smooth plumbing[cite: 4]
                 const pathD = `M ${startX} ${startY} C ${cp1X} ${startY}, ${cp1X} ${endY}, ${endX} ${endY}`;
                 const isActive = phase >= conn.reqPhase;
 
@@ -362,7 +374,7 @@
                 );
             };
 
-            // Dynamic Data Panel states[cite: 3, 4]
+            // Deep Telemetry Data reflecting the math models[cite: 5]
             const panelData = [
                 {
                     title: "SYSTEM IDLE",
@@ -371,37 +383,42 @@
                 },
                 {
                     title: "STAGE 1: GLOBAL DATA INGESTION",
-                    desc: "Fetching institutional macro streams and physical commodity fundamentals via external APIs.",
-                    metrics: [{label: "Global GDP", val: "+2.1%"}, {label: "Core CPI", val: "3.4%"}, {label: "Weather Z-Score", val: "+1.2σ"}, {label: "Crude Inv.", val: "421M bbl"}]
+                    desc: "Fetching institutional macro streams (WB, FRED), physical commodity fundamentals (EIA), and spatial spreads.",
+                    metrics: [{label: "Global GDP", val: "+2.1%"}, {label: "Core CPI", val: "3.4%"}, {label: "Weather Z-Score", val: "+1.2σ"}, {label: "Spread bz-wti", val: "1.4"}]
                 },
                 {
-                    title: "STAGE 2: SUB-INDEX AGGREGATION",
-                    desc: "Splitting indicators into Volatile (F) and Base (L) components. Evaluating financial stress vectors.",
+                    title: "STAGE 2: SUB-COMPONENT PARTITIONS",
+                    desc: "Splitting indicators into Volatile F(it) and Base L(it) bounds. Evaluating Deficit Intensity Λ(it) against the Adaptability Buffer B(it).",
                     metrics: [{label: "Volatile F(it)", val: "0.62"}, {label: "Base L(it)", val: "0.55"}, {label: "Deficit Int. (Λ)", val: "1.44"}, {label: "Buffer B(it)", val: "0.72"}]
                 },
                 {
                     title: "STAGE 3: CORE MACRO INDICES",
-                    desc: "Synthesizing normalized matrices A(it), D(it), and R(it) bounded precisely between 0.00 and 1.00.",
+                    desc: "Synthesizing normalized matrices A(it), D(it), and R(it). Bound rigorously via hyperbolic tangents to the [0.00, 1.00] range.",
                     metrics: [{label: "Activity (A)", val: "0.58"}, {label: "Deficit (D)", val: "0.74"}, {label: "Systemic Risk (R)", val: "0.39"}]
                 },
                 {
-                    title: "STAGE 4: MADR CENTERING & REGIME CLASSIFICATION",
-                    desc: "Centering parameters to [-1, 1] range. Resolving Markov-chain state probabilities to determine active market regime.",
-                    metrics: [{label: "Centered (a, d, r)", val: "[-.16, .48, -.22]"}, {label: "Probabilities (π)", val: "[.1, .2, .6, .1]"}, {label: "Active Regime (z)", val: "State 3"}]
+                    title: "STAGE 4: MADR & MARKOV REGIMES",
+                    desc: "Centering parameters to (a, d, r) via 2X-1. Resolving transition probabilities π(k,t) to classify the active Markov state z(t).",
+                    metrics: [{label: "Centered (a, d, r)", val: "[.16, .48, -.22]"}, {label: "Probabilities (π)", val: "[.1, .2, .6, .1]"}, {label: "Shock Sub Q(t)", val: "0.05"}]
                 },
                 {
-                    title: "STAGE 5: STOCHASTIC LAYERS",
-                    desc: "Injecting convenience yield and shocks. Setting up differential equations for Base (dm_t) and Market (dx_t) layers.",
-                    metrics: [{label: "Target Base (M)", val: "4.12"}, {label: "Yield (y)", val: "3.2%"}, {label: "Shock Sub (Q)", val: "0.05"}]
+                    title: "STAGE 5: EQUILIBRIUM & YIELD TARGETS",
+                    desc: "Calculating the long-term Equilibrium Price Target M(it). Compiling Convenience Yield y(it) and Cost of Carry c(carry).",
+                    metrics: [{label: "Target Base M(it)", val: "4.12"}, {label: "Yield y(it)", val: "3.2%"}, {label: "Carry Cost", val: "0.08"}]
                 },
                 {
-                    title: "STAGE 6: SDE MONTE CARLO SIMULATION",
-                    desc: "Executing massive parallel Brownian motion paths. Integrating Kalman Gain filter for trajectory correction.",
-                    metrics: [{label: "Paths (N)", val: "10,000"}, {label: "Volatility (σ)", val: "0.15"}, {label: "Time Horizon", val: "1 Year"}]
+                    title: "STAGE 6: SDE MONTE CARLO LAYERS",
+                    desc: "Injecting variables into Stochastic Differential Equations. Calculating Base Layer dm(t) and Market Layer dx(t) drifts.",
+                    metrics: [{label: "Base Drift (dm)", val: "+0.012"}, {label: "Mkt Drift (dx)", val: "-0.004"}, {label: "Paths (N)", val: "10,000"}]
                 },
                 {
-                    title: "STAGE 7: OUTPUT CRYSTALLIZATION",
-                    desc: "Aggregating optimal probabilistic future prices into the final 27-step forward curve.",
+                    title: "STAGE 7: KALMAN TRAJECTORY CORRECTION",
+                    desc: "Applying Kalman Gain Equivalent K(ext) to update the state matrix X+ via external forecast equations Y(ext).",
+                    metrics: [{label: "State X(minus)", val: "[4.2, 0.1]"}, {label: "Kalman Gain K(ext)", val: "0.14"}, {label: "State X(plus)", val: "[4.3, 0.1]"}]
+                },
+                {
+                    title: "STAGE 8: OUTPUT CRYSTALLIZATION",
+                    desc: "Aggregating optimal probabilistic future prices into the final 27-step forward curve interpolations.",
                     metrics: [{label: "T_1 (15d)", val: "$82.10"}, {label: "T_2 (30d)", val: "$82.45"}, {label: "T_3 (45d)", val: "$82.60"}, {label: "T_27 (3yr)", val: "$91.20"}]
                 }
             ];
@@ -410,10 +427,10 @@
                 <div className="flex-1 flex flex-col h-full overflow-hidden bg-rwv-bg">
                     
                     {/* Top Topo/Diagram Area */}
-                    <div className="flex-1 bg-rwv-panel m-6 rounded-2xl border border-rwv-border p-6 flex flex-col relative shadow-2xl overflow-hidden">
-                        <div className="flex justify-between items-center mb-4 shrink-0 z-10">
+                    <div className="flex-1 bg-rwv-panel m-6 mb-0 rounded-t-2xl border border-rwv-border p-6 flex flex-col relative shadow-2xl overflow-hidden">
+                        <div className="flex justify-between items-center mb-6 shrink-0 z-10">
                             <div>
-                                <h2 className="text-2xl font-bold text-white">Mathematical Architecture Flow</h2>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">Mathematical Architecture Flow</h2>
                                 <p className="text-rwv-textMuted text-sm mt-1">Real-time data telemetry through the formula pipeline</p>
                             </div>
                             <button 
@@ -426,8 +443,8 @@
 
                         {/* Interactive SVG Canvas */}
                         <div className="flex-1 w-full relative overflow-auto custom-scrollbar">
-                            <div className="min-w-[1300px] min-h-[420px] w-full h-full relative">
-                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1350 420" preserveAspectRatio="xMidYMid meet">
+                            <div className="min-w-[1350px] min-h-[440px] w-full h-full relative">
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1350 440" preserveAspectRatio="xMidYMid meet">
                                     {/* Draw paths first */}
                                     {connections.map((c, i) => renderPath(c, i))}
                                     
@@ -436,11 +453,11 @@
                                         const isActive = phase >= n.phase;
                                         return (
                                             <g key={key} transform={`translate(${n.x}, ${n.y})`} className="svg-node">
-                                                <rect width="140" height="50" rx="8" 
+                                                <rect width="130" height="40" rx="6" 
                                                     className={`fill-[#0B1011] stroke-2 ${isActive ? 'node-active' : 'stroke-rwv-border'}`} 
                                                 />
-                                                <text x="70" y="30" textAnchor="middle" 
-                                                    className={`text-[11px] font-bold font-sans ${isActive ? 'node-text-active' : 'fill-gray-500'}`}
+                                                <text x="65" y="24" textAnchor="middle" 
+                                                    className={`text-[10px] font-bold font-sans ${isActive ? 'node-text-active' : 'fill-gray-500'}`}
                                                 >
                                                     {n.label}
                                                 </text>
@@ -453,7 +470,7 @@
                     </div>
 
                     {/* Bottom Dynamic Telemetry Data Panel */}
-                    <div className="h-44 bg-rwv-panel border-t border-rwv-border p-6 flex flex-col shrink-0 transition-all duration-300">
+                    <div className="h-44 bg-rwv-panel border border-t-0 border-rwv-border mx-6 mb-6 rounded-b-2xl p-6 flex flex-col shrink-0 transition-all duration-300 shadow-2xl">
                         <div className="flex items-center gap-3 mb-2">
                             <div className={`w-2 h-2 rounded-full ${phase > 0 ? 'bg-rwv-lime animate-pulse shadow-[0_0_8px_#C6F34F]' : 'bg-gray-600'}`}></div>
                             <h3 className="text-rwv-lime font-mono text-sm font-bold tracking-widest">{panelData[phase].title}</h3>
@@ -462,7 +479,7 @@
                         
                         <div className="flex gap-4 ml-5">
                             {panelData[phase].metrics.map((m, i) => (
-                                <div key={i} className="bg-rwv-bg border border-rwv-border rounded-lg p-3 min-w-[180px] flex flex-col justify-center">
+                                <div key={i} className="bg-rwv-bg border border-rwv-border rounded-lg p-3 min-w-[180px] flex flex-col justify-center transition-all duration-500 hover:border-rwv-lime/50 hover:bg-rwv-lime/5">
                                     <div className="text-rwv-textMuted text-[10px] uppercase font-bold tracking-wider mb-1">{m.label}</div>
                                     <div className="text-white font-mono text-sm tracking-wide">{m.val}</div>
                                 </div>
